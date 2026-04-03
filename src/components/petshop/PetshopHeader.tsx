@@ -94,10 +94,10 @@ const PetshopHeader = ({ onScheduleClick, onMyAppointmentsClick }: PetshopHeader
               </motion.div>
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-petshop-dark leading-tight tracking-tight">
-                  Seu Xodó
+                  Demo PetShop
                 </h1>
                 <p className="text-[10px] sm:text-xs text-petshop-orange font-semibold -mt-0.5 tracking-wide">
-                  PETSHOP & VET
+                  MODELO DEMONSTRAÇÃO
                 </p>
               </div>
             </a>

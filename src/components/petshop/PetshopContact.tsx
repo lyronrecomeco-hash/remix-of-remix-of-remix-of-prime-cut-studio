@@ -154,36 +154,26 @@ const PetshopContact = ({ onScheduleClick }: PetshopContactProps) => {
             className="relative"
           >
             <div className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3949.9!2d-34.94!3d-8.08!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zOCwwOCdTIDM0wrA1Nic!5e0!3m2!1spt-BR!2sbr!4v1705000000000!5m2!1spt-BR!2sbr"
-                width="100%"
-                height="250"
-                className="sm:h-[300px]"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Localização Seu Xodó Petshop"
-              />
+              <div className="w-full h-[250px] sm:h-[300px] bg-gradient-to-br from-petshop-orange/10 to-amber-100 flex items-center justify-center">
+                <div className="text-center">
+                  <MapPin className="w-12 h-12 text-petshop-orange mx-auto mb-3" />
+                  <p className="text-petshop-dark font-semibold">Localização Demo</p>
+                  <p className="text-petshop-gray text-sm">Centro, São Paulo - SP</p>
+                </div>
+              </div>
               <div className="p-4 sm:p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-petshop-orange to-amber-500 rounded-xl flex items-center justify-center">
                     <span className="text-xl sm:text-2xl">🐾</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-petshop-dark text-base sm:text-lg">Seu Xodó Petshop</h3>
-                    <p className="text-petshop-gray text-xs sm:text-sm">Campo Grande, Recife - PE</p>
+                    <h3 className="font-bold text-petshop-dark text-base sm:text-lg">Demo PetShop</h3>
+                    <p className="text-petshop-gray text-xs sm:text-sm">Centro, São Paulo - SP</p>
                   </div>
                 </div>
-                <a
-                  href="https://www.google.com/maps/dir/?api=1&destination=Estr.+de+Belém,+1273+-+Campo+Grande,+Recife+-+PE"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-petshop-orange font-semibold text-sm hover:underline group"
-                >
-                  Ver rotas no Google Maps
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </a>
+                <span className="flex items-center gap-2 text-petshop-orange font-semibold text-sm">
+                  Endereço de demonstração
+                </span>
               </div>
             </div>
 
