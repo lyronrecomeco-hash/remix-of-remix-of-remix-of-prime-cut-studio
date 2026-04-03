@@ -41,17 +41,14 @@ const PetshopFooter = () => {
               </div>
             </div>
             <p className="text-white/60 text-xs sm:text-sm mb-4 sm:mb-6 leading-relaxed max-w-xs">
-              Cuidando do seu melhor amigo com amor e carinho há mais de 10 anos. 🐕❤️
+              Modelo de demonstração do sistema completo para petshops. 🐕❤️
             </p>
-            <a
-              href="https://www.instagram.com/seuxodo.petshop/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all shadow-lg hover:shadow-xl"
+            <span
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-full text-xs sm:text-sm font-semibold opacity-60"
             >
               <Instagram className="w-4 h-4" />
-              @seuxodo.petshop
-            </a>
+              @demopetshop
+            </span>
           </div>
 
           {/* Services */}
