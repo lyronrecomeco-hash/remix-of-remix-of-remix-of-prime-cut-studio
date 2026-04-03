@@ -78,7 +78,8 @@ import PartnerApplications from "@/components/admin/PartnerApplications";
 
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
 import { ViralSaasTab } from "@/components/genesis-ia/viral-apps/ViralSaasTab";
-import { FileText, Gift, CreditCard, Code2, Rocket, Key, ClipboardList, HelpCircle } from "lucide-react";
+import { FileText, Gift, CreditCard, Code2, Rocket, Key, ClipboardList, HelpCircle, Flame } from "lucide-react";
+import { OfertaQuenteTab } from "@/components/genesis-ia/oferta-quente/OfertaQuenteTab";
 import { HelpCenterTab } from "@/components/genesis-ia/help";
 import { useMenuPermissions } from "@/hooks/useMenuPermissions";
 import { RestrictedAccessModal } from "@/components/admin/RestrictedAccessModal";
@@ -86,7 +87,7 @@ import { GenesisSupportChat } from "@/components/genesis-ia/support/GenesisSuppo
 import { TrialCountdownBadge } from "@/components/genesis-ia/trial/TrialCountdownBadge";
 import { TrialInfoModal } from "@/components/genesis-ia/trial/TrialInfoModal";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas' | 'partner-applications' | 'help';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas' | 'partner-applications' | 'help' | 'oferta-quente';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -275,6 +276,7 @@ const GenesisIADashboard = () => {
       case 'viral-saas': return 'SaaS Virais';
       case 'partner-applications': return 'Inscrições';
       case 'help': return 'Central de Ajuda';
+      case 'oferta-quente': return 'Oferta Quente';
       default: return null;
     }
   };
@@ -299,6 +301,7 @@ const GenesisIADashboard = () => {
         'partner-applications': 'Inscrições',
         'help': 'Central de Ajuda',
         'settings': 'Configurações',
+        'oferta-quente': 'Oferta Quente',
       };
       setRestrictedModal({ open: true, label: labelMap[tabId] || tabId, id: tabId });
       return;
@@ -328,6 +331,8 @@ const GenesisIADashboard = () => {
     { icon: FileText, label: 'Contratos', tabId: 'contracts' },
     // Promo visível apenas para lyronrp@gmail.com e Santiago
     ...((isSuperAdmin || isSantiagoAdmin) ? [{ icon: Gift, label: 'Promo', tabId: 'promocional' as ActiveTab }] : []),
+    // Oferta Quente visível apenas para lyronrp@gmail.com e Santiago
+    ...((isSuperAdmin || isSantiagoAdmin) ? [{ icon: Flame, label: 'Oferta Quente', tabId: 'oferta-quente' as ActiveTab }] : []),
     // Usuários só para admin
     ...(isAdmin ? [{ icon: Users, label: 'Usuários', tabId: 'users' as ActiveTab }] : []),
     { icon: LayoutDashboard, label: 'Financeiro', tabId: 'financial' },
@@ -814,6 +819,10 @@ const GenesisIADashboard = () => {
 
     if (activeTab === 'help') {
       return <HelpCenterTab />;
+    }
+
+    if (activeTab === 'oferta-quente') {
+      return <OfertaQuenteTab onBack={() => setActiveTab('dashboard')} />;
     }
 
     return null;
