@@ -117,7 +117,7 @@ const PetshopFooter = () => {
         <div className="pt-6 sm:pt-8 border-t border-white/10">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
             <p className="text-[10px] sm:text-sm text-white/40 text-center sm:text-left">
-              © {new Date().getFullYear()} Seu Xodó Petshop. Todos os direitos reservados.
+              © {new Date().getFullYear()} Demo PetShop. Todos os direitos reservados.
             </p>
             <div className="flex items-center gap-1 text-[10px] sm:text-sm text-white/40">
               <span>Feito com</span>

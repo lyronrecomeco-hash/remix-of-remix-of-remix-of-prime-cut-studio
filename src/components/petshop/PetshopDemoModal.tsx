@@ -70,7 +70,7 @@ const PetshopDemoModal = () => {
               {/* Title */}
               <div className="text-center mb-4 sm:mb-5">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1.5">
-                  Petshop <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500">Seu Xodó</span>
+                  Demo <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500">PetShop</span>
                 </h2>
                 <p className="text-gray-600 text-xs sm:text-sm leading-relaxed px-2">
                   Demo interativa do sistema completo de gestão para petshops

@@ -85,33 +85,8 @@ const PetshopHero = ({ onScheduleClick }: PetshopHeroProps) => {
               que seu{' '}
               <span className="relative inline-block">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-petshop-orange via-orange-400 to-amber-400">
-                  xodó
+                  pet
                 </span>
-                <motion.svg 
-                  className="absolute -bottom-1 sm:-bottom-2 left-0 w-full" 
-                  height="8" 
-                  viewBox="0 0 100 8" 
-                  fill="none"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ delay: 0.5, duration: 0.8 }}
-                >
-                  <motion.path 
-                    d="M2 6C25 2 75 2 98 6" 
-                    stroke="url(#gradient)" 
-                    strokeWidth="3" 
-                    strokeLinecap="round"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ delay: 0.5, duration: 0.8 }}
-                  />
-                  <defs>
-                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#F97316" />
-                      <stop offset="100%" stopColor="#FCD34D" />
-                    </linearGradient>
-                  </defs>
-                </motion.svg>
               </span>
               {' '}merece
             </h1>
