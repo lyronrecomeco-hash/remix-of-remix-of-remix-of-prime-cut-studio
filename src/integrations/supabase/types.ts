@@ -3458,6 +3458,121 @@ export type Database = {
         }
         Relationships: []
       }
+      engine_outputs: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          output_type: string
+          session_id: string
+          title: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          output_type?: string
+          session_id: string
+          title?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          output_type?: string
+          session_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engine_outputs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "engine_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      engine_sessions: {
+        Row: {
+          affiliate_id: string
+          created_at: string
+          edges: Json
+          id: string
+          nodes: Json
+          proposal_id: string
+          prospect_context: Json | null
+          status: string
+          title: string
+          updated_at: string
+          viewport: Json | null
+        }
+        Insert: {
+          affiliate_id: string
+          created_at?: string
+          edges?: Json
+          id?: string
+          nodes?: Json
+          proposal_id: string
+          prospect_context?: Json | null
+          status?: string
+          title?: string
+          updated_at?: string
+          viewport?: Json | null
+        }
+        Update: {
+          affiliate_id?: string
+          created_at?: string
+          edges?: Json
+          id?: string
+          nodes?: Json
+          proposal_id?: string
+          prospect_context?: Json | null
+          status?: string
+          title?: string
+          updated_at?: string
+          viewport?: Json | null
+        }
+        Relationships: []
+      }
+      engine_snapshots: {
+        Row: {
+          created_at: string
+          edges: Json
+          id: string
+          label: string | null
+          nodes: Json
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          edges?: Json
+          id?: string
+          label?: string | null
+          nodes?: Json
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          edges?: Json
+          id?: string
+          label?: string | null
+          nodes?: Json
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engine_snapshots_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "engine_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enriched_leads: {
         Row: {
           ads_analysis_id: string | null
