@@ -1,20 +1,26 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import type { EngineNode, EngineEdge } from '../types';
+import type { EngineNode, EngineEdge, NODE_CATALOG } from '../types';
 
 interface UseEngineAIProps {
   nodes: EngineNode[];
   edges: EngineEdge[];
   prospectContext: Record<string, unknown>;
   sessionId: string | null;
+  onCanvasAction?: (action: { type: string; nodes?: any[]; edges?: any[] }) => void;
 }
 
-export function useEngineAI({ nodes, edges, prospectContext, sessionId }: UseEngineAIProps) {
+export function useEngineAI({ nodes, edges, prospectContext, sessionId, onCanvasAction }: UseEngineAIProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [streamContent, setStreamContent] = useState('');
   const [outputs, setOutputs] = useState<{ type: string; title: string; content: string }[]>([]);
 
   const generate = useCallback(async (outputType: string, userInstruction?: string) => {
+    // Special: build_structure creates nodes via AI
+    if (outputType === 'build_structure') {
+      return generateStructure(userInstruction);
+    }
+
     setIsGenerating(true);
     setStreamContent('');
 
@@ -106,6 +112,8 @@ export function useEngineAI({ nodes, edges, prospectContext, sessionId }: UseEng
         checklist: 'Checklist de Implementação',
         executive: 'Resumo Executivo',
         analyze: 'Análise do Canvas',
+        objections: 'Fluxo de Objeções',
+        deploy_plan: 'Plano de Entrega',
       };
 
       setOutputs(prev => [...prev, {
@@ -122,6 +130,72 @@ export function useEngineAI({ nodes, edges, prospectContext, sessionId }: UseEng
       setIsGenerating(false);
     }
   }, [nodes, edges, prospectContext]);
+
+  // Generate structure: AI creates nodes on the canvas
+  const generateStructure = useCallback(async (instruction?: string) => {
+    if (!onCanvasAction) return;
+    setIsGenerating(true);
+    toast.info('Montando estrutura no canvas...');
+
+    try {
+      const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-engine-output`;
+      const resp = await fetch(CHAT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          nodes: nodes.map(n => ({ type: n.data.nodeType, data: n.data })),
+          edges,
+          prospect_context: prospectContext,
+          output_type: 'build_structure',
+          user_instruction: instruction || 'Monte a melhor estrutura de conversão para este prospect',
+        }),
+      });
+
+      if (!resp.ok) throw new Error('Falha');
+      
+      const text = await resp.text();
+      // Parse the non-streamed JSON response
+      let result;
+      try {
+        // Try to extract JSON from potential SSE wrapping
+        const lines = text.split('\n').filter(l => l.startsWith('data: ') && l.slice(6).trim() !== '[DONE]');
+        let fullContent = '';
+        for (const line of lines) {
+          try {
+            const parsed = JSON.parse(line.slice(6).trim());
+            const c = parsed.choices?.[0]?.delta?.content;
+            if (c) fullContent += c;
+          } catch {}
+        }
+        
+        // Extract JSON from markdown code blocks if present
+        const jsonMatch = fullContent.match(/```(?:json)?\s*([\s\S]*?)```/) || fullContent.match(/(\{[\s\S]*\})/);
+        if (jsonMatch) {
+          result = JSON.parse(jsonMatch[1].trim());
+        }
+      } catch {
+        toast.error('IA não retornou estrutura válida');
+        return;
+      }
+
+      if (result?.nodes) {
+        onCanvasAction({
+          type: 'add_nodes',
+          nodes: result.nodes,
+          edges: result.edges || [],
+        });
+        toast.success(`${result.nodes.length} blocos adicionados ao canvas!`);
+      }
+    } catch (err) {
+      console.error('Structure generation error:', err);
+      toast.error('Erro ao montar estrutura');
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [nodes, edges, prospectContext, onCanvasAction]);
 
   return {
     isGenerating,
