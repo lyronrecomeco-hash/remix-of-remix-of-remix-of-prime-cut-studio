@@ -13,7 +13,8 @@ import {
   Search,
   Mail,
   TrendingUp,
-  X
+  X,
+  Cpu
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { EngineWorkspace, EngineIntroModal } from "./engine";
+import type { ProposalForEngine } from "./engine";
 
 interface AcceptedProposal {
   id: string;
@@ -44,6 +47,9 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
   const [proposals, setProposals] = useState<AcceptedProposal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [engineProposal, setEngineProposal] = useState<ProposalForEngine | null>(null);
+  const [showIntroModal, setShowIntroModal] = useState(false);
+  const [pendingEngineProposal, setPendingEngineProposal] = useState<AcceptedProposal | null>(null);
 
   const fetchProposals = async () => {
     if (!affiliateId) {
@@ -121,6 +127,38 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
     window.open(`https://www.google.com/maps/search/${encodeURIComponent(companyName)}`, '_blank');
   };
 
+  const handleOpenEngine = (proposal: AcceptedProposal) => {
+    const dismissed = localStorage.getItem('genesis_engine_intro_dismissed');
+    if (dismissed === 'true') {
+      setEngineProposal(proposal as ProposalForEngine);
+    } else {
+      setPendingEngineProposal(proposal);
+      setShowIntroModal(true);
+    }
+  };
+
+  const handleIntroModalContinue = (dontShowAgain: boolean) => {
+    if (dontShowAgain) {
+      localStorage.setItem('genesis_engine_intro_dismissed', 'true');
+    }
+    setShowIntroModal(false);
+    if (pendingEngineProposal) {
+      setEngineProposal(pendingEngineProposal as ProposalForEngine);
+      setPendingEngineProposal(null);
+    }
+  };
+
+  // If engine is open, render workspace
+  if (engineProposal && affiliateId) {
+    return (
+      <EngineWorkspace
+        affiliateId={affiliateId}
+        proposal={engineProposal}
+        onBack={() => setEngineProposal(null)}
+      />
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -136,7 +174,13 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
 
   return (
     <div className="space-y-6 w-full">
-      {/* Header Stats - Same as Radar */}
+      {/* Intro Modal */}
+      <EngineIntroModal
+        isOpen={showIntroModal}
+        onContinue={handleIntroModalContinue}
+      />
+
+      {/* Header Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
           <CardContent className="p-4">
@@ -181,7 +225,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
         </Card>
       </div>
 
-      {/* Opportunities Card - Same wrapper as Radar */}
+      {/* Proposals List */}
       <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -336,6 +380,17 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                             >
                               <MessageCircle className="w-3.5 h-3.5" />
                               WhatsApp
+                            </Button>
+                            {/* Engine Button */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-blue-500/30 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1"
+                              onClick={() => handleOpenEngine(proposal)}
+                              title="Abrir Genesis Engine"
+                            >
+                              <Cpu className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline text-xs">Engine</span>
                             </Button>
                             <Button
                               size="sm"
