@@ -23,7 +23,6 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { EngineNodeComponent } from './components/EngineNode';
 import { NodeCatalogPanel } from './components/NodeCatalogPanel';
 import { AICommandPanel } from './components/AICommandPanel';
-import { EngineOutputModal } from './components/EngineOutputModal';
 import { useEngineSession } from './hooks/useEngineSession';
 import { useEngineAI } from './hooks/useEngineAI';
 import type { ProposalForEngine, EngineNode, EngineEdge } from './types';
@@ -41,7 +40,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
   } = useEngineSession(affiliateId, proposal);
 
   const {
-    isGenerating, streamContent, outputs, generate, clearStream,
+    isGenerating, streamContent, outputs, lastActionType, generate, clearStream,
   } = useEngineAI({
     nodes,
     edges,
@@ -53,7 +52,6 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [mobileLeftOpen, setMobileLeftOpen] = useState(false);
-  const [outputModal, setOutputModal] = useState<{ title: string; content: string } | null>(null);
 
   const nodeTypes = useMemo(() => ({
     engineNode: EngineNodeComponent,
@@ -99,13 +97,6 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
   const handleGenerate = useCallback((type: string, instruction?: string) => {
     generate(type, instruction);
   }, [generate]);
-
-  useEffect(() => {
-    if (!isGenerating && outputs.length > 0) {
-      const last = outputs[outputs.length - 1];
-      setOutputModal({ title: last.title, content: last.content });
-    }
-  }, [isGenerating, outputs.length]);
 
   if (loading) {
     return (
@@ -225,6 +216,16 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                   className="!bg-white/[0.04] !border-white/[0.08] !rounded-lg [&_button]:!bg-white/[0.04] [&_button]:!border-white/[0.08] [&_button]:!text-white/40 [&_button:hover]:!bg-white/10 [&_button:hover]:!text-white/70"
                 />
                 
+                {/* Canvas overlay during structure generation */}
+                {isGenerating && lastActionType === 'build_structure' && (
+                  <Panel position="top-center">
+                    <div className="mt-4 px-4 py-2.5 bg-primary/10 backdrop-blur-md border border-primary/20 rounded-lg flex items-center gap-2.5">
+                      <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                      <span className="text-xs text-primary font-medium">Montando estrutura no canvas...</span>
+                    </div>
+                  </Panel>
+                )}
+                
                 {/* Mobile buttons */}
                 <Panel position="bottom-left" className="sm:hidden flex gap-2">
                   <Button
@@ -260,6 +261,8 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                     outputs={outputs}
                     onGenerate={handleGenerate}
                     prospectName={proposal.company_name}
+                    nodes={nodes}
+                    lastActionType={lastActionType}
                   />
                 </div>
               </ResizablePanel>
@@ -267,14 +270,6 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
           )}
         </ResizablePanelGroup>
       </div>
-
-      {/* Output Modal */}
-      <EngineOutputModal
-        isOpen={!!outputModal}
-        onClose={() => setOutputModal(null)}
-        title={outputModal?.title || ''}
-        content={outputModal?.content || ''}
-      />
 
       {/* Mobile Left Panel Overlay */}
       <AnimatePresence>
@@ -329,6 +324,8 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                 outputs={outputs}
                 onGenerate={handleGenerate}
                 prospectName={proposal.company_name}
+                nodes={nodes}
+                lastActionType={lastActionType}
               />
             </div>
           </motion.div>

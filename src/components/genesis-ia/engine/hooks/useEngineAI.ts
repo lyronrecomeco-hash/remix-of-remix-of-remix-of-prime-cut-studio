@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import type { EngineNode, EngineEdge, NODE_CATALOG } from '../types';
+import type { EngineNode, EngineEdge } from '../types';
 
 interface UseEngineAIProps {
   nodes: EngineNode[];
@@ -10,14 +10,26 @@ interface UseEngineAIProps {
   onCanvasAction?: (action: { type: string; nodes?: any[]; edges?: any[] }) => void;
 }
 
+// Actions that produce canvas changes (no modal)
+const CANVAS_ACTIONS = new Set(['build_structure']);
+
+// Actions that produce text output (shown inline in AI panel)
+const TEXT_ACTIONS = new Set([
+  'prompt', 'scope', 'blueprint', 'strategy', 'checklist',
+  'executive', 'analyze', 'objections', 'deploy_plan',
+]);
+
 export function useEngineAI({ nodes, edges, prospectContext, sessionId, onCanvasAction }: UseEngineAIProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [streamContent, setStreamContent] = useState('');
   const [outputs, setOutputs] = useState<{ type: string; title: string; content: string }[]>([]);
+  const [lastActionType, setLastActionType] = useState<string | null>(null);
 
   const generate = useCallback(async (outputType: string, userInstruction?: string) => {
-    // Special: build_structure creates nodes via AI
-    if (outputType === 'build_structure') {
+    setLastActionType(outputType);
+
+    // Canvas actions: build structure directly
+    if (CANVAS_ACTIONS.has(outputType)) {
       return generateStructure(userInstruction);
     }
 
@@ -56,53 +68,9 @@ export function useEngineAI({ nodes, edges, prospectContext, sessionId, onCanvas
 
       if (!resp.body) throw new Error('Sem resposta');
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = '';
-      let fullContent = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (line.startsWith(':') || line.trim() === '') continue;
-          if (!line.startsWith('data: ')) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') break;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              fullContent += content;
-              setStreamContent(fullContent);
-            }
-          } catch { /* partial */ }
-        }
-      }
-
-      // Flush remaining
-      if (textBuffer.trim()) {
-        for (let raw of textBuffer.split('\n')) {
-          if (!raw || raw.startsWith(':') || raw.trim() === '') continue;
-          if (!raw.startsWith('data: ')) continue;
-          const jsonStr = raw.slice(6).trim();
-          if (jsonStr === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              fullContent += content;
-              setStreamContent(fullContent);
-            }
-          } catch { /* ignore */ }
-        }
-      }
+      const fullContent = await readSSEStream(resp.body, (partial) => {
+        setStreamContent(partial);
+      });
 
       const titleMap: Record<string, string> = {
         prompt: 'Prompt Completo',
@@ -131,10 +99,11 @@ export function useEngineAI({ nodes, edges, prospectContext, sessionId, onCanvas
     }
   }, [nodes, edges, prospectContext]);
 
-  // Generate structure: AI creates nodes on the canvas
+  // Generate structure: AI creates nodes directly on the canvas
   const generateStructure = useCallback(async (instruction?: string) => {
     if (!onCanvasAction) return;
     setIsGenerating(true);
+    setStreamContent('');
     toast.info('Montando estrutura no canvas...');
 
     try {
@@ -155,23 +124,16 @@ export function useEngineAI({ nodes, edges, prospectContext, sessionId, onCanvas
       });
 
       if (!resp.ok) throw new Error('Falha');
-      
-      const text = await resp.text();
-      // Parse the non-streamed JSON response
+      if (!resp.body) throw new Error('Sem resposta');
+
+      // Read the full streamed content
+      const fullContent = await readSSEStream(resp.body, (partial) => {
+        setStreamContent(partial);
+      });
+
+      // Extract JSON from the streamed content
       let result;
       try {
-        // Try to extract JSON from potential SSE wrapping
-        const lines = text.split('\n').filter(l => l.startsWith('data: ') && l.slice(6).trim() !== '[DONE]');
-        let fullContent = '';
-        for (const line of lines) {
-          try {
-            const parsed = JSON.parse(line.slice(6).trim());
-            const c = parsed.choices?.[0]?.delta?.content;
-            if (c) fullContent += c;
-          } catch {}
-        }
-        
-        // Extract JSON from markdown code blocks if present
         const jsonMatch = fullContent.match(/```(?:json)?\s*([\s\S]*?)```/) || fullContent.match(/(\{[\s\S]*\})/);
         if (jsonMatch) {
           result = JSON.parse(jsonMatch[1].trim());
@@ -188,12 +150,15 @@ export function useEngineAI({ nodes, edges, prospectContext, sessionId, onCanvas
           edges: result.edges || [],
         });
         toast.success(`${result.nodes.length} blocos adicionados ao canvas!`);
+      } else {
+        toast.error('IA não gerou blocos válidos');
       }
     } catch (err) {
       console.error('Structure generation error:', err);
       toast.error('Erro ao montar estrutura');
     } finally {
       setIsGenerating(false);
+      setStreamContent('');
     }
   }, [nodes, edges, prospectContext, onCanvasAction]);
 
@@ -201,8 +166,65 @@ export function useEngineAI({ nodes, edges, prospectContext, sessionId, onCanvas
     isGenerating,
     streamContent,
     outputs,
+    lastActionType,
     generate,
     clearStream: () => setStreamContent(''),
     clearOutputs: () => setOutputs([]),
   };
+}
+
+// Helper: read SSE stream and return full content
+async function readSSEStream(
+  body: ReadableStream<Uint8Array>,
+  onProgress: (content: string) => void
+): Promise<string> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let textBuffer = '';
+  let fullContent = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    textBuffer += decoder.decode(value, { stream: true });
+
+    let newlineIndex: number;
+    while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+      let line = textBuffer.slice(0, newlineIndex);
+      textBuffer = textBuffer.slice(newlineIndex + 1);
+      if (line.endsWith('\r')) line = line.slice(0, -1);
+      if (line.startsWith(':') || line.trim() === '') continue;
+      if (!line.startsWith('data: ')) continue;
+      const jsonStr = line.slice(6).trim();
+      if (jsonStr === '[DONE]') break;
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const content = parsed.choices?.[0]?.delta?.content;
+        if (content) {
+          fullContent += content;
+          onProgress(fullContent);
+        }
+      } catch { /* partial */ }
+    }
+  }
+
+  // Flush remaining
+  if (textBuffer.trim()) {
+    for (const raw of textBuffer.split('\n')) {
+      if (!raw || raw.startsWith(':') || raw.trim() === '') continue;
+      if (!raw.startsWith('data: ')) continue;
+      const jsonStr = raw.slice(6).trim();
+      if (jsonStr === '[DONE]') continue;
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const content = parsed.choices?.[0]?.delta?.content;
+        if (content) {
+          fullContent += content;
+          onProgress(fullContent);
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
+  return fullContent;
 }
