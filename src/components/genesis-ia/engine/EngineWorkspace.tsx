@@ -15,10 +15,11 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {
-  Cpu, ArrowLeft, Save, Camera, ChevronLeft, ChevronRight, 
-  Loader2, PanelLeftClose, PanelLeft
+  Cpu, ArrowLeft, Camera, Loader2, PanelLeft, PanelLeftClose,
+  PanelRight, PanelRightClose, ChevronLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { EngineNodeComponent } from './components/EngineNode';
 import { NodeCatalogPanel } from './components/NodeCatalogPanel';
 import { AICommandPanel } from './components/AICommandPanel';
@@ -36,7 +37,7 @@ interface EngineWorkspaceProps {
 export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspaceProps) => {
   const {
     session, nodes, edges, loading, saving,
-    setNodes, setEdges, addNode, createSnapshot,
+    setNodes, setEdges, addNode, createSnapshot, addMultipleNodes,
   } = useEngineSession(affiliateId, proposal);
 
   const {
@@ -46,10 +47,12 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
     edges,
     prospectContext: session?.prospect_context || {},
     sessionId: session?.id || null,
+    onCanvasAction: handleCanvasAction,
   });
 
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
+  const [mobileLeftOpen, setMobileLeftOpen] = useState(false);
   const [outputModal, setOutputModal] = useState<{ title: string; content: string } | null>(null);
 
   const nodeTypes = useMemo(() => ({
@@ -71,7 +74,13 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
     setEdges(updated);
   }, [edges, setEdges]);
 
-  // When a node's content changes
+  // AI canvas action handler
+  function handleCanvasAction(action: { type: string; nodes?: any[]; edges?: any[] }) {
+    if (action.type === 'add_nodes' && action.nodes) {
+      addMultipleNodes(action.nodes, action.edges);
+    }
+  }
+
   const nodesWithHandlers = useMemo(() => {
     return nodes.map(n => ({
       ...n,
@@ -91,7 +100,6 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
     generate(type, instruction);
   }, [generate]);
 
-  // Open last output in modal when generation completes
   useEffect(() => {
     if (!isGenerating && outputs.length > 0) {
       const last = outputs[outputs.length - 1];
@@ -101,7 +109,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[80vh]">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: 'hsl(220, 25%, 10%)' }}>
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
           <p className="text-sm text-white/50">Carregando Engine...</p>
@@ -111,123 +119,153 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] -mx-3 sm:-mx-4">
+    <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: 'hsl(220, 25%, 10%)' }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 bg-white/5 backdrop-blur-md flex-shrink-0">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-white/10 bg-white/[0.03] backdrop-blur-md flex-shrink-0 h-12">
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={onBack}
-            className="h-8 w-8 p-0 text-white/50 hover:text-white"
+            className="h-8 w-8 p-0 text-white/50 hover:text-white hover:bg-white/5"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
+          <div className="w-px h-5 bg-white/10 hidden sm:block" />
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
-              <Cpu className="w-4 h-4 text-blue-400" />
+            <div className="w-6 h-6 rounded-md bg-primary/20 flex items-center justify-center">
+              <Cpu className="w-3.5 h-3.5 text-primary" />
             </div>
-            <div>
-              <h1 className="text-sm font-bold text-white leading-tight">Genesis Engine</h1>
-              <p className="text-[10px] text-white/40 leading-tight truncate max-w-[200px]">{proposal.company_name}</p>
+            <div className="hidden sm:block">
+              <h1 className="text-sm font-semibold text-white leading-none">Genesis Engine</h1>
             </div>
+            <div className="w-px h-4 bg-white/10 hidden sm:block" />
+            <span className="text-xs text-white/40 truncate max-w-[160px] hidden sm:block">{proposal.company_name}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           {saving && (
-            <span className="text-[10px] text-white/30 flex items-center gap-1">
-              <Loader2 className="w-3 h-3 animate-spin" /> Salvando...
+            <span className="text-[10px] text-white/30 flex items-center gap-1 mr-1">
+              <Loader2 className="w-3 h-3 animate-spin" /> Salvando
             </span>
           )}
           <Button
             variant="ghost"
             size="sm"
             onClick={() => createSnapshot()}
-            className="h-8 px-2 text-xs text-white/50 hover:text-white gap-1"
+            className="h-7 px-2 text-[11px] text-white/40 hover:text-white hover:bg-white/5 gap-1"
           >
-            <Camera className="w-3.5 h-3.5" />
+            <Camera className="w-3 h-3" />
             <span className="hidden sm:inline">Snapshot</span>
           </Button>
+          <div className="w-px h-4 bg-white/10 hidden sm:block" />
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setShowLeftPanel(!showLeftPanel)}
-            className="h-8 w-8 p-0 text-white/50 hover:text-white sm:flex hidden"
+            className="h-7 w-7 p-0 text-white/40 hover:text-white hover:bg-white/5 hidden sm:flex"
           >
-            {showLeftPanel ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+            {showLeftPanel ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeft className="w-3.5 h-3.5" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowRightPanel(!showRightPanel)}
+            className="h-7 w-7 p-0 text-white/40 hover:text-white hover:bg-white/5 hidden sm:flex"
+          >
+            {showRightPanel ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRight className="w-3.5 h-3.5" />}
           </Button>
         </div>
       </div>
 
-      {/* Main Layout */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Panel - Node Catalog */}
-        <AnimatePresence>
+      {/* Main Layout - Resizable Panels */}
+      <div className="flex-1 overflow-hidden">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          {/* Left Panel - Node Catalog */}
           {showLeftPanel && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 200, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              className="border-r border-white/10 bg-[hsl(220_25%_11%)] overflow-y-auto flex-shrink-0 hidden sm:block"
-            >
-              <div className="p-3">
-                <NodeCatalogPanel onAddNode={addNode} />
-              </div>
-            </motion.div>
+            <>
+              <ResizablePanel defaultSize={14} minSize={10} maxSize={22} className="hidden sm:block">
+                <div className="h-full overflow-y-auto bg-white/[0.02] border-r border-white/[0.06]">
+                  <div className="p-3">
+                    <NodeCatalogPanel onAddNode={addNode} />
+                  </div>
+                </div>
+              </ResizablePanel>
+              <ResizableHandle className="hidden sm:flex w-px bg-white/[0.06] hover:bg-primary/30 transition-colors" />
+            </>
           )}
-        </AnimatePresence>
 
-        {/* Canvas */}
-        <div className="flex-1 relative">
-          <ReactFlow
-            nodes={nodesWithHandlers}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={nodeTypes}
-            fitView
-            proOptions={{ hideAttribution: true }}
-            style={{ background: 'hsl(220, 25%, 10%)' }}
-            defaultEdgeOptions={{
-              style: { stroke: 'rgba(255,255,255,0.15)', strokeWidth: 2 },
-              type: 'smoothstep',
-            }}
-          >
-            <Background
-              variant={BackgroundVariant.Dots}
-              gap={20}
-              size={1}
-              color="rgba(255,255,255,0.05)"
-            />
-            <Controls
-              className="!bg-white/5 !border-white/10 !rounded-xl [&_button]:!bg-white/5 [&_button]:!border-white/10 [&_button]:!text-white/50 [&_button:hover]:!bg-white/10"
-            />
-            
-            {/* Mobile add node button */}
-            <Panel position="bottom-left" className="sm:hidden">
-              <Button
-                size="sm"
-                onClick={() => setShowLeftPanel(!showLeftPanel)}
-                className="h-9 bg-white/10 backdrop-blur-md border border-white/10 text-white/70 hover:text-white gap-1.5"
+          {/* Canvas */}
+          <ResizablePanel defaultSize={showLeftPanel && showRightPanel ? 58 : showRightPanel ? 72 : showLeftPanel ? 86 : 100} minSize={35}>
+            <div className="h-full relative">
+              <ReactFlow
+                nodes={nodesWithHandlers}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                nodeTypes={nodeTypes}
+                fitView
+                proOptions={{ hideAttribution: true }}
+                style={{ background: 'hsl(220, 25%, 10%)' }}
+                defaultEdgeOptions={{
+                  style: { stroke: 'rgba(255,255,255,0.12)', strokeWidth: 1.5 },
+                  type: 'smoothstep',
+                  animated: true,
+                }}
               >
-                <PanelLeft className="w-4 h-4" />
-                Blocos
-              </Button>
-            </Panel>
-          </ReactFlow>
-        </div>
+                <Background
+                  variant={BackgroundVariant.Dots}
+                  gap={24}
+                  size={1}
+                  color="rgba(255,255,255,0.04)"
+                />
+                <Controls
+                  className="!bg-white/[0.04] !border-white/[0.08] !rounded-lg [&_button]:!bg-white/[0.04] [&_button]:!border-white/[0.08] [&_button]:!text-white/40 [&_button:hover]:!bg-white/10 [&_button:hover]:!text-white/70"
+                />
+                
+                {/* Mobile buttons */}
+                <Panel position="bottom-left" className="sm:hidden flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => setMobileLeftOpen(true)}
+                    className="h-8 bg-white/[0.06] backdrop-blur-md border border-white/[0.08] text-white/60 hover:text-white gap-1 text-xs"
+                  >
+                    <PanelLeft className="w-3.5 h-3.5" />
+                    Blocos
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowRightPanel(!showRightPanel)}
+                    className="h-8 bg-white/[0.06] backdrop-blur-md border border-white/[0.08] text-white/60 hover:text-white gap-1 text-xs"
+                  >
+                    <Cpu className="w-3.5 h-3.5" />
+                    IA
+                  </Button>
+                </Panel>
+              </ReactFlow>
+            </div>
+          </ResizablePanel>
 
-        {/* Right Panel - AI Commands */}
-        <div className="w-[280px] sm:w-[300px] border-l border-white/10 bg-[hsl(220_25%_11%)] flex-shrink-0 flex flex-col overflow-hidden">
-          <AICommandPanel
-            isGenerating={isGenerating}
-            streamContent={streamContent}
-            outputs={outputs}
-            onGenerate={handleGenerate}
-          />
-        </div>
+          {/* Right Panel - AI Commands */}
+          {showRightPanel && (
+            <>
+              <ResizableHandle withHandle className="hidden sm:flex w-px bg-white/[0.06] hover:bg-primary/30 transition-colors" />
+              <ResizablePanel defaultSize={28} minSize={20} maxSize={45} className="hidden sm:block">
+                <div className="h-full overflow-hidden bg-white/[0.02] border-l border-white/[0.06] flex flex-col">
+                  <AICommandPanel
+                    isGenerating={isGenerating}
+                    streamContent={streamContent}
+                    outputs={outputs}
+                    onGenerate={handleGenerate}
+                    prospectName={proposal.company_name}
+                  />
+                </div>
+              </ResizablePanel>
+            </>
+          )}
+        </ResizablePanelGroup>
       </div>
 
       {/* Output Modal */}
@@ -240,21 +278,58 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
 
       {/* Mobile Left Panel Overlay */}
       <AnimatePresence>
-        {showLeftPanel && (
+        {mobileLeftOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileLeftOpen(false)}
+              className="fixed inset-0 z-[101] bg-black/50 sm:hidden"
+            />
+            <motion.div
+              initial={{ x: -260 }}
+              animate={{ x: 0 }}
+              exit={{ x: -260 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+              className="fixed inset-y-0 left-0 z-[102] w-[240px] bg-[hsl(220_25%_11%)] border-r border-white/[0.08] sm:hidden overflow-y-auto"
+            >
+              <div className="flex items-center justify-between p-3 border-b border-white/[0.06]">
+                <span className="text-xs font-semibold text-white/60">Blocos</span>
+                <button onClick={() => setMobileLeftOpen(false)} className="text-white/40 hover:text-white">
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-3">
+                <NodeCatalogPanel onAddNode={(type) => { addNode(type); setMobileLeftOpen(false); }} />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile AI Panel */}
+      <AnimatePresence>
+        {showRightPanel && (
           <motion.div
-            initial={{ x: -250 }}
-            animate={{ x: 0 }}
-            exit={{ x: -250 }}
-            className="fixed inset-y-0 left-0 z-50 w-[250px] bg-[hsl(220_25%_11%)] border-r border-white/10 sm:hidden overflow-y-auto"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+            className="fixed inset-x-0 bottom-0 z-[101] h-[60vh] bg-[hsl(220_25%_11%)] border-t border-white/[0.08] sm:hidden flex flex-col rounded-t-2xl"
           >
-            <div className="flex items-center justify-between p-3 border-b border-white/10">
-              <span className="text-xs font-semibold text-white/70">Blocos</span>
-              <button onClick={() => setShowLeftPanel(false)} className="text-white/50 hover:text-white">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
+            <div className="flex items-center justify-between p-3 border-b border-white/[0.06]">
+              <span className="text-xs font-semibold text-white/60">IA Contextual</span>
+              <button onClick={() => setShowRightPanel(false)} className="text-white/40 hover:text-white text-xs">Fechar</button>
             </div>
-            <div className="p-3">
-              <NodeCatalogPanel onAddNode={(type) => { addNode(type); setShowLeftPanel(false); }} />
+            <div className="flex-1 overflow-hidden">
+              <AICommandPanel
+                isGenerating={isGenerating}
+                streamContent={streamContent}
+                outputs={outputs}
+                onGenerate={handleGenerate}
+                prospectName={proposal.company_name}
+              />
             </div>
           </motion.div>
         )}

@@ -12,13 +12,11 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
   const [saving, setSaving] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  // Load or create session
   const loadSession = useCallback(async () => {
     if (!affiliateId || !proposal) return;
     setLoading(true);
 
     try {
-      // Check for existing session
       const { data: existing } = await supabase
         .from('engine_sessions')
         .select('*')
@@ -34,15 +32,23 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
         setNodes(s.nodes || []);
         setEdges(s.edges || []);
       } else {
-        // Create initial session with prospect node
-        const qa = proposal.questionnaire_answers || {};
+        const qa = (proposal.questionnaire_answers || {}) as any;
+        
+        // Create a meaningful initial structure
         const prospectNode: EngineNode = {
           id: 'prospect-1',
           type: 'engineNode',
-          position: { x: 100, y: 200 },
+          position: { x: 80, y: 250 },
           data: {
             label: proposal.company_name,
-            content: `Empresa: ${proposal.company_name}\nContato: ${proposal.contact_name || 'N/A'}\nTelefone: ${proposal.company_phone || 'N/A'}\nEmail: ${proposal.company_email || 'N/A'}\nNicho: ${(qa as any).niche || 'N/A'}`,
+            content: [
+              `Empresa: ${proposal.company_name}`,
+              proposal.contact_name ? `Contato: ${proposal.contact_name}` : null,
+              proposal.company_phone ? `Telefone: ${proposal.company_phone}` : null,
+              proposal.company_email ? `Email: ${proposal.company_email}` : null,
+              qa.niche ? `Nicho: ${qa.niche}` : null,
+              qa.address ? `Local: ${qa.address}` : null,
+            ].filter(Boolean).join('\n'),
             nodeType: 'prospect',
             icon: 'Building2',
             color: '#3b82f6',
@@ -52,33 +58,35 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
         const diagnosisNode: EngineNode = {
           id: 'diagnosis-1',
           type: 'engineNode',
-          position: { x: 450, y: 100 },
+          position: { x: 400, y: 150 },
           data: {
             label: 'Diagnóstico',
             content: '',
             nodeType: 'diagnosis',
             icon: 'Search',
             color: '#8b5cf6',
+            description: 'Análise da situação atual',
           },
         };
 
-        const offerNode: EngineNode = {
-          id: 'offer-1',
+        const strategyNode: EngineNode = {
+          id: 'strategy-1',
           type: 'engineNode',
-          position: { x: 450, y: 320 },
+          position: { x: 400, y: 350 },
           data: {
-            label: 'Oferta',
+            label: 'Estratégia',
             content: '',
-            nodeType: 'offer',
-            icon: 'Zap',
+            nodeType: 'strategy',
+            icon: 'Target',
             color: '#f59e0b',
+            description: 'Plano estratégico',
           },
         };
 
-        const initialNodes = [prospectNode, diagnosisNode, offerNode];
+        const initialNodes = [prospectNode, diagnosisNode, strategyNode];
         const initialEdges: EngineEdge[] = [
-          { id: 'e-p-d', source: 'prospect-1', target: 'diagnosis-1' },
-          { id: 'e-p-o', source: 'prospect-1', target: 'offer-1' },
+          { id: 'e-p-d', source: 'prospect-1', target: 'diagnosis-1', animated: true },
+          { id: 'e-p-s', source: 'prospect-1', target: 'strategy-1', animated: true },
         ];
 
         const prospectContext = {
@@ -89,6 +97,7 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
           company_cnpj: proposal.company_cnpj,
           notes: proposal.notes,
           questionnaire_answers: proposal.questionnaire_answers,
+          niche: qa.niche,
         };
 
         const { data: newSession, error } = await supabase
@@ -118,10 +127,8 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
     }
   }, [affiliateId, proposal]);
 
-  // Autosave with debounce
   const saveSession = useCallback(async (newNodes: EngineNode[], newEdges: EngineEdge[]) => {
     if (!session) return;
-    
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(async () => {
       setSaving(true);
@@ -141,7 +148,6 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
     }, 2000);
   }, [session]);
 
-  // Add node
   const addNode = useCallback((type: string) => {
     const catalog = NODE_CATALOG.find(n => n.type === type);
     if (!catalog) return;
@@ -149,7 +155,7 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
     const newNode: EngineNode = {
       id: `${type}-${Date.now()}`,
       type: 'engineNode',
-      position: { x: 200 + Math.random() * 300, y: 150 + Math.random() * 200 },
+      position: { x: 250 + Math.random() * 200, y: 200 + Math.random() * 150 },
       data: {
         label: catalog.label,
         content: '',
@@ -166,7 +172,40 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
     return newNode;
   }, [nodes, edges, saveSession]);
 
-  // Update nodes/edges
+  // Add multiple nodes at once (for AI canvas actions)
+  const addMultipleNodes = useCallback((newNodesData: any[], newEdgesData?: any[]) => {
+    const timestamp = Date.now();
+    const createdNodes: EngineNode[] = newNodesData.map((nd, i) => {
+      const catalog = NODE_CATALOG.find(n => n.type === nd.type);
+      return {
+        id: nd.id || `${nd.type}-${timestamp}-${i}`,
+        type: 'engineNode',
+        position: nd.position || { x: 400 + (i % 3) * 280, y: 100 + Math.floor(i / 3) * 200 },
+        data: {
+          label: nd.label || catalog?.label || nd.type,
+          content: nd.content || '',
+          nodeType: nd.type,
+          icon: catalog?.icon || 'StickyNote',
+          color: catalog?.color || '#3b82f6',
+          description: catalog?.description,
+        },
+      };
+    });
+
+    const createdEdges: EngineEdge[] = (newEdgesData || []).map((ed: any, i: number) => ({
+      id: ed.id || `e-ai-${timestamp}-${i}`,
+      source: ed.source,
+      target: ed.target,
+      animated: true,
+    }));
+
+    const updatedNodes = [...nodes, ...createdNodes];
+    const updatedEdges = [...edges, ...createdEdges];
+    setNodes(updatedNodes);
+    setEdges(updatedEdges);
+    saveSession(updatedNodes, updatedEdges);
+  }, [nodes, edges, saveSession]);
+
   const updateNodes = useCallback((newNodes: EngineNode[]) => {
     setNodes(newNodes);
     saveSession(newNodes, edges);
@@ -177,7 +216,6 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
     saveSession(nodes, newEdges);
   }, [nodes, saveSession]);
 
-  // Create snapshot
   const createSnapshot = useCallback(async (label?: string) => {
     if (!session) return;
     try {
@@ -206,6 +244,7 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
     setNodes: updateNodes,
     setEdges: updateEdges,
     addNode,
+    addMultipleNodes,
     createSnapshot,
     loadSession,
   };
