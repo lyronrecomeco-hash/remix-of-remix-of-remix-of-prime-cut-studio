@@ -44,7 +44,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
   } = useEngineSession(affiliateId, proposal);
 
   const {
-    isGenerating, outputs, lastActionType, generate, messages, activityLog,
+    isGenerating, outputs, lastActionType, generate, messages, activityLog, handleApproval,
   } = useEngineAI({
     nodes,
     edges,
