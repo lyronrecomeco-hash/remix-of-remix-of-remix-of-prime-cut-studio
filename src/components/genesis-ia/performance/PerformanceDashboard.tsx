@@ -303,8 +303,8 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
                       <Badge
                         variant="outline"
                         className={`text-[9px] ${
-                          c.status === 'active' ? 'border-green-500/30 text-green-400' :
-                          c.status === 'cancelled' ? 'border-red-500/30 text-red-400' :
+                          c.status === 'active' || c.status === 'signed' ? 'border-emerald-500/30 text-emerald-400' :
+                          c.status === 'cancelled' ? 'border-destructive/30 text-destructive' :
                           'border-yellow-500/30 text-yellow-400'
                         }`}
                       >
