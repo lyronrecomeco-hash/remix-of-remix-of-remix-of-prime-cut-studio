@@ -96,7 +96,7 @@ serve(async (req) => {
         console.log(`[ChatPro Proxy] qr attempt1 POST /generate_qrcode status=${resp.status} data=${JSON.stringify(data)}`);
         
         if (resp.ok && data) {
-          qrValue = data?.base64 || data?.qrcode || data?.value || data?.data?.qrcode || data?.data?.base64;
+          qrValue = data?.qr || data?.base64 || data?.qrcode || data?.value || data?.data?.qrcode || data?.data?.base64 || data?.data?.qr;
         }
 
         // Attempt 2: GET /generate_qrcode (some versions use GET)
