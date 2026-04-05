@@ -84,7 +84,8 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
   }, [resolvedAffiliateId, period]);
 
   const loadData = async () => {
-    if (!affiliateId) return;
+    const affId = resolvedAffiliateId;
+    if (!affId) return;
     setLoading(true);
 
     const now = new Date();
