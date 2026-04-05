@@ -32,9 +32,12 @@ TELEFONE: ${prospect_context.company_phone || 'N/A'}
 EMAIL: ${prospect_context.company_email || 'N/A'}
 CNPJ: ${prospect_context.company_cnpj || 'N/A'}
 WEBSITE: ${qa.website || prospect_context.company_website || 'N/A'}
-INSTAGRAM: ${qa.instagram || 'N/A'}
-ENDEREÇO: ${qa.address || 'N/A'}
-SERVIÇOS: ${qa.services || 'N/A'}
+INSTAGRAM: ${qa.instagram || prospect_context.instagram || 'N/A'}
+ENDEREÇO: ${qa.address || prospect_context.company_address || 'N/A'}
+CIDADE: ${qa.city || prospect_context.company_city || 'N/A'}
+ESTADO: ${qa.state || prospect_context.company_state || 'N/A'}
+SERVIÇOS: ${qa.services || prospect_context.services || 'N/A'}
+HORÁRIO: ${qa.opening_hours || prospect_context.opening_hours || 'N/A'}
 OBJETIVO: ${qa.objective || 'N/A'}
 RESPOSTAS: ${JSON.stringify(qa)}
 NOTAS: ${prospect_context.notes || 'N/A'}
@@ -533,13 +536,16 @@ ${edgesSummary || 'Nenhuma conexão'}
 
 ${user_instruction ? `INSTRUÇÃO ADICIONAL DO USUÁRIO: ${user_instruction}` : ''}
 
-REGRAS:
+REGRAS ABSOLUTAS:
 - Responda SEMPRE em português brasileiro
 - Seja EXTREMAMENTE detalhado, técnico e profissional
-- Use dados REAIS do prospect (não genéricos)
-- Formate com markdown (headers, listas, negrito, código)
-- Cada seção deve ter conteúdo substancial
-- O resultado deve ser PRONTO PARA USO, não um rascunho`;
+- Use dados REAIS do prospect — nome real da empresa, nicho real, telefone real. NUNCA use placeholders genéricos
+- Formate com markdown limpo: use ## para seções, **negrito** para destaques, - para listas, \`código\` para termos técnicos
+- Cada seção com quebra de linha clara entre parágrafos
+- Use linhas em branco entre seções para respiração visual
+- O resultado deve ser PRONTO PARA USO, não um rascunho
+- Para mensagens comerciais: seja CURTO, DIRETO, que mexe na DOR e DESPERTA DESEJO. Máximo 4-5 linhas por mensagem. Sem textão. Cada palavra conta.
+- Para documentos técnicos: seja completo, profundo e encantador`;
 
     const userMessage = outputInstructions[output_type] || outputInstructions.prompt;
 
