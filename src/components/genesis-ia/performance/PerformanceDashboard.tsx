@@ -291,7 +291,7 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
                     <td className="px-4 py-3 text-white/40 hidden sm:table-cell">{c.type}</td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       {c.recurring ? (
-                        <Badge variant="outline" className="text-[9px] border-green-500/30 text-green-400">Sim</Badge>
+                        <Badge variant="outline" className="text-[9px] border-emerald-500/30 text-emerald-400">Sim</Badge>
                       ) : (
                         <span className="text-white/20">—</span>
                       )}
