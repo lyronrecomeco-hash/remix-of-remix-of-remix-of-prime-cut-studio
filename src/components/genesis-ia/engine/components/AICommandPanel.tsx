@@ -314,13 +314,21 @@ export const AICommandPanel = ({
           </div>
         )}
 
-        {/* WhatsApp Connector */}
-        {userId && (
-          <div className="p-3 border-t border-white/[0.04]">
-            <WhatsAppConnectorPanel
-              userId={userId}
-              sessionId={sessionId}
-            />
+        {/* WhatsApp Quick Access */}
+        {onOpenWhatsApp && (
+          <div className="px-3 pb-2">
+            <button
+              onClick={onOpenWhatsApp}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/[0.04] transition-all text-left group"
+            >
+              <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 bg-green-500/[0.08] group-hover:bg-green-500/[0.15]">
+                <MessageSquare className="w-3.5 h-3.5 text-green-400/60 group-hover:text-green-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs text-white/70 group-hover:text-white/90 transition-colors">WhatsApp</span>
+                <span className="text-[10px] text-white/25 block">Configurar e enviar mensagens</span>
+              </div>
+            </button>
           </div>
         )}
 
