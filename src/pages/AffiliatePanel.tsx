@@ -31,6 +31,7 @@ import HowItWorksModal from '@/components/affiliate/HowItWorksModal';
 import AffiliateWelcomeModal from '@/components/affiliate/AffiliateWelcomeModal';
 import { AffiliateProfileMenu } from '@/components/affiliate/AffiliateProfileMenu';
 import AffiliateProspecting from '@/components/affiliate/prospecting/AffiliateProspecting';
+import { PerformanceDashboard } from '@/components/genesis-ia/performance/PerformanceDashboard';
 
 interface Affiliate {
   id: string;
