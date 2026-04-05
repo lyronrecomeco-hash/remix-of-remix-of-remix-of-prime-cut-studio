@@ -16,7 +16,7 @@ const CANVAS_ACTIONS = new Set(['build_structure']);
 // Actions that produce text output (shown inline in AI panel)
 const TEXT_ACTIONS = new Set([
   'prompt', 'scope', 'blueprint', 'strategy', 'checklist',
-  'executive', 'analyze', 'objections', 'deploy_plan',
+  'executive', 'analyze', 'objections', 'deploy_plan', 'enrich_context',
 ]);
 
 export function useEngineAI({ nodes, edges, prospectContext, sessionId, onCanvasAction }: UseEngineAIProps) {
@@ -73,7 +73,7 @@ export function useEngineAI({ nodes, edges, prospectContext, sessionId, onCanvas
       });
 
       const titleMap: Record<string, string> = {
-        prompt: 'Prompt Completo',
+        prompt: 'Build Spec (Prompt)',
         scope: 'Escopo Técnico',
         blueprint: 'Blueprint Técnico',
         strategy: 'Estratégia Comercial',
@@ -82,6 +82,7 @@ export function useEngineAI({ nodes, edges, prospectContext, sessionId, onCanvas
         analyze: 'Análise do Canvas',
         objections: 'Fluxo de Objeções',
         deploy_plan: 'Plano de Entrega',
+        enrich_context: 'Contexto Enriquecido',
       };
 
       setOutputs(prev => [...prev, {
@@ -126,7 +127,6 @@ export function useEngineAI({ nodes, edges, prospectContext, sessionId, onCanvas
       if (!resp.ok) throw new Error('Falha');
       if (!resp.body) throw new Error('Sem resposta');
 
-      // Read the full streamed content
       const fullContent = await readSSEStream(resp.body, (partial) => {
         setStreamContent(partial);
       });
@@ -134,9 +134,15 @@ export function useEngineAI({ nodes, edges, prospectContext, sessionId, onCanvas
       // Extract JSON from the streamed content
       let result;
       try {
-        const jsonMatch = fullContent.match(/```(?:json)?\s*([\s\S]*?)```/) || fullContent.match(/(\{[\s\S]*\})/);
-        if (jsonMatch) {
-          result = JSON.parse(jsonMatch[1].trim());
+        // Try direct JSON parse first
+        const trimmed = fullContent.trim();
+        if (trimmed.startsWith('{')) {
+          result = JSON.parse(trimmed);
+        } else {
+          const jsonMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/) || trimmed.match(/(\{[\s\S]*\})/);
+          if (jsonMatch) {
+            result = JSON.parse(jsonMatch[1].trim());
+          }
         }
       } catch {
         toast.error('IA não retornou estrutura válida');

@@ -16,7 +16,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import {
   Cpu, ArrowLeft, Camera, Loader2, PanelLeft, PanelLeftClose,
-  PanelRight, PanelRightClose, ChevronLeft, Rocket
+  PanelRight, PanelRightClose, ChevronLeft, Rocket, LayoutGrid
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
@@ -79,6 +79,45 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
       addMultipleNodes(action.nodes, action.edges);
     }
   }
+
+  // Smart Auto-Arrange: organize nodes by category in lanes
+  const handleAutoArrange = useCallback(() => {
+    const CATEGORY_ORDER = ['Descoberta', 'Estratégia', 'Técnico', 'Execução'];
+    const NODE_CATALOG_MAP: Record<string, string> = {
+      prospect: 'Descoberta', diagnosis: 'Descoberta', pain: 'Descoberta', opportunity: 'Descoberta',
+      strategy: 'Estratégia', offer: 'Estratégia', differentials: 'Estratégia', objections: 'Estratégia', approach: 'Estratégia',
+      scope: 'Técnico', structure: 'Técnico', integrations: 'Técnico', automation: 'Técnico',
+      followup: 'Execução', checklist: 'Execução', deploy: 'Execução', prompt: 'Execução', notes: 'Execução',
+    };
+
+    const COL_WIDTH = 320;
+    const ROW_HEIGHT = 200;
+    const START_X = 80;
+    const START_Y = 80;
+
+    const categorized: Record<string, EngineNode[]> = {};
+    nodes.forEach(n => {
+      const cat = NODE_CATALOG_MAP[n.data?.nodeType || ''] || 'Execução';
+      if (!categorized[cat]) categorized[cat] = [];
+      categorized[cat].push(n);
+    });
+
+    const updated = nodes.map(n => {
+      const cat = NODE_CATALOG_MAP[n.data?.nodeType || ''] || 'Execução';
+      const colIndex = CATEGORY_ORDER.indexOf(cat);
+      const catNodes = categorized[cat] || [];
+      const rowIndex = catNodes.indexOf(n);
+      return {
+        ...n,
+        position: {
+          x: START_X + colIndex * COL_WIDTH,
+          y: START_Y + rowIndex * ROW_HEIGHT,
+        },
+      };
+    });
+
+    setNodes(updated as EngineNode[]);
+  }, [nodes, setNodes]);
 
   const nodesWithHandlers = useMemo(() => {
     return nodes.map(n => ({
@@ -145,6 +184,16 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
           <Button
             variant="ghost"
             size="sm"
+            onClick={handleAutoArrange}
+            className="h-7 px-2 text-[11px] text-white/40 hover:text-white hover:bg-white/5 gap-1 hidden sm:flex"
+            title="Auto organizar canvas"
+          >
+            <LayoutGrid className="w-3 h-3" />
+            <span className="hidden lg:inline">Organizar</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => createSnapshot()}
             className="h-7 px-2 text-[11px] text-white/40 hover:text-white hover:bg-white/5 gap-1"
           >
@@ -171,10 +220,10 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
         </div>
       </div>
 
-      {/* Main Layout - Resizable Panels */}
+      {/* Main Layout */}
       <div className="flex-1 overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Left Panel - Node Catalog */}
+          {/* Left Panel */}
           {showLeftPanel && (
             <>
               <ResizablePanel defaultSize={14} minSize={10} maxSize={22} className="hidden sm:block">
@@ -250,7 +299,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
             </div>
           </ResizablePanel>
 
-          {/* Right Panel - AI Commands */}
+          {/* Right Panel */}
           {showRightPanel && (
             <>
               <ResizableHandle withHandle className="hidden sm:flex w-px bg-white/[0.06] hover:bg-primary/30 transition-colors" />
@@ -265,6 +314,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                     nodes={nodes}
                     lastActionType={lastActionType}
                     prospectContext={session?.prospect_context || {}}
+                    onAutoArrange={handleAutoArrange}
                   />
                 </div>
               </ResizablePanel>
@@ -329,6 +379,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                 nodes={nodes}
                 lastActionType={lastActionType}
                 prospectContext={session?.prospect_context || {}}
+                onAutoArrange={handleAutoArrange}
               />
             </div>
           </motion.div>

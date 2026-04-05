@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, FileText, Target, Layers, Shield, CheckSquare, BarChart, Send,
   Copy, Loader2, Cpu, Zap, ChevronDown, ChevronRight, Terminal, Rocket,
-  AlertCircle, Lightbulb
+  AlertCircle, Lightbulb, Search, LayoutGrid
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -20,6 +20,7 @@ interface AICommandPanelProps {
   nodes?: EngineNode[];
   lastActionType?: string | null;
   prospectContext?: Record<string, unknown>;
+  onAutoArrange?: () => void;
 }
 
 const ACTION_GROUPS = [
@@ -28,20 +29,21 @@ const ACTION_GROUPS = [
     actions: [
       { type: 'build_structure', label: 'Montar Estrutura', icon: Layers, desc: 'IA cria blocos direto no canvas', highlight: true },
       { type: 'analyze', label: 'Analisar Canvas', icon: BarChart, desc: 'Analisa blocos, gaps e oportunidades' },
+      { type: 'enrich_context', label: 'Enriquecer Contexto', icon: Search, desc: 'Análise profunda do negócio' },
     ],
   },
   {
     label: 'Geração Técnica',
     actions: [
-      { type: 'prompt', label: 'Prompt Completo', icon: Terminal, desc: 'Prompt para criar a solução completa' },
+      { type: 'prompt', label: 'Build Spec (Prompt)', icon: Terminal, desc: 'Prompt ultra-completo com backend profundo' },
       { type: 'blueprint', label: 'Blueprint Técnico', icon: Target, desc: 'Arquitetura frontend + backend + DB' },
-      { type: 'scope', label: 'Escopo Técnico', icon: Layers, desc: 'O que entra, o que não entra, entregáveis' },
+      { type: 'scope', label: 'Escopo Técnico', icon: Layers, desc: 'Módulos, prioridades, entregáveis' },
     ],
   },
   {
     label: 'Comercial',
     actions: [
-      { type: 'strategy', label: 'Estratégia Comercial', icon: Zap, desc: 'Argumentos, abordagem e posicionamento' },
+      { type: 'strategy', label: 'Estratégia Comercial', icon: Zap, desc: 'Argumentos, abordagem e pricing' },
       { type: 'executive', label: 'Resumo Executivo', icon: FileText, desc: 'Documento para apresentar ao cliente' },
       { type: 'objections', label: 'Fluxo de Objeções', icon: Shield, desc: 'Objeções prováveis + respostas' },
     ],
@@ -57,7 +59,7 @@ const ACTION_GROUPS = [
 
 export const AICommandPanel = ({
   isGenerating, streamContent, outputs, onGenerate, prospectName,
-  nodes = [], lastActionType, prospectContext = {},
+  nodes = [], lastActionType, prospectContext = {}, onAutoArrange,
 }: AICommandPanelProps) => {
   const [customInstruction, setCustomInstruction] = useState('');
   const [activeOutput, setActiveOutput] = useState<number | null>(null);
@@ -70,9 +72,10 @@ export const AICommandPanel = ({
   const canvasInfo = useMemo(() => {
     const blockTypes = nodes.map(n => n.data?.nodeType).filter(Boolean);
     const hasStructure = blockTypes.length > 3;
+    const filledBlocks = nodes.filter(n => n.data?.content?.trim()).length;
     const missingTypes = ['diagnosis', 'pain', 'opportunity', 'strategy', 'offer', 'scope', 'prompt']
       .filter(t => !blockTypes.includes(t as any));
-    return { blockCount: nodes.length, hasStructure, missingTypes };
+    return { blockCount: nodes.length, hasStructure, missingTypes, filledBlocks };
   }, [nodes]);
 
   useEffect(() => {
@@ -110,8 +113,10 @@ export const AICommandPanel = ({
               <p className="text-[10px] text-white/30 truncate">{prospectName}</p>
             )}
           </div>
-          <div className="flex items-center gap-1 text-[10px] text-white/20">
+          <div className="flex items-center gap-2 text-[10px] text-white/20">
             <span>{canvasInfo.blockCount} blocos</span>
+            <span>•</span>
+            <span>{canvasInfo.filledBlocks} preenchidos</span>
           </div>
         </div>
       </div>
@@ -124,7 +129,7 @@ export const AICommandPanel = ({
             <div>
               <p className="text-[11px] text-primary/80 font-medium">Canvas quase vazio</p>
               <p className="text-[10px] text-white/30 mt-0.5">
-                Clique em "Montar Estrutura" para a IA criar automaticamente os blocos estratégicos no canvas.
+                Clique em "Montar Estrutura" para a IA criar os blocos estratégicos diretamente no canvas.
               </p>
             </div>
           </div>
@@ -166,7 +171,7 @@ export const AICommandPanel = ({
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto" ref={streamRef}>
-        {/* Stream content (only for text outputs, not canvas actions) */}
+        {/* Stream content */}
         {isGenerating && streamContent && !isCanvasAction && (
           <div className="p-3 border-b border-white/[0.06]">
             <div className="p-3 bg-primary/[0.06] border border-primary/[0.12] rounded-lg">
@@ -181,7 +186,25 @@ export const AICommandPanel = ({
           </div>
         )}
 
-        {/* Quick Actions - Grouped */}
+        {/* Auto Arrange button */}
+        {canvasInfo.hasStructure && onAutoArrange && (
+          <div className="px-3 pt-2">
+            <button
+              onClick={onAutoArrange}
+              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-white/[0.04] transition-all text-left group"
+            >
+              <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 bg-white/[0.04] group-hover:bg-primary/10">
+                <LayoutGrid className="w-3.5 h-3.5 text-white/40 group-hover:text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs text-white/70 group-hover:text-white/90 transition-colors">Auto Organizar</span>
+                <span className="text-[10px] text-white/25 block">Reorganiza layout do canvas</span>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* Quick Actions */}
         <div className="p-3 space-y-1">
           {ACTION_GROUPS.map((group) => (
             <div key={group.label}>
@@ -242,10 +265,10 @@ export const AICommandPanel = ({
           ))}
         </div>
 
-        {/* Outputs History - inline, no modal */}
+        {/* Outputs History */}
         {outputs.length > 0 && (
           <div className="px-3 pb-3 space-y-1.5">
-            <h4 className="text-[10px] font-semibold text-white/30 uppercase tracking-wider px-1 pt-2">Resultados</h4>
+            <h4 className="text-[10px] font-semibold text-white/30 uppercase tracking-wider px-1 pt-2">Resultados ({outputs.length})</h4>
             {outputs.map((output, i) => (
               <div key={i} className="group">
                 <button
