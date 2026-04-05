@@ -1,4 +1,4 @@
-import lovableIcon from '@/assets/ai-icons/lovable.svg';
+import lovableIcon from '@/assets/ai-icons/lovable.ico';
 import v0Icon from '@/assets/ai-icons/v0.svg';
 import windsurfIcon from '@/assets/ai-icons/windsurf.svg';
 
