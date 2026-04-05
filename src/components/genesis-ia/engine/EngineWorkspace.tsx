@@ -214,7 +214,9 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
             <FlowControls
               flowStatus={flowStatus}
               validationErrors={validationErrors}
+              preFlightSummary={preFlightSummary}
               onValidate={validateFlow}
+              onGeneratePreFlight={generatePreFlight}
               onRun={runFlow}
               onPause={pauseFlow}
               onReset={resetFlow}
