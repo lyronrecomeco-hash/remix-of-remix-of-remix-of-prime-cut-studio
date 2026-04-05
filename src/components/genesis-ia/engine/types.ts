@@ -4,7 +4,8 @@ export type EngineNodeType =
   | 'prospect' | 'diagnosis' | 'pain' | 'opportunity' | 'strategy'
   | 'offer' | 'differentials' | 'objections' | 'approach'
   | 'scope' | 'structure' | 'integrations' | 'automation'
-  | 'followup' | 'prompt' | 'deploy' | 'notes' | 'checklist';
+  | 'followup' | 'prompt' | 'deploy' | 'notes' | 'checklist'
+  | 'whatsapp';
 
 export interface EngineNodeData {
   label: string;
@@ -76,6 +77,7 @@ export const NODE_CATALOG: { type: EngineNodeType; label: string; icon: string; 
   { type: 'automation', label: 'Automações', icon: 'Repeat', color: '#84cc16', description: 'Automações do sistema', category: 'Técnico' },
   // Execution
   { type: 'followup', label: 'Follow-up', icon: 'Clock', color: '#a78bfa', description: 'Plano de acompanhamento', category: 'Execução' },
+  { type: 'whatsapp', label: 'WhatsApp', icon: 'MessageSquare', color: '#25d366', description: 'Envio e automação WhatsApp', category: 'Execução' },
   { type: 'checklist', label: 'Checklist', icon: 'CheckSquare', color: '#22c55e', description: 'Lista de tarefas', category: 'Execução' },
   { type: 'deploy', label: 'Deploy', icon: 'Rocket', color: '#06b6d4', description: 'Estratégia de entrega', category: 'Execução' },
   { type: 'prompt', label: 'Prompt Final', icon: 'Terminal', color: '#7c3aed', description: 'Prompt gerado pela IA', category: 'Execução' },

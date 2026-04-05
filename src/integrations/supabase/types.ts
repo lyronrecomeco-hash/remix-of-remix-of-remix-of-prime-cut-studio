@@ -3458,6 +3458,77 @@ export type Database = {
         }
         Relationships: []
       }
+      engine_message_logs: {
+        Row: {
+          ack_status: string | null
+          connector_id: string | null
+          created_at: string
+          delivered_at: string | null
+          direction: string
+          error_message: string | null
+          full_message: string | null
+          id: string
+          message_preview: string | null
+          metadata: Json | null
+          phone: string
+          provider_response: Json | null
+          read_at: string | null
+          retry_count: number | null
+          sent_at: string | null
+          session_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          ack_status?: string | null
+          connector_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          direction?: string
+          error_message?: string | null
+          full_message?: string | null
+          id?: string
+          message_preview?: string | null
+          metadata?: Json | null
+          phone: string
+          provider_response?: Json | null
+          read_at?: string | null
+          retry_count?: number | null
+          sent_at?: string | null
+          session_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          ack_status?: string | null
+          connector_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          direction?: string
+          error_message?: string | null
+          full_message?: string | null
+          id?: string
+          message_preview?: string | null
+          metadata?: Json | null
+          phone?: string
+          provider_response?: Json | null
+          read_at?: string | null
+          retry_count?: number | null
+          sent_at?: string | null
+          session_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engine_message_logs_connector_id_fkey"
+            columns: ["connector_id"]
+            isOneToOne: false
+            referencedRelation: "engine_whatsapp_connectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       engine_outputs: {
         Row: {
           content: string
@@ -3492,6 +3563,74 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "engine_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      engine_scheduled_messages: {
+        Row: {
+          connector_id: string | null
+          created_at: string
+          executed_at: string | null
+          id: string
+          last_error: string | null
+          lead_context: Json | null
+          lead_name: string | null
+          max_retries: number | null
+          message: string
+          message_type: string | null
+          phone: string
+          retry_count: number | null
+          scheduled_at: string
+          session_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connector_id?: string | null
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          last_error?: string | null
+          lead_context?: Json | null
+          lead_name?: string | null
+          max_retries?: number | null
+          message: string
+          message_type?: string | null
+          phone: string
+          retry_count?: number | null
+          scheduled_at: string
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connector_id?: string | null
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          last_error?: string | null
+          lead_context?: Json | null
+          lead_name?: string | null
+          max_retries?: number | null
+          message?: string
+          message_type?: string | null
+          phone?: string
+          retry_count?: number | null
+          scheduled_at?: string
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engine_scheduled_messages_connector_id_fkey"
+            columns: ["connector_id"]
+            isOneToOne: false
+            referencedRelation: "engine_whatsapp_connectors"
             referencedColumns: ["id"]
           },
         ]
@@ -3572,6 +3711,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      engine_whatsapp_connectors: {
+        Row: {
+          base_endpoint: string | null
+          created_at: string
+          environment: string | null
+          id: string
+          instance_id: string | null
+          last_connected_at: string | null
+          last_error: string | null
+          metadata: Json | null
+          name: string
+          notes: string | null
+          provider: string
+          status: string
+          token_hash: string | null
+          updated_at: string
+          user_id: string
+          webhook_url: string | null
+        }
+        Insert: {
+          base_endpoint?: string | null
+          created_at?: string
+          environment?: string | null
+          id?: string
+          instance_id?: string | null
+          last_connected_at?: string | null
+          last_error?: string | null
+          metadata?: Json | null
+          name?: string
+          notes?: string | null
+          provider?: string
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+          user_id: string
+          webhook_url?: string | null
+        }
+        Update: {
+          base_endpoint?: string | null
+          created_at?: string
+          environment?: string | null
+          id?: string
+          instance_id?: string | null
+          last_connected_at?: string | null
+          last_error?: string | null
+          metadata?: Json | null
+          name?: string
+          notes?: string | null
+          provider?: string
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+          user_id?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
       }
       enriched_leads: {
         Row: {

@@ -154,7 +154,7 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
 
     const newNode: EngineNode = {
       id: `${type}-${Date.now()}`,
-      type: 'engineNode',
+      type: type === 'whatsapp' ? 'whatsappNode' : 'engineNode',
       position: { x: 250 + Math.random() * 200, y: 200 + Math.random() * 150 },
       data: {
         label: catalog.label,
@@ -179,7 +179,7 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
       const catalog = NODE_CATALOG.find(n => n.type === nd.type);
       return {
         id: nd.id || `${nd.type}-${timestamp}-${i}`,
-        type: 'engineNode',
+        type: nd.type === 'whatsapp' ? 'whatsappNode' : 'engineNode',
         position: nd.position || { x: 400 + (i % 3) * 280, y: 100 + Math.floor(i / 3) * 200 },
         data: {
           label: nd.label || catalog?.label || nd.type,
