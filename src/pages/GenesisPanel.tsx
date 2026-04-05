@@ -66,6 +66,7 @@ import { MessagingFeatures } from '@/components/genesis/messaging';
 import { SecuritySettings, BrandingSettings, AIAssistant } from '@/components/genesis/professional';
 import { NPSSurveys, QuickRepliesManager, ClosureReasons } from '@/components/genesis/professional';
 import { SyntheticReport, AnalyticReport } from '@/components/genesis/professional/reports';
+import { PerformanceDashboard } from '@/components/genesis-ia/performance/PerformanceDashboard';
 
 // Dashboard component with real data - Premium Design
 const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
