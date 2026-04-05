@@ -19,18 +19,14 @@ serve(async (req) => {
     // Verify JWT
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Não autorizado' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ error: 'Não autorizado' }, 401);
     }
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(
       authHeader.replace('Bearer ', '')
     );
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Token inválido' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ error: 'Token inválido' }, 401);
     }
 
     const body = await req.json();
@@ -54,20 +50,31 @@ serve(async (req) => {
       return jsonResponse({ error: 'Conector não configurado. Preencha instance_id e token.' }, 400);
     }
 
-    const baseUrl = (connector.base_endpoint || 'https://v5.chatpro.com.br').replace(/\/$/, '');
-    const apiBase = `${baseUrl}/${connector.instance_id}/api/v1`;
+    // Build API base URL - handle cases where base_endpoint might already contain instance_id
+    let baseUrl = (connector.base_endpoint || 'https://v5.chatpro.com.br').replace(/\/$/, '');
+    const instanceId = connector.instance_id;
+    
+    // If base_endpoint already contains the instance_id, strip it to avoid duplication
+    if (baseUrl.endsWith(`/${instanceId}`)) {
+      baseUrl = baseUrl.slice(0, baseUrl.length - instanceId.length - 1);
+    }
+    
+    const apiBase = `${baseUrl}/${instanceId}/api/v1`;
+    console.log(`[ChatPro Proxy] apiBase=${apiBase}`);
 
     switch (action) {
       case 'test_connection': {
         const resp = await chatproFetch(`${apiBase}/status`, 'GET', connector.token_hash);
         const data = await safeJson(resp);
 
+        console.log(`[ChatPro Proxy] test_connection status=${resp.status} data=${JSON.stringify(data)}`);
+
         const isConnected = resp.ok && data?.connected === true;
         
         await supabase.from('engine_whatsapp_connectors').update({
           status: isConnected ? 'connected' : 'disconnected',
           last_connected_at: isConnected ? new Date().toISOString() : connector.last_connected_at,
-          last_error: isConnected ? null : (data?.message || `Status: ${resp.status}`),
+          last_error: isConnected ? null : (data?.message || data?.error || `HTTP ${resp.status}`),
         }).eq('id', connector_id);
 
         return jsonResponse({ 
@@ -78,21 +85,55 @@ serve(async (req) => {
       }
 
       case 'get_qrcode': {
-        const resp = await chatproFetch(`${apiBase}/generate_qrcode`, 'POST', connector.token_hash);
-        const data = await safeJson(resp);
+        // Try multiple QR code endpoint patterns used by ChatPro
+        let resp: Response;
+        let data: any;
+        let qrValue: string | null = null;
 
-        if (!resp.ok) {
-          return jsonResponse({ error: 'Erro ao gerar QR Code', details: data }, 500);
+        // Attempt 1: POST /generate_qrcode
+        resp = await chatproFetch(`${apiBase}/generate_qrcode`, 'POST', connector.token_hash);
+        data = await safeJson(resp);
+        console.log(`[ChatPro Proxy] qr attempt1 POST /generate_qrcode status=${resp.status} data=${JSON.stringify(data)}`);
+        
+        if (resp.ok && data) {
+          qrValue = data?.base64 || data?.qrcode || data?.value || data?.data?.qrcode || data?.data?.base64;
         }
 
-        await supabase.from('engine_whatsapp_connectors').update({
-          status: 'awaiting_qr',
-        }).eq('id', connector_id);
+        // Attempt 2: GET /generate_qrcode (some versions use GET)
+        if (!qrValue) {
+          resp = await chatproFetch(`${apiBase}/generate_qrcode`, 'GET', connector.token_hash);
+          data = await safeJson(resp);
+          console.log(`[ChatPro Proxy] qr attempt2 GET /generate_qrcode status=${resp.status} data=${JSON.stringify(data)}`);
+          if (resp.ok && data) {
+            qrValue = data?.base64 || data?.qrcode || data?.value || data?.data?.qrcode || data?.data?.base64;
+          }
+        }
 
+        // Attempt 3: POST /qrcode
+        if (!qrValue) {
+          resp = await chatproFetch(`${apiBase}/qrcode`, 'POST', connector.token_hash);
+          data = await safeJson(resp);
+          console.log(`[ChatPro Proxy] qr attempt3 POST /qrcode status=${resp.status} data=${JSON.stringify(data)}`);
+          if (resp.ok && data) {
+            qrValue = data?.base64 || data?.qrcode || data?.value || data?.data?.qrcode || data?.data?.base64;
+          }
+        }
+
+        if (qrValue) {
+          await supabase.from('engine_whatsapp_connectors').update({
+            status: 'awaiting_qr',
+          }).eq('id', connector_id);
+
+          return jsonResponse({ qrcode: qrValue, raw: data });
+        }
+
+        // Return detailed error for debugging
         return jsonResponse({ 
-          qrcode: data?.base64 || data?.qrcode || data?.value,
-          raw: data 
-        });
+          error: 'Não foi possível gerar o QR Code. Verifique se a instância existe e está desconectada no painel ChatPro.',
+          details: data,
+          http_status: resp.status,
+          api_url: apiBase,
+        }, 400);
       }
 
       case 'disconnect': {
@@ -157,9 +198,9 @@ serve(async (req) => {
     }
   } catch (error) {
     console.error('[ChatPro Proxy] Error:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Erro interno' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    return jsonResponse(
+      { error: error instanceof Error ? error.message : 'Erro interno' },
+      500
     );
   }
 });
@@ -181,7 +222,17 @@ async function chatproFetch(url: string, method: string, token: string, body?: a
     },
   };
   if (body) opts.body = JSON.stringify(body);
-  return fetch(url, opts);
+  
+  try {
+    return await fetch(url, opts);
+  } catch (err) {
+    console.error(`[ChatPro Proxy] fetch error for ${url}:`, err);
+    // Return a synthetic error response
+    return new Response(JSON.stringify({ error: `Falha na conexão com ${url}` }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 }
 
 async function safeJson(resp: Response) {

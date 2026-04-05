@@ -26,7 +26,7 @@ import { WhatsAppNodeComponent } from './components/WhatsAppNodeComponent';
 import { NodeCatalogPanel } from './components/NodeCatalogPanel';
 import { AICommandPanel } from './components/AICommandPanel';
 import { ExecutionPanel } from './components/ExecutionPanel';
-import { WhatsAppConnectorPanel } from './components/WhatsAppConnectorPanel';
+import { WhatsAppConfigModal } from './components/WhatsAppConfigModal';
 import { useEngineSession } from './hooks/useEngineSession';
 import { useEngineAI } from './hooks/useEngineAI';
 import type { ProposalForEngine, EngineNode, EngineEdge } from './types';
@@ -57,6 +57,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [mobileLeftOpen, setMobileLeftOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -240,7 +241,12 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
               <ResizablePanel defaultSize={14} minSize={10} maxSize={22} className="hidden sm:block">
                 <div className="h-full overflow-y-auto bg-white/[0.02] border-r border-white/[0.06]">
                   <div className="p-3">
-                    <NodeCatalogPanel onAddNode={addNode} />
+                    <NodeCatalogPanel onAddNode={(type) => {
+                      if (type === 'whatsapp') {
+                        setShowWhatsAppModal(true);
+                      }
+                      addNode(type);
+                    }} />
                   </div>
                 </div>
               </ResizablePanel>
@@ -328,6 +334,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                     onAutoArrange={handleAutoArrange}
                     userId={userId}
                     sessionId={session?.id}
+                    onOpenWhatsApp={() => setShowWhatsAppModal(true)}
                   />
                 </div>
               </ResizablePanel>
@@ -361,7 +368,11 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                 </button>
               </div>
               <div className="p-3">
-                <NodeCatalogPanel onAddNode={(type) => { addNode(type); setMobileLeftOpen(false); }} />
+                <NodeCatalogPanel onAddNode={(type) => { 
+                  if (type === 'whatsapp') setShowWhatsAppModal(true);
+                  addNode(type); 
+                  setMobileLeftOpen(false); 
+                }} />
               </div>
             </motion.div>
           </>
@@ -395,11 +406,22 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                 onAutoArrange={handleAutoArrange}
                 userId={userId}
                 sessionId={session?.id}
+                onOpenWhatsApp={() => setShowWhatsAppModal(true)}
               />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* WhatsApp Config Modal */}
+      {userId && (
+        <WhatsAppConfigModal
+          isOpen={showWhatsAppModal}
+          onClose={() => setShowWhatsAppModal(false)}
+          userId={userId}
+          sessionId={session?.id}
+        />
+      )}
     </div>
   );
 };
