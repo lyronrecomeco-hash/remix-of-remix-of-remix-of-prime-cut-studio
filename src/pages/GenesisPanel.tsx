@@ -523,6 +523,7 @@ export default function GenesisPanel() {
     // { id: 'buttons', label: 'Botões', icon: MousePointerClick }, // Temporariamente desativado - botões nativos não funcionam no mobile
     { id: 'metrics', label: 'Métricas', icon: Activity },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { id: 'performance', label: 'Performance', icon: TrendingUp },
     { id: 'credits', label: 'Créditos', icon: CreditCard },
     { id: 'account', label: 'Minha Conta', icon: User },
     { id: 'settings', label: 'Configurações', icon: Settings },
