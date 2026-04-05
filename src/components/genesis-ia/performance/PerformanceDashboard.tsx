@@ -203,8 +203,6 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
 
   const paginatedContracts = contracts.slice(contractPage * PAGE_SIZE, (contractPage + 1) * PAGE_SIZE);
   const totalContractPages = Math.ceil(contracts.length / PAGE_SIZE);
-  const paginatedResponses = responses.slice(responsePage * PAGE_SIZE, (responsePage + 1) * PAGE_SIZE);
-  const totalResponsePages = Math.ceil(responses.length / PAGE_SIZE);
 
   if (loading) {
     return (
