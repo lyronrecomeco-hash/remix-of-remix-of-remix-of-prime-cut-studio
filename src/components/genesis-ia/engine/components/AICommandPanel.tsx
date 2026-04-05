@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import type { EngineNode } from '../types';
+import { ExecutionPanel } from './ExecutionPanel';
 
 interface AICommandPanelProps {
   isGenerating: boolean;
