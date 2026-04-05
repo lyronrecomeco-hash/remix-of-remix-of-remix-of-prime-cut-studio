@@ -31,7 +31,8 @@ import {
   Sun,
   Moon,
   MousePointerClick,
-  MessageSquare
+  MessageSquare,
+  TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -66,6 +67,7 @@ import { MessagingFeatures } from '@/components/genesis/messaging';
 import { SecuritySettings, BrandingSettings, AIAssistant } from '@/components/genesis/professional';
 import { NPSSurveys, QuickRepliesManager, ClosureReasons } from '@/components/genesis/professional';
 import { SyntheticReport, AnalyticReport } from '@/components/genesis/professional/reports';
+import { PerformanceDashboard } from '@/components/genesis-ia/performance/PerformanceDashboard';
 
 // Dashboard component with real data - Premium Design
 const GenesisDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
@@ -522,6 +524,7 @@ export default function GenesisPanel() {
     // { id: 'buttons', label: 'Botões', icon: MousePointerClick }, // Temporariamente desativado - botões nativos não funcionam no mobile
     { id: 'metrics', label: 'Métricas', icon: Activity },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { id: 'performance', label: 'Performance', icon: TrendingUp },
     { id: 'credits', label: 'Créditos', icon: CreditCard },
     { id: 'account', label: 'Minha Conta', icon: User },
     { id: 'settings', label: 'Configurações', icon: Settings },
@@ -663,6 +666,8 @@ export default function GenesisPanel() {
             </Tabs>
           </div>
         );
+      case 'performance':
+        return <PerformanceDashboard affiliateId={null} userId={user?.id || ''} />;
       case 'users':
         return <div className="text-center py-20 text-muted-foreground">Em desenvolvimento...</div>;
       default:
