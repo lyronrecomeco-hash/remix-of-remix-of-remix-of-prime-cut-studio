@@ -103,7 +103,6 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
     
     let semanticType: 'data_flow' | 'execution_flow' = 'data_flow';
     if (sourceNode?.data?.nodeType && targetNode?.data?.nodeType) {
-      const { BLOCK_CATEGORIES } = require('./types');
       const sourceCat = BLOCK_CATEGORIES[sourceNode.data.nodeType];
       const targetCat = BLOCK_CATEGORIES[targetNode.data.nodeType];
       // If connecting to/from an action block, it's an execution flow
