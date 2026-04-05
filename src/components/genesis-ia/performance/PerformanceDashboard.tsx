@@ -178,7 +178,7 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
       });
 
       setContracts(contractRows);
-      setResponses(responsesFiltered);
+      
     } catch (err) {
       console.error('Error loading performance data:', err);
     } finally {
