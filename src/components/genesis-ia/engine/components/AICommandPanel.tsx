@@ -314,6 +314,16 @@ export const AICommandPanel = ({
           </div>
         )}
 
+        {/* WhatsApp Connector */}
+        {userId && (
+          <div className="p-3 border-t border-white/[0.04]">
+            <WhatsAppConnectorPanel
+              userId={userId}
+              sessionId={sessionId}
+            />
+          </div>
+        )}
+
         {/* Execution Engine */}
         <ExecutionPanel
           nodes={nodes as EngineNode[]}
