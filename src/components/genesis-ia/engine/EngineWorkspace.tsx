@@ -56,6 +56,13 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [mobileLeftOpen, setMobileLeftOpen] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) setUserId(data.user.id);
+    });
+  }, []);
 
   const nodeTypes = useMemo(() => ({
     engineNode: EngineNodeComponent,
