@@ -353,59 +353,6 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
         )}
       </div>
 
-      {/* Responses / Feedbacks */}
-      <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-          <h3 className="text-sm font-semibold text-white/80 flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-white/30" />
-            Respostas e Feedbacks ({responses.length})
-          </h3>
-          {totalResponsePages > 1 && (
-            <div className="flex items-center gap-2 text-[10px] text-white/30">
-              <span>Página {responsePage + 1} de {totalResponsePages}</span>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setResponsePage(Math.max(0, responsePage - 1))}
-                  disabled={responsePage === 0}
-                  className="p-1 hover:bg-white/10 rounded disabled:opacity-20"
-                >
-                  <ChevronLeft className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => setResponsePage(Math.min(totalResponsePages - 1, responsePage + 1))}
-                  disabled={responsePage >= totalResponsePages - 1}
-                  className="p-1 hover:bg-white/10 rounded disabled:opacity-20"
-                >
-                  <ChevronRight className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {responses.length === 0 ? (
-          <div className="py-12 text-center">
-            <MessageSquare className="w-8 h-8 text-white/10 mx-auto mb-2" />
-            <p className="text-sm text-white/30">Nenhuma resposta ainda</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-white/[0.04]">
-            {paginatedResponses.map((r, i) => (
-              <div key={r.id || i} className="px-4 py-3 hover:bg-white/[0.02] transition-colors">
-                <div className="flex items-center justify-between mb-1">
-                  <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">
-                    {r.channel || 'WhatsApp'}
-                  </Badge>
-                  <span className="text-[10px] text-white/20">
-                    {r.replied_at ? format(new Date(r.replied_at), 'dd/MM HH:mm', { locale: ptBR }) : '—'}
-                  </span>
-                </div>
-                <p className="text-xs text-white/50 line-clamp-2">{r.reply_content || 'Resposta recebida'}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 };
