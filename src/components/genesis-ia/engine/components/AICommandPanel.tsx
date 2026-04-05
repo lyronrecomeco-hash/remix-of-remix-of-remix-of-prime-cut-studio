@@ -63,6 +63,7 @@ const ACTION_GROUPS = [
 export const AICommandPanel = ({
   isGenerating, streamContent, outputs, onGenerate, prospectName,
   nodes = [], lastActionType, prospectContext = {}, onAutoArrange,
+  userId, sessionId,
 }: AICommandPanelProps) => {
   const [customInstruction, setCustomInstruction] = useState('');
   const [activeOutput, setActiveOutput] = useState<number | null>(null);
