@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertCircle, CheckCircle2, Info, AlertTriangle } from 'lucide-react';
-import type { FlowValidationError } from '../types';
+import type { FlowValidationError, BlockCategory } from '../types';
+import { CATEGORY_META } from '../types';
 
 interface ExecutionLog {
   id: string;
@@ -10,6 +11,7 @@ interface ExecutionLog {
   level: 'info' | 'success' | 'error' | 'warning';
   message: string;
   timestamp: number;
+  category?: BlockCategory;
 }
 
 interface ExecutionLogsPanelProps {
@@ -32,26 +34,22 @@ const LEVEL_COLOR = {
 };
 
 export const ExecutionLogsPanel = ({ logs, validationErrors }: ExecutionLogsPanelProps) => {
-  const allItems = useMemo(() => {
-    const items: { id: string; type: 'log' | 'validation'; data: any }[] = [];
+  const actionLogs = useMemo(() => logs.filter(l => l.category === 'action'), [logs]);
+  const otherLogs = useMemo(() => logs.filter(l => l.category !== 'action'), [logs]);
 
-    validationErrors.forEach((e, i) => {
-      items.push({ id: `v-${i}`, type: 'validation', data: e });
-    });
-
-    logs.forEach(l => {
-      items.push({ id: l.id, type: 'log', data: l });
-    });
-
-    return items;
-  }, [logs, validationErrors]);
-
-  if (allItems.length === 0) return null;
+  if (logs.length === 0 && validationErrors.length === 0) return null;
 
   return (
     <div className="border-t border-white/[0.06] bg-white/[0.02]">
       <div className="px-3 py-1.5 border-b border-white/[0.04] flex items-center justify-between">
-        <span className="text-[10px] font-medium text-white/30 uppercase tracking-wider">Execução</span>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-medium text-white/30 uppercase tracking-wider">Execução</span>
+          {actionLogs.length > 0 && (
+            <span className="text-[9px] px-1.5 py-0 rounded bg-emerald-500/10 text-emerald-400/80">
+              {actionLogs.filter(l => l.level === 'success').length} ação(ões) OK
+            </span>
+          )}
+        </div>
         <span className="text-[9px] text-white/20">{logs.length} log(s)</span>
       </div>
       <ScrollArea className="max-h-[160px]">
@@ -71,6 +69,7 @@ export const ExecutionLogsPanel = ({ logs, validationErrors }: ExecutionLogsPane
           {logs.map(log => {
             const Icon = LEVEL_ICON[log.level];
             const color = LEVEL_COLOR[log.level];
+            const catMeta = log.category ? CATEGORY_META[log.category] : null;
             return (
               <div key={log.id} className="flex items-start gap-1.5 px-1.5 py-0.5 text-[10px]">
                 <Icon className={`w-3 h-3 mt-0.5 flex-shrink-0 ${color}`} />

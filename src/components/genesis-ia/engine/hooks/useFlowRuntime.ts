@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import type { EngineNode, EngineEdge, BlockExecutionStatus, FlowExecutionStatus, FlowValidationError } from '../types';
-import { EXECUTABLE_BLOCKS, NODE_CATALOG } from '../types';
+import type { EngineNode, EngineEdge, BlockExecutionStatus, FlowExecutionStatus, FlowValidationError, PreFlightSummary, BlockCategory } from '../types';
+import { BLOCK_CATEGORIES, CATEGORY_META, EXECUTABLE_BLOCKS } from '../types';
 
 interface UseFlowRuntimeProps {
   nodes: EngineNode[];
@@ -12,25 +12,27 @@ interface UseFlowRuntimeProps {
   userId: string | null;
 }
 
-interface ExecutionLog {
+export interface ExecutionLog {
   id: string;
   nodeId: string;
   nodeLabel: string;
   level: 'info' | 'success' | 'error' | 'warning';
   message: string;
   timestamp: number;
+  category?: BlockCategory;
 }
 
 export function useFlowRuntime({ nodes, edges, setNodes, sessionId, userId }: UseFlowRuntimeProps) {
   const [flowStatus, setFlowStatus] = useState<FlowExecutionStatus>('idle');
   const [validationErrors, setValidationErrors] = useState<FlowValidationError[]>([]);
   const [executionLogs, setExecutionLogs] = useState<ExecutionLog[]>([]);
+  const [preFlightSummary, setPreFlightSummary] = useState<PreFlightSummary | null>(null);
   const abortRef = useRef(false);
 
-  const addLog = useCallback((nodeId: string, nodeLabel: string, level: ExecutionLog['level'], message: string) => {
+  const addLog = useCallback((nodeId: string, nodeLabel: string, level: ExecutionLog['level'], message: string, category?: BlockCategory) => {
     setExecutionLogs(prev => [...prev.slice(-99), {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      nodeId, nodeLabel, level, message,
+      nodeId, nodeLabel, level, message, category,
       timestamp: Date.now(),
     }]);
   }, []);
@@ -44,17 +46,27 @@ export function useFlowRuntime({ nodes, edges, setNodes, sessionId, userId }: Us
     setNodes(updated as EngineNode[]);
   }, [nodes, setNodes]);
 
-  // Get topological order of nodes based on edges
+  // Classify nodes by their block category
+  const classifyNodes = useCallback(() => {
+    const classified: Record<BlockCategory, EngineNode[]> = {
+      context: [], decision: [], action: [], control: [], output: [],
+    };
+    nodes.forEach(n => {
+      const type = n.data?.nodeType;
+      if (type && BLOCK_CATEGORIES[type]) {
+        classified[BLOCK_CATEGORIES[type]].push(n);
+      }
+    });
+    return classified;
+  }, [nodes]);
+
+  // Get topological order respecting edges
   const getExecutionOrder = useCallback((): string[] => {
     const nodeIds = new Set(nodes.map(n => n.id));
     const inDegree = new Map<string, number>();
     const adj = new Map<string, string[]>();
 
-    nodeIds.forEach(id => {
-      inDegree.set(id, 0);
-      adj.set(id, []);
-    });
-
+    nodeIds.forEach(id => { inDegree.set(id, 0); adj.set(id, []); });
     edges.forEach(e => {
       if (nodeIds.has(e.source) && nodeIds.has(e.target)) {
         adj.get(e.source)!.push(e.target);
@@ -64,7 +76,6 @@ export function useFlowRuntime({ nodes, edges, setNodes, sessionId, userId }: Us
 
     const queue = [...nodeIds].filter(id => (inDegree.get(id) || 0) === 0);
     const order: string[] = [];
-
     while (queue.length > 0) {
       const curr = queue.shift()!;
       order.push(curr);
@@ -73,116 +84,253 @@ export function useFlowRuntime({ nodes, edges, setNodes, sessionId, userId }: Us
         if (inDegree.get(next) === 0) queue.push(next);
       }
     }
-
-    // Add any remaining (disconnected) nodes
     nodeIds.forEach(id => { if (!order.includes(id)) order.push(id); });
     return order;
   }, [nodes, edges]);
 
-  // Validate flow before execution
+  // Generate pre-flight summary
+  const generatePreFlight = useCallback((): PreFlightSummary => {
+    const classified = classifyNodes();
+    const blockers: string[] = [];
+
+    const contextFilled = classified.context.filter(n => n.data?.content?.trim()).length;
+    const decisionFilled = classified.decision.filter(n => n.data?.content?.trim()).length;
+
+    // Check for prospect
+    const prospectNode = classified.context.find(n => n.data?.nodeType === 'prospect');
+    if (!prospectNode || !prospectNode.data?.content?.trim()) {
+      blockers.push('Prospect sem dados preenchidos');
+    }
+
+    // Analyze action blocks
+    const actionDetails = classified.action.map(n => {
+      const type = n.data?.nodeType!;
+      const content = n.data?.content?.trim() || '';
+      let ready = !!content;
+      let detail = content ? 'Configurado' : 'Sem configuração';
+
+      if (type === 'whatsapp') {
+        const hasPhone = /\d{8,}/.test((prospectNode?.data?.content || '').replace(/\D/g, ''));
+        const hasMessage = !!content || !!classified.action.find(a => a.data?.nodeType === 'approach')?.data?.content?.trim();
+        ready = hasPhone && hasMessage;
+        detail = !hasPhone ? 'Sem telefone no Prospect' : !hasMessage ? 'Sem mensagem definida' : 'Pronto para envio';
+        if (!ready) blockers.push(`WhatsApp: ${detail}`);
+      }
+
+      if (type === 'approach' && !content) {
+        detail = 'Mensagem de abordagem vazia';
+      }
+
+      // Check if connected
+      const isConnected = edges.some(e => e.target === n.id) || edges.some(e => e.source === n.id);
+      if (!isConnected && nodes.length > 1) {
+        ready = false;
+        detail = 'Desconectado do fluxo';
+        blockers.push(`${n.data?.label}: desconectado do fluxo`);
+      }
+
+      return { label: n.data?.label || type, type, ready, detail };
+    });
+
+    if (classified.action.length === 0) {
+      blockers.push('Nenhum bloco de ação no fluxo');
+    }
+
+    const summary: PreFlightSummary = {
+      contextBlocks: { count: classified.context.length, filled: contextFilled },
+      decisionBlocks: { count: classified.decision.length, filled: decisionFilled },
+      actionBlocks: actionDetails,
+      outputBlocks: { count: classified.output.length },
+      controlBlocks: { count: classified.control.length },
+      canExecute: blockers.length === 0,
+      blockers,
+    };
+
+    setPreFlightSummary(summary);
+    return summary;
+  }, [classifyNodes, nodes, edges]);
+
+  // Deep validation
   const validateFlow = useCallback((): FlowValidationError[] => {
     const errors: FlowValidationError[] = [];
+    const classified = classifyNodes();
 
     if (nodes.length === 0) {
       errors.push({ nodeId: '', nodeLabel: 'Flow', message: 'Canvas vazio. Adicione blocos.', severity: 'error' });
+      setValidationErrors(errors);
       return errors;
     }
 
-    // Check for required prospect block
-    const prospectNode = nodes.find(n => n.data?.nodeType === 'prospect');
-    if (!prospectNode || !prospectNode.data?.content?.trim()) {
-      errors.push({ nodeId: prospectNode?.id || '', nodeLabel: 'Prospect', message: 'Bloco Prospect obrigatório e precisa ter dados.', severity: 'error' });
+    // Must have prospect
+    const prospectNode = classified.context.find(n => n.data?.nodeType === 'prospect');
+    if (!prospectNode) {
+      errors.push({ nodeId: '', nodeLabel: 'Prospect', message: 'Bloco Prospect obrigatório — adicione ao canvas.', severity: 'error' });
+    } else if (!prospectNode.data?.content?.trim()) {
+      errors.push({ nodeId: prospectNode.id, nodeLabel: 'Prospect', message: 'Prospect sem dados preenchidos.', severity: 'error' });
     }
 
-    // Check each node for completeness
-    nodes.forEach(n => {
-      const type = n.data?.nodeType;
-      const label = n.data?.label || type || 'Bloco';
-      const content = n.data?.content?.trim();
+    // Must have at least one action block
+    if (classified.action.length === 0) {
+      errors.push({ nodeId: '', nodeLabel: 'Flow', message: 'Nenhum bloco de AÇÃO no fluxo. Adicione WhatsApp, Automação ou Deploy.', severity: 'error' });
+    }
 
-      // WhatsApp needs specific validation
-      if (type === 'whatsapp') {
-        if (!content) {
-          errors.push({ nodeId: n.id, nodeLabel: label, message: 'Bloco WhatsApp sem configuração (telefone, mensagem).', severity: 'error' });
-        } else {
-          // Check for phone in content
-          const hasPhone = /telefone|phone|número/i.test(content) && /\d{8,}/.test(content.replace(/\D/g, ''));
-          const hasMessage = /mensagem|message|texto/i.test(content);
-          if (!hasPhone) errors.push({ nodeId: n.id, nodeLabel: label, message: 'Telefone não encontrado no bloco WhatsApp.', severity: 'warning' });
-          if (!hasMessage) errors.push({ nodeId: n.id, nodeLabel: label, message: 'Mensagem não definida no bloco WhatsApp.', severity: 'warning' });
-        }
+    // WhatsApp specific checks
+    classified.action.filter(n => n.data?.nodeType === 'whatsapp').forEach(n => {
+      const prospectContent = prospectNode?.data?.content || '';
+      const hasPhone = /\d{8,}/.test(prospectContent.replace(/\D/g, ''));
+      if (!hasPhone) {
+        errors.push({ nodeId: n.id, nodeLabel: 'WhatsApp', message: 'Telefone não encontrado no Prospect.', severity: 'error' });
       }
+      const approachNode = nodes.find(nd => nd.data?.nodeType === 'approach');
+      const hasMessage = !!(n.data?.content?.trim()) || !!(approachNode?.data?.content?.trim());
+      if (!hasMessage) {
+        errors.push({ nodeId: n.id, nodeLabel: 'WhatsApp', message: 'Mensagem não definida (preencha Abordagem ou WhatsApp).', severity: 'error' });
+      }
+      // Check if WhatsApp is connected to the flow
+      const connected = edges.some(e => e.target === n.id) || edges.some(e => e.source === n.id);
+      if (!connected && nodes.length > 1) {
+        errors.push({ nodeId: n.id, nodeLabel: 'WhatsApp', message: 'Bloco WhatsApp desconectado do fluxo.', severity: 'warning' });
+      }
+    });
 
-      // Check disconnected nodes (no edges)
-      const hasIncoming = edges.some(e => e.target === n.id);
-      const hasOutgoing = edges.some(e => e.source === n.id);
-      if (!hasIncoming && !hasOutgoing && nodes.length > 1) {
-        errors.push({ nodeId: n.id, nodeLabel: label, message: `"${label}" está desconectado do fluxo.`, severity: 'warning' });
+    // Check disconnected nodes
+    nodes.forEach(n => {
+      const hasIn = edges.some(e => e.target === n.id);
+      const hasOut = edges.some(e => e.source === n.id);
+      if (!hasIn && !hasOut && nodes.length > 1) {
+        const cat = BLOCK_CATEGORIES[n.data?.nodeType as keyof typeof BLOCK_CATEGORIES];
+        const catLabel = cat ? CATEGORY_META[cat].label : '';
+        errors.push({ nodeId: n.id, nodeLabel: n.data?.label || '', message: `"${n.data?.label}" [${catLabel}] está desconectado do fluxo.`, severity: 'warning' });
+      }
+    });
+
+    // Check action blocks without content
+    classified.action.forEach(n => {
+      if (n.data?.nodeType !== 'whatsapp' && !n.data?.content?.trim()) {
+        errors.push({ nodeId: n.id, nodeLabel: n.data?.label || '', message: `Bloco de ação "${n.data?.label}" sem configuração.`, severity: 'warning' });
       }
     });
 
     setValidationErrors(errors);
     return errors;
-  }, [nodes, edges]);
+  }, [nodes, edges, classifyNodes]);
 
-  // Execute a single content block
-  const executeContentBlock = useCallback(async (node: EngineNode) => {
+  // Execute a single node based on its category
+  const executeNode = useCallback(async (node: EngineNode): Promise<boolean> => {
+    const type = node.data?.nodeType;
+    const category = type ? BLOCK_CATEGORIES[type] : undefined;
+    const label = node.data?.label || type || 'Bloco';
     const content = node.data?.content?.trim();
-    if (content) {
-      updateNodeStatus(node.id, 'success');
-      addLog(node.id, node.data?.label || '', 'success', 'Bloco preenchido — OK');
-    } else {
-      updateNodeStatus(node.id, 'skipped');
-      addLog(node.id, node.data?.label || '', 'warning', 'Bloco vazio — ignorado');
+
+    // Context & Decision: auto-validate (filled = success)
+    if (category === 'context' || category === 'decision') {
+      if (content) {
+        updateNodeStatus(node.id, 'success');
+        addLog(node.id, label, 'success', `✓ ${CATEGORY_META[category].label}: dados validados`, category);
+      } else {
+        updateNodeStatus(node.id, 'skipped');
+        addLog(node.id, label, 'warning', `↷ ${CATEGORY_META[category].label}: vazio — ignorado`, category);
+      }
+      return true;
     }
-  }, [updateNodeStatus, addLog]);
+
+    // Output: validate and mark
+    if (category === 'output') {
+      if (content) {
+        updateNodeStatus(node.id, 'success');
+        addLog(node.id, label, 'success', `✓ SAÍDA: "${label}" gerada`, category);
+      } else {
+        updateNodeStatus(node.id, 'skipped');
+        addLog(node.id, label, 'warning', `↷ SAÍDA: "${label}" vazia`, category);
+      }
+      return true;
+    }
+
+    // Control: validate state
+    if (category === 'control') {
+      if (content) {
+        updateNodeStatus(node.id, 'success');
+        addLog(node.id, label, 'success', `✓ CONTROLE: "${label}" configurado`, category);
+      } else {
+        updateNodeStatus(node.id, 'skipped');
+        addLog(node.id, label, 'warning', `↷ CONTROLE: "${label}" sem configuração`, category);
+      }
+      return true;
+    }
+
+    // Action: real execution
+    if (category === 'action') {
+      if (type === 'whatsapp') {
+        return await executeWhatsAppBlock(node);
+      }
+
+      // approach: validate message exists
+      if (type === 'approach') {
+        if (content) {
+          updateNodeStatus(node.id, 'success');
+          addLog(node.id, label, 'success', '✓ AÇÃO: Mensagem de abordagem pronta', category);
+        } else {
+          updateNodeStatus(node.id, 'failed', 'Mensagem de abordagem vazia');
+          addLog(node.id, label, 'error', '✗ AÇÃO: Mensagem de abordagem não definida', category);
+          return false;
+        }
+        return true;
+      }
+
+      // automation/deploy: placeholder for real execution
+      if (content) {
+        updateNodeStatus(node.id, 'success');
+        addLog(node.id, label, 'success', `✓ AÇÃO: "${label}" registrada`, category);
+      } else {
+        updateNodeStatus(node.id, 'skipped');
+        addLog(node.id, label, 'warning', `↷ AÇÃO: "${label}" sem configuração`, category);
+      }
+      return true;
+    }
+
+    // Fallback
+    updateNodeStatus(node.id, 'skipped');
+    return true;
+  }, [nodes, updateNodeStatus, addLog]);
 
   // Execute WhatsApp block
   const executeWhatsAppBlock = useCallback(async (node: EngineNode): Promise<boolean> => {
     const content = node.data?.content || '';
     const label = node.data?.label || 'WhatsApp';
 
-    addLog(node.id, label, 'info', 'Iniciando envio WhatsApp...');
+    addLog(node.id, label, 'info', '⟳ Iniciando envio WhatsApp...', 'action');
 
-    // Parse phone from content
-    const phoneMatch = content.match(/(?:telefone|phone|número)[:\s]*([+\d\s()-]+)/i);
+    // Parse phone from prospect
+    const prospectNode = nodes.find(n => n.data?.nodeType === 'prospect');
+    const prospectContent = prospectNode?.data?.content || '';
+    const phoneMatch = prospectContent.match(/(?:telefone|phone|número)[:\s]*([+\d\s()-]+)/i) 
+      || content.match(/(?:telefone|phone|número)[:\s]*([+\d\s()-]+)/i);
+    const phone = phoneMatch?.[1]?.replace(/\D/g, '') || '';
+
+    // Get message from approach or WhatsApp block
+    const approachNode = nodes.find(n => n.data?.nodeType === 'approach');
     const messageMatch = content.match(/(?:mensagem|message|texto)[:\s]*([\s\S]+?)(?=\n[A-Z]|$)/i);
-
-    // Also check prospect node for phone
-    let phone = phoneMatch?.[1]?.replace(/\D/g, '') || '';
-    let message = messageMatch?.[1]?.trim() || '';
+    const message = messageMatch?.[1]?.trim() || approachNode?.data?.content?.trim() || '';
 
     if (!phone) {
-      const prospectNode = nodes.find(n => n.data?.nodeType === 'prospect');
-      const prospectContent = prospectNode?.data?.content || '';
-      const prospectPhone = prospectContent.match(/(?:telefone|phone)[:\s]*([+\d\s()-]+)/i);
-      phone = prospectPhone?.[1]?.replace(/\D/g, '') || '';
-    }
-
-    if (!message) {
-      const approachNode = nodes.find(n => n.data?.nodeType === 'approach');
-      message = approachNode?.data?.content?.trim() || '';
-    }
-
-    if (!phone) {
-      addLog(node.id, label, 'error', 'Telefone não encontrado. Preencha no bloco Prospect ou WhatsApp.');
+      addLog(node.id, label, 'error', '✗ Telefone não encontrado. Preencha no bloco Prospect.', 'action');
       updateNodeStatus(node.id, 'failed', 'Telefone não encontrado');
       return false;
     }
 
     if (!message) {
-      addLog(node.id, label, 'error', 'Mensagem não encontrada. Preencha no bloco Abordagem ou WhatsApp.');
+      addLog(node.id, label, 'error', '✗ Mensagem não encontrada. Preencha na Abordagem ou WhatsApp.', 'action');
       updateNodeStatus(node.id, 'failed', 'Mensagem não encontrada');
       return false;
     }
 
-    // Find active WhatsApp connector
     if (!userId) {
-      addLog(node.id, label, 'error', 'Usuário não autenticado.');
+      addLog(node.id, label, 'error', '✗ Usuário não autenticado.', 'action');
       updateNodeStatus(node.id, 'failed', 'Usuário não autenticado');
       return false;
     }
 
+    // Find active connector
     const { data: connectors } = await supabase
       .from('engine_whatsapp_connectors')
       .select('*')
@@ -191,13 +339,13 @@ export function useFlowRuntime({ nodes, edges, setNodes, sessionId, userId }: Us
       .limit(1);
 
     if (!connectors || connectors.length === 0) {
-      addLog(node.id, label, 'error', 'Nenhum conector WhatsApp conectado. Configure nas configurações.');
-      updateNodeStatus(node.id, 'failed', 'Sem conector conectado');
+      addLog(node.id, label, 'error', '✗ Nenhum conector WhatsApp conectado.', 'action');
+      updateNodeStatus(node.id, 'failed', 'Sem conector ativo');
       return false;
     }
 
     const connector = connectors[0];
-    addLog(node.id, label, 'info', `Enviando para ${phone} via ${connector.name}...`);
+    addLog(node.id, label, 'info', `→ Enviando para ${phone} via ${connector.name}...`, 'action');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -221,18 +369,18 @@ export function useFlowRuntime({ nodes, edges, setNodes, sessionId, userId }: Us
       const result = await resp.json();
 
       if (resp.ok && result.success) {
-        addLog(node.id, label, 'success', `✓ Mensagem enviada para ${phone}`);
+        addLog(node.id, label, 'success', `✓ Mensagem enviada para ${phone}`, 'action');
         updateNodeStatus(node.id, 'success');
         return true;
       } else {
         const errorMsg = result.error || `Falha HTTP ${resp.status}`;
-        addLog(node.id, label, 'error', `✗ ${errorMsg}`);
+        addLog(node.id, label, 'error', `✗ ${errorMsg}`, 'action');
         updateNodeStatus(node.id, 'failed', errorMsg);
         return false;
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Erro desconhecido';
-      addLog(node.id, label, 'error', `✗ ${errorMsg}`);
+      addLog(node.id, label, 'error', `✗ ${errorMsg}`, 'action');
       updateNodeStatus(node.id, 'failed', errorMsg);
       return false;
     }
@@ -251,9 +399,22 @@ export function useFlowRuntime({ nodes, edges, setNodes, sessionId, userId }: Us
       return;
     }
 
+    // Generate pre-flight
+    const summary = generatePreFlight();
+    if (!summary.canExecute) {
+      setFlowStatus('failed');
+      toast.error(`Bloqueios: ${summary.blockers.join(', ')}`);
+      return;
+    }
+
     setFlowStatus('running');
     setExecutionLogs([]);
-    addLog('flow', 'Flow', 'info', '▶ Iniciando execução do fluxo...');
+
+    const classified = classifyNodes();
+    const actionCount = classified.action.length;
+    const contextCount = classified.context.filter(n => n.data?.content?.trim()).length;
+
+    addLog('flow', 'Flow', 'info', `▶ Iniciando execução — ${contextCount} contextos, ${actionCount} ações`);
 
     // Reset all node statuses
     const resetNodes = nodes.map(n => ({
@@ -263,6 +424,8 @@ export function useFlowRuntime({ nodes, edges, setNodes, sessionId, userId }: Us
 
     const order = getExecutionOrder();
     let allSuccess = true;
+    let actionsExecuted = 0;
+    let actionsFailed = 0;
 
     for (const nodeId of order) {
       if (abortRef.current) {
@@ -275,49 +438,40 @@ export function useFlowRuntime({ nodes, edges, setNodes, sessionId, userId }: Us
       if (!node) continue;
 
       const type = node.data?.nodeType;
+      const category = type ? BLOCK_CATEGORIES[type] : undefined;
       updateNodeStatus(nodeId, 'running');
-      addLog(nodeId, node.data?.label || '', 'info', `Executando "${node.data?.label}"...`);
 
-      // Small delay for visual feedback
-      await new Promise(r => setTimeout(r, 300));
+      // Different delay based on category
+      const delay = category === 'action' ? 500 : 200;
+      await new Promise(r => setTimeout(r, delay));
 
-      if (type === 'whatsapp') {
-        const success = await executeWhatsAppBlock(node);
-        if (!success) allSuccess = false;
-      } else if (EXECUTABLE_BLOCKS.includes(type as any)) {
-        // For automation blocks, just mark as success for now
-        if (node.data?.content?.trim()) {
-          updateNodeStatus(nodeId, 'success');
-          addLog(nodeId, node.data?.label || '', 'success', 'Automação registrada');
-        } else {
-          updateNodeStatus(nodeId, 'skipped');
-          addLog(nodeId, node.data?.label || '', 'warning', 'Sem configuração — ignorado');
-        }
-      } else {
-        await executeContentBlock(node);
+      const success = await executeNode(node);
+      if (!success) {
+        allSuccess = false;
+        if (category === 'action') actionsFailed++;
       }
+      if (category === 'action' && success) actionsExecuted++;
     }
 
     if (allSuccess) {
-      addLog('flow', 'Flow', 'success', '✅ Fluxo concluído com sucesso!');
+      addLog('flow', 'Flow', 'success', `✅ Fluxo concluído — ${actionsExecuted} ação(ões) executada(s)`);
       setFlowStatus('completed');
       toast.success('Fluxo executado com sucesso!');
     } else {
-      addLog('flow', 'Flow', 'error', '⚠ Fluxo concluído com erros');
+      addLog('flow', 'Flow', 'error', `⚠ Fluxo concluído com ${actionsFailed} falha(s)`);
       setFlowStatus('failed');
-      toast.error('Fluxo concluído com erros. Verifique os logs.');
+      toast.error(`Fluxo com ${actionsFailed} falha(s). Verifique os logs.`);
     }
-  }, [nodes, edges, validateFlow, getExecutionOrder, updateNodeStatus, addLog, setNodes, executeContentBlock, executeWhatsAppBlock]);
+  }, [nodes, edges, validateFlow, generatePreFlight, classifyNodes, getExecutionOrder, updateNodeStatus, addLog, setNodes, executeNode]);
 
-  const pauseFlow = useCallback(() => {
-    abortRef.current = true;
-  }, []);
+  const pauseFlow = useCallback(() => { abortRef.current = true; }, []);
 
   const resetFlow = useCallback(() => {
     abortRef.current = false;
     setFlowStatus('idle');
     setValidationErrors([]);
     setExecutionLogs([]);
+    setPreFlightSummary(null);
     const resetNodes = nodes.map(n => ({
       ...n, data: { ...n.data, executionStatus: 'idle' as BlockExecutionStatus, executionError: undefined },
     }));
@@ -336,13 +490,8 @@ export function useFlowRuntime({ nodes, edges, setNodes, sessionId, userId }: Us
 
     for (const node of failedNodes) {
       updateNodeStatus(node.id, 'running');
-      await new Promise(r => setTimeout(r, 300));
-
-      if (node.data?.nodeType === 'whatsapp') {
-        await executeWhatsAppBlock(node);
-      } else {
-        await executeContentBlock(node);
-      }
+      await new Promise(r => setTimeout(r, 400));
+      await executeNode(node);
     }
 
     const stillFailed = nodes.filter(n => n.data?.executionStatus === 'failed');
@@ -352,13 +501,15 @@ export function useFlowRuntime({ nodes, edges, setNodes, sessionId, userId }: Us
     } else {
       setFlowStatus('failed');
     }
-  }, [nodes, updateNodeStatus, addLog, executeWhatsAppBlock, executeContentBlock]);
+  }, [nodes, updateNodeStatus, addLog, executeNode]);
 
   return {
     flowStatus,
     validationErrors,
     executionLogs,
+    preFlightSummary,
     validateFlow,
+    generatePreFlight,
     runFlow,
     pauseFlow,
     resetFlow,

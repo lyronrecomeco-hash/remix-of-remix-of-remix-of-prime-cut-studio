@@ -33,6 +33,7 @@ import { useEngineSession } from './hooks/useEngineSession';
 import { useEngineAI } from './hooks/useEngineAI';
 import { useFlowRuntime } from './hooks/useFlowRuntime';
 import type { ProposalForEngine, EngineNode, EngineEdge } from './types';
+import { BLOCK_CATEGORIES } from './types';
 
 interface EngineWorkspaceProps {
   affiliateId: string;
@@ -70,8 +71,8 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
 
   // Flow Runtime
   const {
-    flowStatus, validationErrors, executionLogs,
-    validateFlow, runFlow, pauseFlow, resetFlow, retryFailed,
+    flowStatus, validationErrors, executionLogs, preFlightSummary,
+    validateFlow, generatePreFlight, runFlow, pauseFlow, resetFlow, retryFailed,
   } = useFlowRuntime({
     nodes,
     edges,
@@ -96,9 +97,33 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
   }, [edges, setEdges]);
 
   const onConnect = useCallback((connection: Connection) => {
-    const updated = addEdge(connection, edges) as EngineEdge[];
-    setEdges(updated);
-  }, [edges, setEdges]);
+    // Determine semantic edge type based on source/target node categories
+    const sourceNode = nodes.find(n => n.id === connection.source);
+    const targetNode = nodes.find(n => n.id === connection.target);
+    
+    let semanticType: 'data_flow' | 'execution_flow' = 'data_flow';
+    if (sourceNode?.data?.nodeType && targetNode?.data?.nodeType) {
+      const sourceCat = BLOCK_CATEGORIES[sourceNode.data.nodeType];
+      const targetCat = BLOCK_CATEGORIES[targetNode.data.nodeType];
+      // If connecting to/from an action block, it's an execution flow
+      if (sourceCat === 'action' || targetCat === 'action') {
+        semanticType = 'execution_flow';
+      }
+    }
+
+    const newEdge = {
+      ...connection,
+      id: `e-${connection.source}-${connection.target}`,
+      type: 'smoothstep',
+      animated: semanticType === 'execution_flow',
+      style: {
+        stroke: semanticType === 'execution_flow' ? '#3b82f680' : 'rgba(255,255,255,0.12)',
+        strokeWidth: semanticType === 'execution_flow' ? 2 : 1.5,
+      },
+      data: { semanticType },
+    };
+    setEdges([...edges, newEdge] as EngineEdge[]);
+  }, [edges, nodes, setEdges]);
 
   // AI canvas action handler
   function handleCanvasAction(action: { type: string; nodes?: any[]; edges?: any[] }) {
@@ -214,7 +239,9 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
             <FlowControls
               flowStatus={flowStatus}
               validationErrors={validationErrors}
+              preFlightSummary={preFlightSummary}
               onValidate={validateFlow}
+              onGeneratePreFlight={generatePreFlight}
               onRun={runFlow}
               onPause={pauseFlow}
               onReset={resetFlow}

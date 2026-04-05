@@ -6,7 +6,8 @@ import {
   CheckSquare, Terminal, GripVertical, AlertTriangle, Target, Star,
   Sparkles, ChevronDown, ChevronRight, Loader2, CheckCircle2, XCircle, SkipForward
 } from 'lucide-react';
-import type { BlockExecutionStatus } from '../types';
+import type { BlockExecutionStatus, EngineNodeType } from '../types';
+import { BLOCK_CATEGORIES, CATEGORY_META } from '../types';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Building2, Search, TrendingUp, Zap, Layers, Server,
@@ -174,6 +175,10 @@ export const EngineNodeComponent = memo(({ data, selected }: EngineNodeProps) =>
   const color = data.color || '#3b82f6';
   const fields = BLOCK_FIELDS[data.nodeType] || [{ key: 'content', label: 'Conteúdo', placeholder: 'Escreva aqui...' }];
 
+  // Block category
+  const blockCategory = BLOCK_CATEGORIES[data.nodeType as EngineNodeType];
+  const categoryMeta = blockCategory ? CATEGORY_META[blockCategory] : null;
+
   useEffect(() => {
     setContent(data.content || '');
   }, [data.content]);
@@ -185,34 +190,6 @@ export const EngineNodeComponent = memo(({ data, selected }: EngineNodeProps) =>
 
   const hasContent = content.trim().length > 0;
 
-  // Parse structured content into field values
-  const parseContent = (raw: string): Record<string, string> => {
-    const result: Record<string, string> = {};
-    const lines = raw.split('\n');
-    let currentKey = '';
-    
-    for (const line of lines) {
-      const match = line.match(/^([^:]+):\s*(.*)$/);
-      if (match) {
-        const label = match[1].trim().toLowerCase();
-        const field = fields.find(f => f.label.toLowerCase() === label || f.key === label);
-        if (field) {
-          currentKey = field.key;
-          result[currentKey] = match[2].trim();
-          continue;
-        }
-      }
-      if (currentKey) {
-        result[currentKey] = (result[currentKey] || '') + '\n' + line;
-      } else if (!result._raw) {
-        result._raw = line;
-      } else {
-        result._raw += '\n' + line;
-      }
-    }
-    return result;
-  };
-
   const contentPreview = hasContent
     ? content.split('\n').filter(l => l.trim()).slice(0, 3).join(' • ').slice(0, 100)
     : null;
@@ -220,6 +197,10 @@ export const EngineNodeComponent = memo(({ data, selected }: EngineNodeProps) =>
   const execStatus = data.executionStatus || 'idle';
   const execIndicator = EXEC_STATUS_INDICATOR[execStatus];
   const ExecIcon = execIndicator.icon;
+
+  // Handle style based on category
+  const isAction = blockCategory === 'action';
+  const handleBorderColor = isAction ? '#10b98180' : 'rgba(255,255,255,0.2)';
 
   return (
     <div
@@ -232,8 +213,14 @@ export const EngineNodeComponent = memo(({ data, selected }: EngineNodeProps) =>
         boxShadow: selected ? `0 0 20px ${color}15` : '0 2px 8px rgba(0,0,0,0.3)',
       }}
     >
-      <Handle type="target" position={Position.Left} className="!w-2.5 !h-2.5 !border-[1.5px] !bg-white/10 !border-white/20" />
-      <Handle type="source" position={Position.Right} className="!w-2.5 !h-2.5 !border-[1.5px] !bg-white/10 !border-white/20" />
+      <Handle type="target" position={Position.Left} 
+        className="!w-2.5 !h-2.5 !border-[1.5px] !bg-white/10"
+        style={{ borderColor: handleBorderColor }}
+      />
+      <Handle type="source" position={Position.Right} 
+        className="!w-2.5 !h-2.5 !border-[1.5px] !bg-white/10"
+        style={{ borderColor: handleBorderColor }}
+      />
 
       {/* Execution status indicator */}
       {execStatus !== 'idle' && (
@@ -254,7 +241,21 @@ export const EngineNodeComponent = memo(({ data, selected }: EngineNodeProps) =>
           <Icon className="w-3 h-3" style={{ color }} />
         </div>
         <div className="flex-1 min-w-0">
-          <span className="text-[11px] font-semibold text-white/80 block truncate">{data.label}</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-semibold text-white/80 truncate">{data.label}</span>
+            {/* Category badge */}
+            {categoryMeta && (
+              <span 
+                className="text-[7px] font-bold uppercase tracking-wider px-1 py-0 rounded flex-shrink-0"
+                style={{ 
+                  color: `${categoryMeta.color}90`,
+                  background: `${categoryMeta.color}12`,
+                }}
+              >
+                {categoryMeta.label}
+              </span>
+            )}
+          </div>
           {data.description && !hasContent && (
             <span className="text-[9px] text-white/20 block truncate">{data.description}</span>
           )}
