@@ -19,6 +19,7 @@ interface AICommandPanelProps {
   prospectName?: string;
   nodes?: EngineNode[];
   lastActionType?: string | null;
+  prospectContext?: Record<string, unknown>;
 }
 
 const ACTION_GROUPS = [
