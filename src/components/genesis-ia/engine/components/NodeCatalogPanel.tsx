@@ -8,6 +8,24 @@ import {
 } from 'lucide-react';
 import { NODE_CATALOG } from '../types';
 
+const VISIBLE_NODE_TYPES = new Set([
+  'prospect',
+  'diagnosis',
+  'pain',
+  'opportunity',
+  'strategy',
+  'offer',
+  'objections',
+  'scope',
+  'structure',
+  'integrations',
+  'automation',
+  'whatsapp',
+  'checklist',
+  'deploy',
+  'prompt',
+]);
+
 const ICON_MAP: Record<string, React.ElementType> = {
   Building2, Search, TrendingUp, Zap, Layers, Server,
   Link, ShieldAlert, MessageSquare, Clock, Repeat, Rocket, StickyNote,
@@ -26,7 +44,8 @@ export const NodeCatalogPanel = ({ onAddNode }: NodeCatalogPanelProps) => {
     'Execução': true,
   });
 
-  const categories = Array.from(new Set(NODE_CATALOG.map(n => n.category)));
+  const visibleNodes = NODE_CATALOG.filter((node) => VISIBLE_NODE_TYPES.has(node.type));
+  const categories = Array.from(new Set(visibleNodes.map(n => n.category)));
 
   const toggleCategory = (cat: string) => {
     setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
@@ -53,7 +72,7 @@ export const NodeCatalogPanel = ({ onAddNode }: NodeCatalogPanelProps) => {
                 className="overflow-hidden"
               >
                 <div className="space-y-0.5 pb-2">
-                  {NODE_CATALOG.filter(n => n.category === category).map((item) => {
+                  {visibleNodes.filter(n => n.category === category).map((item) => {
                     const Icon = ICON_MAP[item.icon] || StickyNote;
                     return (
                       <motion.button
