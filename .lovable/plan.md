@@ -1,76 +1,98 @@
 
-# Genesis Engine v3.0 — Plano de Evolução
+# Genesis Engine v3.5 — Workflow Engine Executável
 
-## DIAGNÓSTICO ATUAL
+## DIAGNÓSTICO DO PROBLEMA ATUAL
 
-### 1. Bug de Desconexão WhatsApp
-- **Causa**: O proxy tenta `logout` → `disconnect` → `restart` mas se o primeiro falha, `disconnectOk` fica false. Mesmo com restart OK, se `stillConnected && !disconnectOk` retorna erro 400
-- **Fix**: Considerar restart bem-sucedido como desconexão válida. Forçar status `disconnected` no DB independentemente. Frontend precisa limpar `qrCode` e polling
-
-### 2. Canvas é estático
-- Blocos são apenas cartões visuais sem estado de execução
-- Não há conceito de "rodar" um fluxo
-- Sem validação de completude antes de executar
-
-### 3. Logs ao vivo visíveis ao usuário
-- O card "Logs ao vivo" no AICommandPanel está exposto — precisa ser ocultado
+### Por que o canvas ainda parece conceitual:
+1. **Todos os blocos são tratados igualmente** — Prospect, WhatsApp, Deploy recebem o mesmo tratamento visual e lógico. Não há distinção entre "contexto" e "ação"
+2. **Conexões são linhas visuais sem significado** — uma aresta de Prospect→Diagnóstico tem o mesmo peso que Abordagem→WhatsApp
+3. **O runtime trata conteúdo como sucesso** — blocos preenchidos viram "success" automaticamente, sem execução real
+4. **"Executar" roda tudo linearmente** — não distingue blocos informativos de ações reais
+5. **Não há blocos de controle/espera** — sem aguardar resposta, delay, condição
+6. **Validação é superficial** — checa texto vazio, não semântica do fluxo
 
 ---
 
-## PLANO DE IMPLEMENTAÇÃO
+## IMPLEMENTAÇÃO
 
-### P0 — Fix Desconexão (Crítico)
-1. **chatpro-proxy**: Corrigir lógica de disconnect para SEMPRE marcar como disconnected no DB após tentativa, mesmo se provider não confirmar
-2. **WhatsAppConfigModal**: Após disconnect, forçar reload dos connectors e limpar todo estado local (qr, polling, activeConnector)
-3. Adicionar botão "Forçar Desconexão" como fallback
+### 1. Nova Taxonomia de Blocos (`types.ts`)
 
-### P1 — Runtime de Execução do Canvas
-1. **Novo tipo `EngineNodeData`**: Adicionar campos `executionStatus`, `executionLogs`, `executionError`
-2. **Status dos blocos**: `idle` | `ready` | `running` | `success` | `failed` | `skipped`
-3. **Visual**: Indicador de status no canto do bloco (bolinha colorida) — sem mudar design
-4. **Hook `useFlowRuntime`**: Motor que interpreta edges como dependências, executa em ordem topológica
-5. **Validação pré-execução**: Verificar blocos obrigatórios, configs faltantes, conexões quebradas
+Reclassificar todos os blocos em 5 categorias funcionais:
 
-### P2 — Controles de Execução
-1. **Barra de execução no header**: Botões Validar | Executar | Pausar (inline, minimalista)
-2. **Validação visual**: Shake + highlight vermelho nos blocos com problema
-3. **Execução sequencial**: Percorre edges source→target, marca status em cada bloco
+```
+CONTEXT_BLOCKS   → prospect, diagnosis, pain, opportunity (alimentam dados, auto-success)
+DECISION_BLOCKS  → strategy, offer, differentials, objections (definem rumo, auto-success)
+ACTION_BLOCKS    → whatsapp, automation, deploy, approach (executam algo real)
+CONTROL_BLOCKS   → followup, checklist (gerenciam estado/timing)
+OUTPUT_BLOCKS    → prompt, scope, structure, integrations, notes (geram saída/artefato)
+```
 
-### P3 — Bloco WhatsApp Executável
-1. Ao executar, verifica se connector está connected
-2. Extrai telefone do bloco Prospect
-3. Extrai mensagem do bloco Approach
-4. Envia via chatpro-proxy
-5. Marca status: enviado/falhou com log
+Cada bloco ganha `blockCategory` no tipo, e um badge visual sutil (ícone de categoria no header do nó).
 
-### P4 — Ocultar Logs do Card
-1. Remover o card "Logs ao vivo" do `AICommandPanel` (seção `recentLogs`)
-2. Manter logs internamente para debug mas não exibir ao usuário
+### 2. Conexões com Semântica (`types.ts` + `EngineWorkspace.tsx`)
 
-### P5 — IA mais precisa no contexto do flow
-1. Passar `executionStatus` dos blocos no prompt
-2. IA pode sugerir "execute o fluxo" quando tudo está pronto
-3. IA entende estado de execução e sugere correções
+Adicionar tipos de edge:
+- `data_flow` — alimenta dados (default, cinza)
+- `execution_flow` — executa depois de (azul)
+- `success_path` — se sucesso (verde)
+- `failure_path` — se falha (vermelho)
+
+Visual: cor da linha muda conforme o tipo. Label opcional no edge.
+
+### 3. Runtime Inteligente (`useFlowRuntime.ts`)
+
+Refatorar para:
+- **Classificar** nós antes de executar: context/decision → auto-validate, action → execute real
+- **Pre-flight summary**: antes de rodar, retornar resumo: "Será enviada 1 msg WhatsApp, 2 blocos de contexto validados"
+- **Execução apenas dos ACTION_BLOCKS**: contexto/decisão são validados (preenchidos?), ações são executadas
+- **Respeitar edge types**: seguir success_path/failure_path conforme resultado
+
+### 4. Validador de Fluxo Robusto (`useFlowRuntime.ts`)
+
+Novo validador que checa:
+- ✅ Existe pelo menos 1 bloco de contexto (Prospect)
+- ✅ Existe pelo menos 1 bloco de ação
+- ✅ Blocos de ação estão conectados (não soltos)
+- ✅ WhatsApp tem telefone (do Prospect) + mensagem (da Abordagem)
+- ✅ Conector WhatsApp está ativo
+- ✅ Não há blocos de ação desconectados
+- ✅ Fluxo tem caminho completo de entrada→ação→saída
+
+### 5. Pre-flight Panel no "Executar" (`FlowControls.tsx`)
+
+Ao clicar Executar, mostrar tooltip/popover com:
+- "3 blocos de contexto ✓"
+- "1 ação: Envio WhatsApp para +55..."
+- "1 saída: Prompt Final"
+- Botão "Confirmar Execução"
+
+### 6. Visual dos Blocos por Categoria (`EngineNode.tsx`)
+
+Sem mudar o design base, adicionar:
+- Badge de categoria discreto (ex: "CONTEXTO", "AÇÃO", "SAÍDA") — text 8px, uppercase, no header
+- Ícone de handle diferente: ação = handle com borda primary, contexto = handle neutro
+- Indicador visual de "executável" vs "informativo" (bolinha no canto: azul = ação, cinza = contexto)
+
+### 7. IA Contextual para Flows Executáveis
+
+Atualizar `generate-engine-output` para:
+- Ao montar estrutura, classificar blocos corretamente
+- Conectar com edge types semânticos
+- Incluir blocos de ação no ponto certo do fluxo
 
 ---
 
-## ESTADOS DOS BLOCOS
-```
-idle → ready → running → success
-                    ↘ failed → (retry) → running
-                    ↘ skipped
-```
+## ARQUIVOS MODIFICADOS
 
-## ARQUITETURA DO RUNTIME
-- **Client-side**: useFlowRuntime interpreta o grafo
-- **Execução**: Blocos conceituais (prospect, diagnosis...) = auto-success se preenchidos
-- **Blocos executáveis** (whatsapp, automation) = chamam edge function
-- **Validação**: Verifica preenchimento, conexões, dependências
+1. `src/components/genesis-ia/engine/types.ts` — nova taxonomia, edge types
+2. `src/components/genesis-ia/engine/hooks/useFlowRuntime.ts` — runtime inteligente + validador robusto
+3. `src/components/genesis-ia/engine/components/EngineNode.tsx` — badge de categoria
+4. `src/components/genesis-ia/engine/components/FlowControls.tsx` — pre-flight summary
+5. `src/components/genesis-ia/engine/components/ExecutionLogsPanel.tsx` — logs por categoria
+6. `src/components/genesis-ia/engine/EngineWorkspace.tsx` — edge types + cores
 
-## ROADMAP
-1. P0: Fix disconnect (imediato)
-2. P4: Ocultar logs (imediato)
-3. P1: Runtime + estados dos blocos
-4. P2: Controles de execução
-5. P3: WhatsApp executável
-6. P5: IA contextual com execução
+## O QUE NÃO MUDA
+- Layout, cores base, fonts, glassmorphism
+- Estrutura de painéis (left/canvas/right)
+- Design dos blocos (apenas badges sutis adicionados)
+- AI Command Panel (mantém chat + aprovação)
