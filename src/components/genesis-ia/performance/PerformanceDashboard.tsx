@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   TrendingUp, Users, FileText, DollarSign, Target, BarChart3,
   Calendar, ArrowUpRight, ArrowDownRight, ChevronLeft, ChevronRight,
-  Search, Filter, Clock, CheckCircle2, XCircle, MessageSquare
+  Search, CheckCircle2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
