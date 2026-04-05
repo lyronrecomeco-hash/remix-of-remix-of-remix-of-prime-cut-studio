@@ -157,15 +157,6 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
         last_interaction: c.updated_at || c.created_at,
       }));
 
-      // Sends / Responses
-      const { data: sendsData } = await supabase
-        .from('affiliate_prospect_sends')
-        .select('id, status, channel, created_at, sent_at, reply_content, replied_at, prospect_id')
-        .eq('affiliate_id', affId)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      const responsesFiltered = (sendsData || []).filter(s => s.reply_content || s.replied_at);
 
       setMetrics({
         leadsToday: leadsToday || 0,
