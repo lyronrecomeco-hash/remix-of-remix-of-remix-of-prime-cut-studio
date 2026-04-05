@@ -326,6 +326,8 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                     lastActionType={lastActionType}
                     prospectContext={session?.prospect_context || {}}
                     onAutoArrange={handleAutoArrange}
+                    userId={userId}
+                    sessionId={session?.id}
                   />
                 </div>
               </ResizablePanel>
