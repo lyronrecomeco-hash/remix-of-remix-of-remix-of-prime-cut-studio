@@ -58,6 +58,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
 
   const nodeTypes = useMemo(() => ({
     engineNode: EngineNodeComponent,
+    whatsappNode: WhatsAppNodeComponent,
   }), []);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
