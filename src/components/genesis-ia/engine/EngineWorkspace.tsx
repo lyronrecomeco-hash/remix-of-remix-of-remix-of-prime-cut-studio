@@ -16,13 +16,14 @@ import {
 import '@xyflow/react/dist/style.css';
 import {
   Cpu, ArrowLeft, Camera, Loader2, PanelLeft, PanelLeftClose,
-  PanelRight, PanelRightClose, ChevronLeft
+  PanelRight, PanelRightClose, ChevronLeft, Rocket
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { EngineNodeComponent } from './components/EngineNode';
 import { NodeCatalogPanel } from './components/NodeCatalogPanel';
 import { AICommandPanel } from './components/AICommandPanel';
+import { ExecutionPanel } from './components/ExecutionPanel';
 import { useEngineSession } from './hooks/useEngineSession';
 import { useEngineAI } from './hooks/useEngineAI';
 import type { ProposalForEngine, EngineNode, EngineEdge } from './types';
@@ -263,6 +264,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                     prospectName={proposal.company_name}
                     nodes={nodes}
                     lastActionType={lastActionType}
+                    prospectContext={session?.prospect_context || {}}
                   />
                 </div>
               </ResizablePanel>
@@ -326,6 +328,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                 prospectName={proposal.company_name}
                 nodes={nodes}
                 lastActionType={lastActionType}
+                prospectContext={session?.prospect_context || {}}
               />
             </div>
           </motion.div>

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import type { EngineNode } from '../types';
+import { ExecutionPanel } from './ExecutionPanel';
 
 interface AICommandPanelProps {
   isGenerating: boolean;
@@ -18,6 +19,7 @@ interface AICommandPanelProps {
   prospectName?: string;
   nodes?: EngineNode[];
   lastActionType?: string | null;
+  prospectContext?: Record<string, unknown>;
 }
 
 const ACTION_GROUPS = [
@@ -55,7 +57,7 @@ const ACTION_GROUPS = [
 
 export const AICommandPanel = ({
   isGenerating, streamContent, outputs, onGenerate, prospectName,
-  nodes = [], lastActionType,
+  nodes = [], lastActionType, prospectContext = {},
 }: AICommandPanelProps) => {
   const [customInstruction, setCustomInstruction] = useState('');
   const [activeOutput, setActiveOutput] = useState<number | null>(null);
@@ -285,8 +287,17 @@ export const AICommandPanel = ({
           </div>
         )}
 
+        {/* Execution Engine */}
+        <ExecutionPanel
+          nodes={nodes as EngineNode[]}
+          outputs={outputs}
+          onGenerate={onGenerate}
+          isGenerating={isGenerating}
+          prospectContext={prospectContext}
+        />
+
         {/* Empty state */}
-        {!isGenerating && outputs.length === 0 && !streamContent && canvasInfo.hasStructure && (
+        {!isGenerating && outputs.length === 0 && !streamContent && canvasInfo.hasStructure && nodes.length > 3 && (
           <div className="flex flex-col items-center justify-center py-8 text-center px-6">
             <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center mb-3">
               <Sparkles className="w-5 h-5 text-white/10" />
