@@ -394,16 +394,14 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
             <div className="flex-1 overflow-hidden">
               <AICommandPanel
                 isGenerating={isGenerating}
-                streamContent={streamContent}
                 outputs={outputs}
                 onGenerate={handleGenerate}
+                messages={messages}
+                activityLog={activityLog}
                 prospectName={proposal.company_name}
                 nodes={nodes}
                 lastActionType={lastActionType}
-                prospectContext={session?.prospect_context || {}}
                 onAutoArrange={handleAutoArrange}
-                userId={userId}
-                sessionId={session?.id}
                 onOpenWhatsApp={() => setShowWhatsAppModal(true)}
               />
             </div>
