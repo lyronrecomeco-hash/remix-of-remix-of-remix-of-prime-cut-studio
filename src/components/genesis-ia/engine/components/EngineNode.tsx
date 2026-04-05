@@ -4,8 +4,9 @@ import {
   Building2, Search, TrendingUp, Zap, Layers, Server,
   Link, ShieldAlert, MessageSquare, Clock, Repeat, Rocket, StickyNote,
   CheckSquare, Terminal, GripVertical, AlertTriangle, Target, Star,
-  Sparkles, ChevronDown, ChevronRight
+  Sparkles, ChevronDown, ChevronRight, Loader2, CheckCircle2, XCircle, SkipForward
 } from 'lucide-react';
+import type { BlockExecutionStatus } from '../types';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Building2, Search, TrendingUp, Zap, Layers, Server,
