@@ -145,6 +145,8 @@ const AffiliatePanel = () => {
         return <AffiliateProposals affiliateId={affiliate.id} />;
       case 'sales':
         return <AffiliateSales affiliateId={affiliate.id} />;
+      case 'performance':
+        return <PerformanceDashboard affiliateId={affiliate.id} userId={affiliate.id} />;
       case 'ai':
         return <AIContentGenerator affiliateCode={affiliate.affiliate_code} />;
       case 'materials':
