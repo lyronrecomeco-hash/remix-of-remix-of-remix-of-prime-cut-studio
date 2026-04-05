@@ -78,7 +78,7 @@ import PartnerApplications from "@/components/admin/PartnerApplications";
 
 import GenesisBackground from "@/components/genesis-ia/GenesisBackground";
 import { ViralSaasTab } from "@/components/genesis-ia/viral-apps/ViralSaasTab";
-import { FileText, Gift, CreditCard, Code2, Rocket, Key, ClipboardList, HelpCircle, Flame } from "lucide-react";
+import { FileText, Gift, CreditCard, Code2, Rocket, Key, ClipboardList, HelpCircle, Flame, BarChart3 } from "lucide-react";
 import { OfertaQuenteTab } from "@/components/genesis-ia/oferta-quente/OfertaQuenteTab";
 import { HelpCenterTab } from "@/components/genesis-ia/help";
 import { useMenuPermissions } from "@/hooks/useMenuPermissions";
