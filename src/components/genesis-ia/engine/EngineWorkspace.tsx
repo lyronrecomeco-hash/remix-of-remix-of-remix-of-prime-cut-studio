@@ -26,9 +26,12 @@ import { WhatsAppNodeComponent } from './components/WhatsAppNodeComponent';
 import { NodeCatalogPanel } from './components/NodeCatalogPanel';
 import { AICommandPanel } from './components/AICommandPanel';
 import { ExecutionPanel } from './components/ExecutionPanel';
+import { FlowControls } from './components/FlowControls';
+import { ExecutionLogsPanel } from './components/ExecutionLogsPanel';
 import { WhatsAppConfigModal } from './components/WhatsAppConfigModal';
 import { useEngineSession } from './hooks/useEngineSession';
 import { useEngineAI } from './hooks/useEngineAI';
+import { useFlowRuntime } from './hooks/useFlowRuntime';
 import type { ProposalForEngine, EngineNode, EngineEdge } from './types';
 
 interface EngineWorkspaceProps {
@@ -65,6 +68,18 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
     });
   }, []);
 
+  // Flow Runtime
+  const {
+    flowStatus, validationErrors, executionLogs,
+    validateFlow, runFlow, pauseFlow, resetFlow, retryFailed,
+  } = useFlowRuntime({
+    nodes,
+    edges,
+    setNodes,
+    sessionId: session?.id || null,
+    userId,
+  });
+
   const nodeTypes = useMemo(() => ({
     engineNode: EngineNodeComponent,
     whatsappNode: WhatsAppNodeComponent,
@@ -92,7 +107,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
     }
   }
 
-  // Smart Auto-Arrange: organize nodes by category in lanes
+  // Smart Auto-Arrange
   const handleAutoArrange = useCallback(() => {
     const CATEGORY_ORDER = ['Descoberta', 'Estratégia', 'Técnico', 'Execução'];
     const NODE_CATALOG_MAP: Record<string, string> = {
@@ -183,7 +198,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
               <h1 className="text-sm font-semibold text-white leading-none">Genesis Engine</h1>
             </div>
             <div className="w-px h-4 bg-white/10 hidden sm:block" />
-            <span className="text-xs text-white/40 truncate max-w-[160px] hidden sm:block">{proposal.company_name}</span>
+            <span className="text-xs text-white/40 truncate max-w-[120px] hidden sm:block">{proposal.company_name}</span>
           </div>
         </div>
 
@@ -193,6 +208,23 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
               <Loader2 className="w-3 h-3 animate-spin" /> Salvando
             </span>
           )}
+
+          {/* Flow Controls */}
+          <div className="hidden sm:flex">
+            <FlowControls
+              flowStatus={flowStatus}
+              validationErrors={validationErrors}
+              onValidate={validateFlow}
+              onRun={runFlow}
+              onPause={pauseFlow}
+              onReset={resetFlow}
+              onRetryFailed={retryFailed}
+              nodeCount={nodes.length}
+            />
+          </div>
+
+          <div className="w-px h-4 bg-white/10 hidden sm:block ml-1" />
+
           <Button
             variant="ghost"
             size="sm"
@@ -201,7 +233,6 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
             title="Auto organizar canvas"
           >
             <LayoutGrid className="w-3 h-3" />
-            <span className="hidden lg:inline">Organizar</span>
           </Button>
           <Button
             variant="ghost"
@@ -210,7 +241,6 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
             className="h-7 px-2 text-[11px] text-white/40 hover:text-white hover:bg-white/5 gap-1"
           >
             <Camera className="w-3 h-3" />
-            <span className="hidden sm:inline">Snapshot</span>
           </Button>
           <div className="w-px h-4 bg-white/10 hidden sm:block" />
           <Button
@@ -256,63 +286,83 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
 
           {/* Canvas */}
           <ResizablePanel defaultSize={showLeftPanel && showRightPanel ? 58 : showRightPanel ? 72 : showLeftPanel ? 86 : 100} minSize={35}>
-            <div className="h-full relative">
-              <ReactFlow
-                nodes={nodesWithHandlers}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                nodeTypes={nodeTypes}
-                fitView
-                proOptions={{ hideAttribution: true }}
-                style={{ background: 'hsl(220, 25%, 10%)' }}
-                defaultEdgeOptions={{
-                  style: { stroke: 'rgba(255,255,255,0.12)', strokeWidth: 1.5 },
-                  type: 'smoothstep',
-                  animated: true,
-                }}
-              >
-                <Background
-                  variant={BackgroundVariant.Dots}
-                  gap={24}
-                  size={1}
-                  color="rgba(255,255,255,0.04)"
-                />
-                <Controls
-                  className="!bg-white/[0.04] !border-white/[0.08] !rounded-lg [&_button]:!bg-white/[0.04] [&_button]:!border-white/[0.08] [&_button]:!text-white/40 [&_button:hover]:!bg-white/10 [&_button:hover]:!text-white/70"
-                />
-                
-                {/* Canvas overlay during structure generation */}
-                {isGenerating && lastActionType === 'build_structure' && (
-                  <Panel position="top-center">
-                    <div className="mt-4 px-4 py-2.5 bg-primary/10 backdrop-blur-md border border-primary/20 rounded-lg flex items-center gap-2.5">
-                      <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
-                      <span className="text-xs text-primary font-medium">Montando estrutura no canvas...</span>
-                    </div>
+            <div className="h-full relative flex flex-col">
+              <div className="flex-1">
+                <ReactFlow
+                  nodes={nodesWithHandlers}
+                  edges={edges}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                  onConnect={onConnect}
+                  nodeTypes={nodeTypes}
+                  fitView
+                  proOptions={{ hideAttribution: true }}
+                  style={{ background: 'hsl(220, 25%, 10%)' }}
+                  defaultEdgeOptions={{
+                    style: { stroke: 'rgba(255,255,255,0.12)', strokeWidth: 1.5 },
+                    type: 'smoothstep',
+                    animated: true,
+                  }}
+                >
+                  <Background
+                    variant={BackgroundVariant.Dots}
+                    gap={24}
+                    size={1}
+                    color="rgba(255,255,255,0.04)"
+                  />
+                  <Controls
+                    className="!bg-white/[0.04] !border-white/[0.08] !rounded-lg [&_button]:!bg-white/[0.04] [&_button]:!border-white/[0.08] [&_button]:!text-white/40 [&_button:hover]:!bg-white/10 [&_button:hover]:!text-white/70"
+                  />
+                  
+                  {/* Canvas overlay during structure generation */}
+                  {isGenerating && lastActionType === 'build_structure' && (
+                    <Panel position="top-center">
+                      <div className="mt-4 px-4 py-2.5 bg-primary/10 backdrop-blur-md border border-primary/20 rounded-lg flex items-center gap-2.5">
+                        <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                        <span className="text-xs text-primary font-medium">Montando estrutura no canvas...</span>
+                      </div>
+                    </Panel>
+                  )}
+
+                  {/* Flow execution overlay */}
+                  {flowStatus === 'running' && (
+                    <Panel position="top-center">
+                      <div className="mt-4 px-4 py-2.5 bg-purple-500/10 backdrop-blur-md border border-purple-500/20 rounded-lg flex items-center gap-2.5">
+                        <Loader2 className="w-3.5 h-3.5 text-purple-400 animate-spin" />
+                        <span className="text-xs text-purple-300 font-medium">Executando fluxo...</span>
+                      </div>
+                    </Panel>
+                  )}
+                  
+                  {/* Mobile buttons */}
+                  <Panel position="bottom-left" className="sm:hidden flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => setMobileLeftOpen(true)}
+                      className="h-8 bg-white/[0.06] backdrop-blur-md border border-white/[0.08] text-white/60 hover:text-white gap-1 text-xs"
+                    >
+                      <PanelLeft className="w-3.5 h-3.5" />
+                      Blocos
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setShowRightPanel(!showRightPanel)}
+                      className="h-8 bg-white/[0.06] backdrop-blur-md border border-white/[0.08] text-white/60 hover:text-white gap-1 text-xs"
+                    >
+                      <Cpu className="w-3.5 h-3.5" />
+                      IA
+                    </Button>
                   </Panel>
-                )}
-                
-                {/* Mobile buttons */}
-                <Panel position="bottom-left" className="sm:hidden flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => setMobileLeftOpen(true)}
-                    className="h-8 bg-white/[0.06] backdrop-blur-md border border-white/[0.08] text-white/60 hover:text-white gap-1 text-xs"
-                  >
-                    <PanelLeft className="w-3.5 h-3.5" />
-                    Blocos
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowRightPanel(!showRightPanel)}
-                    className="h-8 bg-white/[0.06] backdrop-blur-md border border-white/[0.08] text-white/60 hover:text-white gap-1 text-xs"
-                  >
-                    <Cpu className="w-3.5 h-3.5" />
-                    IA
-                  </Button>
-                </Panel>
-              </ReactFlow>
+                </ReactFlow>
+              </div>
+
+              {/* Execution Logs (bottom of canvas) */}
+              {(executionLogs.length > 0 || validationErrors.length > 0) && (
+                <ExecutionLogsPanel
+                  logs={executionLogs}
+                  validationErrors={validationErrors}
+                />
+              )}
             </div>
           </ResizablePanel>
 
