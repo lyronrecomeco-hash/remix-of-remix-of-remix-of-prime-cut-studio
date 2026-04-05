@@ -26,7 +26,7 @@ import { WhatsAppNodeComponent } from './components/WhatsAppNodeComponent';
 import { NodeCatalogPanel } from './components/NodeCatalogPanel';
 import { AICommandPanel } from './components/AICommandPanel';
 import { ExecutionPanel } from './components/ExecutionPanel';
-import { WhatsAppConnectorPanel } from './components/WhatsAppConnectorPanel';
+import { WhatsAppConfigModal } from './components/WhatsAppConfigModal';
 import { useEngineSession } from './hooks/useEngineSession';
 import { useEngineAI } from './hooks/useEngineAI';
 import type { ProposalForEngine, EngineNode, EngineEdge } from './types';
@@ -57,6 +57,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [mobileLeftOpen, setMobileLeftOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
