@@ -21,6 +21,10 @@ const BLOCK_FIELDS: Record<string, { key: string; label: string; placeholder: st
     { key: 'nicho', label: 'Nicho', placeholder: 'Segmento do negócio' },
     { key: 'telefone', label: 'Telefone', placeholder: '+55 ...' },
     { key: 'email', label: 'Email', placeholder: 'email@empresa.com' },
+    { key: 'endereco', label: 'Endereço', placeholder: 'Rua, bairro, cidade - UF' },
+    { key: 'website', label: 'Website', placeholder: 'https://...' },
+    { key: 'instagram', label: 'Instagram', placeholder: '@perfil' },
+    { key: 'servicos', label: 'Serviços', placeholder: 'Principais serviços oferecidos' },
     { key: 'contexto', label: 'Contexto', placeholder: 'Situação e cenário atual' },
   ],
   diagnosis: [
