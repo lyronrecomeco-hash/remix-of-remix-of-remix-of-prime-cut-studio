@@ -4,7 +4,8 @@ export type EngineNodeType =
   | 'prospect' | 'diagnosis' | 'pain' | 'opportunity' | 'strategy'
   | 'offer' | 'differentials' | 'objections' | 'approach'
   | 'scope' | 'structure' | 'integrations' | 'automation'
-  | 'followup' | 'prompt' | 'deploy' | 'notes' | 'checklist';
+  | 'followup' | 'prompt' | 'deploy' | 'notes' | 'checklist'
+  | 'whatsapp';
 
 export interface EngineNodeData {
   label: string;
