@@ -32,9 +32,12 @@ TELEFONE: ${prospect_context.company_phone || 'N/A'}
 EMAIL: ${prospect_context.company_email || 'N/A'}
 CNPJ: ${prospect_context.company_cnpj || 'N/A'}
 WEBSITE: ${qa.website || prospect_context.company_website || 'N/A'}
-INSTAGRAM: ${qa.instagram || 'N/A'}
-ENDEREÇO: ${qa.address || 'N/A'}
-SERVIÇOS: ${qa.services || 'N/A'}
+INSTAGRAM: ${qa.instagram || prospect_context.instagram || 'N/A'}
+ENDEREÇO: ${qa.address || prospect_context.company_address || 'N/A'}
+CIDADE: ${qa.city || prospect_context.company_city || 'N/A'}
+ESTADO: ${qa.state || prospect_context.company_state || 'N/A'}
+SERVIÇOS: ${qa.services || prospect_context.services || 'N/A'}
+HORÁRIO: ${qa.opening_hours || prospect_context.opening_hours || 'N/A'}
 OBJETIVO: ${qa.objective || 'N/A'}
 RESPOSTAS: ${JSON.stringify(qa)}
 NOTAS: ${prospect_context.notes || 'N/A'}
