@@ -53,6 +53,7 @@ const navItems = [
   { id: 'prospecting', label: 'Prospectar', icon: Target },
   { id: 'proposals', label: 'Modo Empresa', icon: Building2 },
   { id: 'sales', label: 'Minhas Vendas', icon: TrendingUp },
+  { id: 'performance', label: 'Performance', icon: BarChart3 },
   { id: 'ai', label: 'Criar com IA', icon: Sparkles },
   { id: 'materials', label: 'Materiais', icon: FileText },
   { id: 'withdrawals', label: 'Saques', icon: Wallet },
