@@ -22,6 +22,8 @@ interface AICommandPanelProps {
   lastActionType?: string | null;
   prospectContext?: Record<string, unknown>;
   onAutoArrange?: () => void;
+  userId?: string | null;
+  sessionId?: string;
 }
 
 const ACTION_GROUPS = [
