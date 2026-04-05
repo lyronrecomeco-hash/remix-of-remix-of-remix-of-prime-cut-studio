@@ -44,7 +44,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
   } = useEngineSession(affiliateId, proposal);
 
   const {
-    isGenerating, outputs, lastActionType, generate, messages, activityLog,
+    isGenerating, outputs, lastActionType, generate, messages, activityLog, handleApproval,
   } = useEngineAI({
     nodes,
     edges,
@@ -333,6 +333,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                     lastActionType={lastActionType}
                     onAutoArrange={handleAutoArrange}
                     onOpenWhatsApp={() => setShowWhatsAppModal(true)}
+                    onApproval={handleApproval}
                   />
                 </div>
               </ResizablePanel>
@@ -403,6 +404,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                 lastActionType={lastActionType}
                 onAutoArrange={handleAutoArrange}
                 onOpenWhatsApp={() => setShowWhatsAppModal(true)}
+                onApproval={handleApproval}
               />
             </div>
           </motion.div>
