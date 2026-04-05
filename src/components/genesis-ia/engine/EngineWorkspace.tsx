@@ -241,7 +241,12 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
               <ResizablePanel defaultSize={14} minSize={10} maxSize={22} className="hidden sm:block">
                 <div className="h-full overflow-y-auto bg-white/[0.02] border-r border-white/[0.06]">
                   <div className="p-3">
-                    <NodeCatalogPanel onAddNode={addNode} />
+                    <NodeCatalogPanel onAddNode={(type) => {
+                      if (type === 'whatsapp') {
+                        setShowWhatsAppModal(true);
+                      }
+                      addNode(type);
+                    }} />
                   </div>
                 </div>
               </ResizablePanel>
