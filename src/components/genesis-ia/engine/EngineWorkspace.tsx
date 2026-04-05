@@ -329,6 +329,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                     onAutoArrange={handleAutoArrange}
                     userId={userId}
                     sessionId={session?.id}
+                    onOpenWhatsApp={() => setShowWhatsAppModal(true)}
                   />
                 </div>
               </ResizablePanel>
