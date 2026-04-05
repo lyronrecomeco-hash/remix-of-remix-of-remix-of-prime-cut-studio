@@ -231,8 +231,8 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
             >
               <div className="flex items-center justify-between mb-2">
                 <Icon className="w-4 h-4 text-white/30" />
-                {card.trend === 'up' && <ArrowUpRight className="w-3.5 h-3.5 text-green-400" />}
-                {card.trend === 'down' && <ArrowDownRight className="w-3.5 h-3.5 text-red-400" />}
+                {card.trend === 'up' && <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400/80" />}
+                {card.trend === 'down' && <ArrowDownRight className="w-3.5 h-3.5 text-destructive/80" />}
               </div>
               <p className="text-lg font-bold text-white">{card.value}</p>
               <p className="text-[10px] text-white/40 mt-0.5">{card.label}</p>
