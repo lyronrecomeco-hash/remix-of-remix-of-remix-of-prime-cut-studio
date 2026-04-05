@@ -74,53 +74,76 @@ serve(async (req) => {
       case 'disconnect': {
         console.log(`[ChatPro] Starting full disconnect sequence`);
 
-        // Step 1: Try logout first (clears WhatsApp session)
-        const logoutAttempts = [
-          { url: `${apiBase}/logout`, method: 'POST' },
-          { url: `${apiBase}/disconnect`, method: 'POST' },
-          { url: `${apiBase}/disconnect`, method: 'GET' },
-        ] as const;
-
-        let disconnectOk = false;
-        for (const attempt of logoutAttempts) {
-          const resp = await chatproFetch(attempt.url, attempt.method, connector.token_hash);
-          const data = await safeJson(resp);
-          console.log(`[ChatPro] disconnect ${attempt.method} ${attempt.url} → ${resp.status} ${JSON.stringify(data)}`);
-          if (resp.ok) { disconnectOk = true; break; }
-        }
-
-        // Step 2: Try restart to fully reset instance state
-        const restartResp = await chatproFetch(`${apiBase}/restart`, 'POST', connector.token_hash);
-        const restartData = await safeJson(restartResp);
-        console.log(`[ChatPro] restart → ${restartResp.status} ${JSON.stringify(restartData)}`);
-
-        // Step 3: Wait briefly then verify
-        await new Promise(r => setTimeout(r, 2000));
-
-        const statusResp = await chatproFetch(`${apiBase}/status`, 'GET', connector.token_hash);
-        const statusData = await safeJson(statusResp);
-        const stillConnected = statusResp.ok && isConnectedPayload(statusData);
-        console.log(`[ChatPro] post-disconnect check: stillConnected=${stillConnected}`);
-
-        if (stillConnected && !disconnectOk) {
-          return jsonResponse({ error: 'Não foi possível desconectar. Tente desconectar manualmente no painel ChatPro.', details: statusData }, 400);
-        }
-
-        // Step 4: Update local state to disconnected
+        // ALWAYS mark as disconnected in DB first — this is the source of truth for frontend
         await updateConnector({
           status: 'disconnected',
           last_error: null,
         });
 
-        return jsonResponse({ success: true, verified: !stillConnected });
+        // Step 1: Try all disconnect methods
+        const disconnectAttempts = [
+          { url: `${apiBase}/logout`, method: 'POST' },
+          { url: `${apiBase}/disconnect`, method: 'POST' },
+          { url: `${apiBase}/disconnect`, method: 'GET' },
+        ] as const;
+
+        let anySuccess = false;
+        for (const attempt of disconnectAttempts) {
+          try {
+            const resp = await chatproFetch(attempt.url, attempt.method, connector.token_hash);
+            const data = await safeJson(resp);
+            console.log(`[ChatPro] disconnect ${attempt.method} ${attempt.url} → ${resp.status} ${JSON.stringify(data)}`);
+            if (resp.ok || resp.status === 404) { anySuccess = true; break; }
+          } catch (e) {
+            console.log(`[ChatPro] disconnect attempt failed: ${e}`);
+          }
+        }
+
+        // Step 2: Try restart to fully reset instance state
+        try {
+          const restartResp = await chatproFetch(`${apiBase}/restart`, 'POST', connector.token_hash);
+          const restartData = await safeJson(restartResp);
+          console.log(`[ChatPro] restart → ${restartResp.status} ${JSON.stringify(restartData)}`);
+          if (restartResp.ok) anySuccess = true;
+        } catch (e) {
+          console.log(`[ChatPro] restart failed: ${e}`);
+        }
+
+        // Step 3: Brief wait then verify
+        await new Promise(r => setTimeout(r, 2000));
+
+        let stillConnected = false;
+        try {
+          const statusResp = await chatproFetch(`${apiBase}/status`, 'GET', connector.token_hash);
+          const statusData = await safeJson(statusResp);
+          stillConnected = statusResp.ok && isConnectedPayload(statusData);
+          console.log(`[ChatPro] post-disconnect check: stillConnected=${stillConnected}`);
+        } catch {
+          // Can't verify — assume disconnected
+        }
+
+        // Even if still connected on provider, we keep DB as disconnected
+        // User can force via ChatPro panel if needed
+        if (stillConnected) {
+          await updateConnector({
+            status: 'disconnected',
+            last_error: 'Provider ainda mostra conectado. Pode ser necessário desconectar no painel ChatPro.',
+          });
+        }
+
+        return jsonResponse({
+          success: true,
+          verified: !stillConnected,
+          warning: stillConnected ? 'Sessão pode persistir no provider. Desconecte também pelo painel ChatPro se necessário.' : null,
+        });
       }
 
       // ─── GET QR CODE ───
       case 'get_qrcode': {
-        // Step 1: Check current status - if connected, return immediately
+        // Step 1: Check current status
         const statusResp = await chatproFetch(`${apiBase}/status`, 'GET', connector.token_hash);
         const statusData = await safeJson(statusResp);
-        console.log(`[ChatPro] qr pre-check: ${resp_status(statusResp)} ${JSON.stringify(statusData)}`);
+        console.log(`[ChatPro] qr pre-check: ${statusResp.status} ${JSON.stringify(statusData)}`);
 
         if (statusResp.ok && isConnectedPayload(statusData)) {
           await updateConnector({
@@ -150,7 +173,6 @@ serve(async (req) => {
           lastResp = resp;
           console.log(`[ChatPro] qr ${attempt.method} ${attempt.url} → ${resp.status}`);
 
-          // Check if it connected while generating QR
           if (resp.ok && isConnectedPayload(data)) {
             await updateConnector({
               status: 'connected',
@@ -184,7 +206,6 @@ serve(async (req) => {
         const data = await safeJson(resp);
         const connected = resp.ok && isConnectedPayload(data);
 
-        // Sync DB status if changed
         if (connected && connector.status !== 'connected') {
           await updateConnector({
             status: 'connected',
@@ -240,8 +261,6 @@ serve(async (req) => {
     return jsonResponse({ error: error instanceof Error ? error.message : 'Erro interno' }, 500);
   }
 });
-
-function resp_status(r: Response) { return r.status; }
 
 function jsonResponse(data: any, status = 200) {
   return new Response(JSON.stringify(data), {

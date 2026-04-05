@@ -133,25 +133,6 @@ export const AICommandPanel = ({
       {/* Messages Area */}
       <ScrollArea className="flex-1">
         <div ref={scrollRef} className="p-3 space-y-3">
-          {/* Live Logs */}
-          {recentLogs.length > 0 && (
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
-              <div className="mb-2 flex items-center gap-2 text-[11px] font-medium text-white/65">
-                <Clock3 className="h-3.5 w-3.5 text-primary/80" /> Logs ao vivo
-              </div>
-              <div className="space-y-1.5">
-                {recentLogs.map((log) => (
-                  <div key={log.id} className="flex items-start justify-between gap-2 text-[10px]">
-                    <span className={`leading-relaxed ${log.level === 'error' ? 'text-red-300/90' : log.level === 'success' ? 'text-emerald-300/90' : 'text-white/45'}`}>
-                      {log.message}
-                    </span>
-                    <span className="shrink-0 text-white/20">{new Date(log.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Empty state */}
           {messages.length === 0 ? (
             <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.02] p-5 text-center">

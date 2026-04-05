@@ -4,8 +4,9 @@ import {
   Building2, Search, TrendingUp, Zap, Layers, Server,
   Link, ShieldAlert, MessageSquare, Clock, Repeat, Rocket, StickyNote,
   CheckSquare, Terminal, GripVertical, AlertTriangle, Target, Star,
-  Sparkles, ChevronDown, ChevronRight
+  Sparkles, ChevronDown, ChevronRight, Loader2, CheckCircle2, XCircle, SkipForward
 } from 'lucide-react';
+import type { BlockExecutionStatus } from '../types';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Building2, Search, TrendingUp, Zap, Layers, Server,
@@ -149,10 +150,21 @@ interface EngineNodeProps {
     icon?: string;
     color?: string;
     description?: string;
+    executionStatus?: BlockExecutionStatus;
+    executionError?: string;
     onContentChange?: (content: string) => void;
   };
   selected?: boolean;
 }
+
+const EXEC_STATUS_INDICATOR: Record<BlockExecutionStatus, { icon: React.ElementType; color: string; pulse?: boolean }> = {
+  idle: { icon: () => null, color: 'transparent' },
+  ready: { icon: CheckCircle2, color: '#60a5fa' },
+  running: { icon: Loader2, color: '#a78bfa', pulse: true },
+  success: { icon: CheckCircle2, color: '#34d399' },
+  failed: { icon: XCircle, color: '#f87171' },
+  skipped: { icon: SkipForward, color: '#6b7280' },
+};
 
 export const EngineNodeComponent = memo(({ data, selected }: EngineNodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -205,19 +217,33 @@ export const EngineNodeComponent = memo(({ data, selected }: EngineNodeProps) =>
     ? content.split('\n').filter(l => l.trim()).slice(0, 3).join(' • ').slice(0, 100)
     : null;
 
+  const execStatus = data.executionStatus || 'idle';
+  const execIndicator = EXEC_STATUS_INDICATOR[execStatus];
+  const ExecIcon = execIndicator.icon;
+
   return (
     <div
       className={`relative min-w-[240px] max-w-[320px] rounded-lg border transition-all duration-150 ${
         selected ? 'ring-1 ring-primary/50' : ''
-      }`}
+      } ${execStatus === 'running' ? 'ring-1 ring-purple-400/30' : ''} ${execStatus === 'failed' ? 'ring-1 ring-red-400/20' : ''}`}
       style={{
         background: 'hsl(220 25% 12%)',
-        borderColor: selected ? `${color}80` : 'rgba(255,255,255,0.06)',
+        borderColor: execStatus === 'running' ? '#a78bfa50' : execStatus === 'failed' ? '#f8717130' : execStatus === 'success' ? '#34d39930' : selected ? `${color}80` : 'rgba(255,255,255,0.06)',
         boxShadow: selected ? `0 0 20px ${color}15` : '0 2px 8px rgba(0,0,0,0.3)',
       }}
     >
       <Handle type="target" position={Position.Left} className="!w-2.5 !h-2.5 !border-[1.5px] !bg-white/10 !border-white/20" />
       <Handle type="source" position={Position.Right} className="!w-2.5 !h-2.5 !border-[1.5px] !bg-white/10 !border-white/20" />
+
+      {/* Execution status indicator */}
+      {execStatus !== 'idle' && (
+        <div className="absolute -top-1.5 -right-1.5 z-10">
+          <div className={`w-4 h-4 rounded-full flex items-center justify-center ${execIndicator.pulse ? 'animate-pulse' : ''}`}
+            style={{ background: `${execIndicator.color}30`, border: `1px solid ${execIndicator.color}50` }}>
+            <ExecIcon className="w-2.5 h-2.5" style={{ color: execIndicator.color }} />
+          </div>
+        </div>
+      )}
 
       {/* Top accent line */}
       <div className="h-0.5 rounded-t-lg" style={{ background: `${color}60` }} />
@@ -293,9 +319,16 @@ export const EngineNodeComponent = memo(({ data, selected }: EngineNodeProps) =>
             className="h-full rounded-full transition-all"
             style={{
               width: `${Math.min(100, (content.length / 200) * 100)}%`,
-              background: `${color}60`,
+              background: execStatus === 'success' ? '#34d39960' : execStatus === 'failed' ? '#f8717160' : `${color}60`,
             }}
           />
+        </div>
+      )}
+
+      {/* Execution error */}
+      {data.executionError && (
+        <div className="mx-3 mb-2 px-2 py-1 rounded bg-red-500/[0.08] border border-red-500/[0.12]">
+          <span className="text-[9px] text-red-300/80">{data.executionError}</span>
         </div>
       )}
     </div>
