@@ -21,9 +21,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { EngineNodeComponent } from './components/EngineNode';
+import { WhatsAppNodeComponent } from './components/WhatsAppNodeComponent';
 import { NodeCatalogPanel } from './components/NodeCatalogPanel';
 import { AICommandPanel } from './components/AICommandPanel';
 import { ExecutionPanel } from './components/ExecutionPanel';
+import { WhatsAppConnectorPanel } from './components/WhatsAppConnectorPanel';
 import { useEngineSession } from './hooks/useEngineSession';
 import { useEngineAI } from './hooks/useEngineAI';
 import type { ProposalForEngine, EngineNode, EngineEdge } from './types';
