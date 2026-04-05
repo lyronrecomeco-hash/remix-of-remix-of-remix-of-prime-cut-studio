@@ -48,9 +48,7 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
     proposalsSent: 0, proposalsAccepted: 0, avgCloseTime: 0,
   });
   const [contracts, setContracts] = useState<ContractRow[]>([]);
-  const [responses, setResponses] = useState<any[]>([]);
   const [contractPage, setContractPage] = useState(0);
-  const [responsePage, setResponsePage] = useState(0);
   const PAGE_SIZE = 10;
 
   // Resolve affiliateId from userId if not provided
