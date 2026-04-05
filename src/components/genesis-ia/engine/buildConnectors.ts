@@ -1,6 +1,10 @@
 import lovableIcon from '@/assets/ai-icons/lovable.ico';
 import v0Icon from '@/assets/ai-icons/v0.svg';
 import windsurfIcon from '@/assets/ai-icons/windsurf.svg';
+import cursorIcon from '@/assets/ai-icons/cursor.png';
+import traeIcon from '@/assets/ai-icons/trae.png';
+import boltIcon from '@/assets/ai-icons/bolt.png';
+import replitIcon from '@/assets/ai-icons/replit.png';
 
 export interface BuildConnector {
   id: string;
@@ -48,6 +52,7 @@ export const BUILD_CONNECTORS: BuildConnector[] = [
     id: 'cursor',
     name: 'Cursor',
     description: 'IDE com IA para projetos completos',
+    icon: cursorIcon,
     url: 'https://cursor.sh',
     promptPrefix: 'Gere a arquitetura completa com estrutura de pastas, services, hooks, APIs e banco.',
     focus: ['fullstack', 'architecture', 'backend', 'api'],
@@ -65,6 +70,7 @@ export const BUILD_CONNECTORS: BuildConnector[] = [
     id: 'trae',
     name: 'Trae',
     description: 'IDE com IA da ByteDance',
+    icon: traeIcon,
     url: 'https://trae.ai',
     promptPrefix: 'Gere a solução completa com foco em performance, escalabilidade e boas práticas.',
     focus: ['fullstack', 'performance', 'scalability'],
@@ -73,6 +79,7 @@ export const BUILD_CONNECTORS: BuildConnector[] = [
     id: 'bolt',
     name: 'Bolt.new',
     description: 'Build fullstack no navegador',
+    icon: boltIcon,
     url: 'https://bolt.new',
     buildUrl: (prompt: string) => {
       const encoded = encodeURIComponent(prompt.trim().slice(0, 8000));
@@ -85,6 +92,7 @@ export const BUILD_CONNECTORS: BuildConnector[] = [
     id: 'replit',
     name: 'Replit',
     description: 'IDE online com deploy integrado',
+    icon: replitIcon,
     url: 'https://replit.com',
     promptPrefix: 'Estruture o projeto para deploy rápido com backend integrado.',
     focus: ['fullstack', 'deploy', 'rapid'],
