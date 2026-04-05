@@ -13,7 +13,8 @@ import {
   Sparkles,
   Building2,
   Settings,
-  Target
+  Target,
+  BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
