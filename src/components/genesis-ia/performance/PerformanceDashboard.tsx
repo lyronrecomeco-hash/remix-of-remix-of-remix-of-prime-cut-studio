@@ -113,30 +113,30 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
         .eq('affiliate_id', affiliateId)
         .order('created_at', { ascending: false });
 
-      const activeContracts = contractsData?.filter(c => c.status === 'active').length || 0;
-      const recurringContracts = contractsData?.filter(c => c.is_recurring).length || 0;
+      const activeContracts = contractsData?.filter(c => c.status === 'active' || c.status === 'signed').length || 0;
+      const recurringContracts = contractsData?.filter(c => c.payment_method === 'recurring' || c.payment_method === 'recorrente').length || 0;
       const cancelledContracts = contractsData?.filter(c => c.status === 'cancelled').length || 0;
 
       const contractRows: ContractRow[] = (contractsData || []).map(c => ({
         id: c.id,
-        company_name: c.client_name || c.company_name || 'N/A',
+        company_name: c.contracted_name || 'N/A',
         status: c.status || 'pending',
-        value: c.value || c.total_value || null,
-        type: c.contract_type || 'Serviço',
-        recurring: c.is_recurring || false,
-        next_billing: c.next_billing_date || null,
+        value: c.total_value || null,
+        type: c.service_type || 'Serviço',
+        recurring: c.payment_method === 'recurring' || c.payment_method === 'recorrente',
+        next_billing: c.end_date || null,
         last_interaction: c.updated_at || c.created_at,
       }));
 
       // Sends / Responses
       const { data: sendsData } = await supabase
         .from('affiliate_prospect_sends')
-        .select('id, status, channel, created_at, sent_at, reply_content, reply_received_at, prospect_id')
+        .select('id, status, channel, created_at, sent_at, reply_content, replied_at, prospect_id')
         .eq('affiliate_id', affiliateId)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      const responsesFiltered = (sendsData || []).filter(s => s.reply_content || s.reply_received_at);
+      const responsesFiltered = (sendsData || []).filter(s => s.reply_content || s.replied_at);
 
       setMetrics({
         leadsToday: leadsToday || 0,
