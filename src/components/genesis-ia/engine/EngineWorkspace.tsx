@@ -396,11 +396,22 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                 onAutoArrange={handleAutoArrange}
                 userId={userId}
                 sessionId={session?.id}
+                onOpenWhatsApp={() => setShowWhatsAppModal(true)}
               />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* WhatsApp Config Modal */}
+      {userId && (
+        <WhatsAppConfigModal
+          isOpen={showWhatsAppModal}
+          onClose={() => setShowWhatsAppModal(false)}
+          userId={userId}
+          sessionId={session?.id}
+        />
+      )}
     </div>
   );
 };
