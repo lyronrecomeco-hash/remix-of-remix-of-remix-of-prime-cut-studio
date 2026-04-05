@@ -231,8 +231,8 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
             >
               <div className="flex items-center justify-between mb-2">
                 <Icon className="w-4 h-4 text-white/30" />
-                {card.trend === 'up' && <ArrowUpRight className="w-3.5 h-3.5 text-green-400" />}
-                {card.trend === 'down' && <ArrowDownRight className="w-3.5 h-3.5 text-red-400" />}
+                {card.trend === 'up' && <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400/80" />}
+                {card.trend === 'down' && <ArrowDownRight className="w-3.5 h-3.5 text-destructive/80" />}
               </div>
               <p className="text-lg font-bold text-white">{card.value}</p>
               <p className="text-[10px] text-white/40 mt-0.5">{card.label}</p>
@@ -291,7 +291,7 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
                     <td className="px-4 py-3 text-white/40 hidden sm:table-cell">{c.type}</td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       {c.recurring ? (
-                        <Badge variant="outline" className="text-[9px] border-green-500/30 text-green-400">Sim</Badge>
+                        <Badge variant="outline" className="text-[9px] border-emerald-500/30 text-emerald-400">Sim</Badge>
                       ) : (
                         <span className="text-white/20">—</span>
                       )}
@@ -303,12 +303,12 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
                       <Badge
                         variant="outline"
                         className={`text-[9px] ${
-                          c.status === 'active' ? 'border-green-500/30 text-green-400' :
-                          c.status === 'cancelled' ? 'border-red-500/30 text-red-400' :
+                          c.status === 'active' || c.status === 'signed' ? 'border-emerald-500/30 text-emerald-400' :
+                          c.status === 'cancelled' ? 'border-destructive/30 text-destructive' :
                           'border-yellow-500/30 text-yellow-400'
                         }`}
                       >
-                        {c.status === 'active' ? 'Ativo' : c.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
+                        {c.status === 'active' || c.status === 'signed' ? 'Ativo' : c.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-white/30 hidden lg:table-cell">
@@ -366,7 +366,7 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
                     {r.channel || 'WhatsApp'}
                   </Badge>
                   <span className="text-[10px] text-white/20">
-                    {r.reply_received_at ? format(new Date(r.reply_received_at), 'dd/MM HH:mm', { locale: ptBR }) : '—'}
+                    {r.replied_at ? format(new Date(r.replied_at), 'dd/MM HH:mm', { locale: ptBR }) : '—'}
                   </span>
                 </div>
                 <p className="text-xs text-white/50 line-clamp-2">{r.reply_content || 'Resposta recebida'}</p>

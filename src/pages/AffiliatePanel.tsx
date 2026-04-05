@@ -13,7 +13,8 @@ import {
   Sparkles,
   Building2,
   Settings,
-  Target
+  Target,
+  BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,6 +31,7 @@ import HowItWorksModal from '@/components/affiliate/HowItWorksModal';
 import AffiliateWelcomeModal from '@/components/affiliate/AffiliateWelcomeModal';
 import { AffiliateProfileMenu } from '@/components/affiliate/AffiliateProfileMenu';
 import AffiliateProspecting from '@/components/affiliate/prospecting/AffiliateProspecting';
+import { PerformanceDashboard } from '@/components/genesis-ia/performance/PerformanceDashboard';
 
 interface Affiliate {
   id: string;
@@ -51,6 +53,7 @@ const navItems = [
   { id: 'prospecting', label: 'Prospectar', icon: Target },
   { id: 'proposals', label: 'Modo Empresa', icon: Building2 },
   { id: 'sales', label: 'Minhas Vendas', icon: TrendingUp },
+  { id: 'performance', label: 'Performance', icon: BarChart3 },
   { id: 'ai', label: 'Criar com IA', icon: Sparkles },
   { id: 'materials', label: 'Materiais', icon: FileText },
   { id: 'withdrawals', label: 'Saques', icon: Wallet },
@@ -142,6 +145,8 @@ const AffiliatePanel = () => {
         return <AffiliateProposals affiliateId={affiliate.id} />;
       case 'sales':
         return <AffiliateSales affiliateId={affiliate.id} />;
+      case 'performance':
+        return <PerformanceDashboard affiliateId={affiliate.id} userId={affiliate.id} />;
       case 'ai':
         return <AIContentGenerator affiliateCode={affiliate.affiliate_code} />;
       case 'materials':
