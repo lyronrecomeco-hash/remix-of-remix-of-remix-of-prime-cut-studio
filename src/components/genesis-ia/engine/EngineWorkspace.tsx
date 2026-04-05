@@ -333,6 +333,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                     lastActionType={lastActionType}
                     onAutoArrange={handleAutoArrange}
                     onOpenWhatsApp={() => setShowWhatsAppModal(true)}
+                    onApproval={handleApproval}
                   />
                 </div>
               </ResizablePanel>
