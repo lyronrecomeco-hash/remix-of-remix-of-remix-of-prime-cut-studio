@@ -150,10 +150,21 @@ interface EngineNodeProps {
     icon?: string;
     color?: string;
     description?: string;
+    executionStatus?: BlockExecutionStatus;
+    executionError?: string;
     onContentChange?: (content: string) => void;
   };
   selected?: boolean;
 }
+
+const EXEC_STATUS_INDICATOR: Record<BlockExecutionStatus, { icon: React.ElementType; color: string; pulse?: boolean }> = {
+  idle: { icon: () => null, color: 'transparent' },
+  ready: { icon: CheckCircle2, color: '#60a5fa' },
+  running: { icon: Loader2, color: '#a78bfa', pulse: true },
+  success: { icon: CheckCircle2, color: '#34d399' },
+  failed: { icon: XCircle, color: '#f87171' },
+  skipped: { icon: SkipForward, color: '#6b7280' },
+};
 
 export const EngineNodeComponent = memo(({ data, selected }: EngineNodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
