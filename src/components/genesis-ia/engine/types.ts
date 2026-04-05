@@ -7,6 +7,19 @@ export type EngineNodeType =
   | 'followup' | 'prompt' | 'deploy' | 'notes' | 'checklist'
   | 'whatsapp';
 
+export type BlockExecutionStatus = 'idle' | 'ready' | 'running' | 'success' | 'failed' | 'skipped';
+
+// Blocks that are "executable" (trigger real actions)
+export const EXECUTABLE_BLOCKS: EngineNodeType[] = ['whatsapp', 'automation'];
+
+// Blocks that are "content" blocks (auto-success when filled)
+export const CONTENT_BLOCKS: EngineNodeType[] = [
+  'prospect', 'diagnosis', 'pain', 'opportunity', 'strategy',
+  'offer', 'differentials', 'objections', 'approach', 'scope',
+  'structure', 'integrations', 'followup', 'prompt', 'deploy',
+  'notes', 'checklist',
+];
+
 export interface EngineNodeData {
   label: string;
   content: string;
@@ -14,6 +27,11 @@ export interface EngineNodeData {
   nodeType: EngineNodeType;
   icon?: string;
   color?: string;
+  // Execution state
+  executionStatus?: BlockExecutionStatus;
+  executionError?: string;
+  executionLogs?: string[];
+  lastExecutedAt?: number;
   [key: string]: unknown;
 }
 
@@ -55,6 +73,15 @@ export interface ProposalForEngine {
   notes: string | null;
   questionnaire_answers: Record<string, unknown> | null;
   created_at: string;
+}
+
+export type FlowExecutionStatus = 'idle' | 'validating' | 'running' | 'paused' | 'completed' | 'failed';
+
+export interface FlowValidationError {
+  nodeId: string;
+  nodeLabel: string;
+  message: string;
+  severity: 'error' | 'warning';
 }
 
 // Organized by strategic conversion flow
