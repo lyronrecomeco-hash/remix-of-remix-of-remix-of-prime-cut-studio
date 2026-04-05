@@ -101,17 +101,17 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
         { count: leadsMonth },
         { count: scansTotal },
       ] = await Promise.all([
-        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affiliateId).gte('created_at', todayStart),
-        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affiliateId).gte('created_at', weekStart),
-        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affiliateId).gte('created_at', monthStart),
-        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affiliateId),
+        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affId).gte('created_at', todayStart),
+        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affId).gte('created_at', weekStart),
+        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affId).gte('created_at', monthStart),
+        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affId),
       ]);
 
       // Proposals
       const { data: proposals } = await supabase
         .from('affiliate_proposals')
         .select('id, status, proposal_value, created_at, accepted_at')
-        .eq('affiliate_id', affiliateId);
+        .eq('affiliate_id', affId);
 
       const sent = proposals?.length || 0;
       const accepted = proposals?.filter(p => p.status === 'accepted').length || 0;
@@ -138,7 +138,7 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
       const { data: contractsData } = await supabase
         .from('contracts')
         .select('*')
-        .eq('affiliate_id', affiliateId)
+        .eq('affiliate_id', affId)
         .order('created_at', { ascending: false });
 
       const activeContracts = contractsData?.filter(c => c.status === 'active' || c.status === 'signed').length || 0;
@@ -160,7 +160,7 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
       const { data: sendsData } = await supabase
         .from('affiliate_prospect_sends')
         .select('id, status, channel, created_at, sent_at, reply_content, replied_at, prospect_id')
-        .eq('affiliate_id', affiliateId)
+        .eq('affiliate_id', affId)
         .order('created_at', { ascending: false })
         .limit(50);
 
