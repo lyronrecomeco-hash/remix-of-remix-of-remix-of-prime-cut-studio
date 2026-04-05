@@ -96,9 +96,34 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
   }, [edges, setEdges]);
 
   const onConnect = useCallback((connection: Connection) => {
-    const updated = addEdge(connection, edges) as EngineEdge[];
-    setEdges(updated);
-  }, [edges, setEdges]);
+    // Determine semantic edge type based on source/target node categories
+    const sourceNode = nodes.find(n => n.id === connection.source);
+    const targetNode = nodes.find(n => n.id === connection.target);
+    
+    let semanticType: 'data_flow' | 'execution_flow' = 'data_flow';
+    if (sourceNode?.data?.nodeType && targetNode?.data?.nodeType) {
+      const { BLOCK_CATEGORIES } = require('./types');
+      const sourceCat = BLOCK_CATEGORIES[sourceNode.data.nodeType];
+      const targetCat = BLOCK_CATEGORIES[targetNode.data.nodeType];
+      // If connecting to/from an action block, it's an execution flow
+      if (sourceCat === 'action' || targetCat === 'action') {
+        semanticType = 'execution_flow';
+      }
+    }
+
+    const newEdge = {
+      ...connection,
+      id: `e-${connection.source}-${connection.target}`,
+      type: 'smoothstep',
+      animated: semanticType === 'execution_flow',
+      style: {
+        stroke: semanticType === 'execution_flow' ? '#3b82f680' : 'rgba(255,255,255,0.12)',
+        strokeWidth: semanticType === 'execution_flow' ? 2 : 1.5,
+      },
+      data: { semanticType },
+    };
+    setEdges([...edges, newEdge] as EngineEdge[]);
+  }, [edges, nodes, setEdges]);
 
   // AI canvas action handler
   function handleCanvasAction(action: { type: string; nodes?: any[]; edges?: any[] }) {
