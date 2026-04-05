@@ -308,7 +308,7 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
                           'border-yellow-500/30 text-yellow-400'
                         }`}
                       >
-                        {c.status === 'active' ? 'Ativo' : c.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
+                        {c.status === 'active' || c.status === 'signed' ? 'Ativo' : c.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-white/30 hidden lg:table-cell">
