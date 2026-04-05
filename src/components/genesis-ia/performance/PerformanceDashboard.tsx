@@ -79,8 +79,11 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
   }, [affiliateId, userId]);
 
   useEffect(() => {
-    if (resolvedAffiliateId) loadData();
-    else if (resolvedAffiliateId === null && !loading) setLoading(false);
+    if (resolvedAffiliateId) {
+      loadData();
+    } else {
+      setLoading(false);
+    }
   }, [resolvedAffiliateId, period]);
 
   const loadData = async () => {
