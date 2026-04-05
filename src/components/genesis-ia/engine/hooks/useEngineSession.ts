@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 import type { EngineNode, EngineEdge, EngineSession, ProposalForEngine } from '../types';
 import { NODE_CATALOG } from '../types';
 
+const getNodeType = (node: EngineNode) => node.data?.nodeType;
+
 export function useEngineSession(affiliateId: string | null, proposal: ProposalForEngine | null) {
   const [session, setSession] = useState<EngineSession | null>(null);
   const [nodes, setNodes] = useState<EngineNode[]>([]);
@@ -165,6 +167,12 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
     const catalog = NODE_CATALOG.find(n => n.type === type);
     if (!catalog) return;
 
+    const existingNode = nodes.find((node) => getNodeType(node) === type);
+    if (existingNode) {
+      toast.info(`${catalog.label} já está no canvas.`);
+      return existingNode;
+    }
+
     const newNode: EngineNode = {
       id: `${type}-${Date.now()}`,
       type: type === 'whatsapp' ? 'whatsappNode' : 'engineNode',
@@ -188,7 +196,24 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
   // Add multiple nodes at once (for AI canvas actions)
   const addMultipleNodes = useCallback((newNodesData: any[], newEdgesData?: any[]) => {
     const timestamp = Date.now();
-    const createdNodes: EngineNode[] = newNodesData.map((nd, i) => {
+    const existingTypes = new Set(nodes.map(getNodeType).filter(Boolean));
+    const seenTypes = new Set<string>();
+
+    const filteredNodesData = newNodesData.filter((nd: any) => {
+      const type = nd?.type;
+      if (!type || existingTypes.has(type) || seenTypes.has(type)) {
+        return false;
+      }
+      seenTypes.add(type);
+      return true;
+    });
+
+    if (filteredNodesData.length === 0) {
+      toast.info('Os blocos sugeridos já existem no canvas.');
+      return;
+    }
+
+    const createdNodes: EngineNode[] = filteredNodesData.map((nd, i) => {
       const catalog = NODE_CATALOG.find(n => n.type === nd.type);
       return {
         id: nd.id || `${nd.type}-${timestamp}-${i}`,
@@ -205,18 +230,35 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
       };
     });
 
-    const createdEdges: EngineEdge[] = (newEdgesData || []).map((ed: any, i: number) => ({
-      id: ed.id || `e-ai-${timestamp}-${i}`,
-      source: ed.source,
-      target: ed.target,
-      animated: true,
-    }));
+    const validNodeIds = new Set([...nodes.map((node) => node.id), ...createdNodes.map((node) => node.id)]);
+    const edgeKeys = new Set(edges.map((edge) => `${edge.source}->${edge.target}`));
+
+    const createdEdges: EngineEdge[] = (newEdgesData || [])
+      .filter((ed: any) => ed?.source && ed?.target)
+      .filter((ed: any) => validNodeIds.has(ed.source) && validNodeIds.has(ed.target))
+      .filter((ed: any) => {
+        const key = `${ed.source}->${ed.target}`;
+        if (edgeKeys.has(key)) return false;
+        edgeKeys.add(key);
+        return true;
+      })
+      .map((ed: any, i: number) => ({
+        id: ed.id || `e-ai-${timestamp}-${i}`,
+        source: ed.source,
+        target: ed.target,
+        animated: true,
+      }));
 
     const updatedNodes = [...nodes, ...createdNodes];
     const updatedEdges = [...edges, ...createdEdges];
     setNodes(updatedNodes);
     setEdges(updatedEdges);
     saveSession(updatedNodes, updatedEdges);
+
+    const skippedCount = newNodesData.length - filteredNodesData.length;
+    if (skippedCount > 0) {
+      toast.info(`${skippedCount} bloco(s) duplicado(s) foram ignorados.`);
+    }
   }, [nodes, edges, saveSession]);
 
   const updateNodes = useCallback((newNodes: EngineNode[]) => {

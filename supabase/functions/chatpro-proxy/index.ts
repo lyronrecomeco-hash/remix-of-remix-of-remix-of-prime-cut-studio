@@ -69,7 +69,7 @@ serve(async (req) => {
 
         console.log(`[ChatPro Proxy] test_connection status=${resp.status} data=${JSON.stringify(data)}`);
 
-        const isConnected = resp.ok && data?.connected === true;
+        const isConnected = resp.ok && isConnectedPayload(data);
         
         await supabase.from('engine_whatsapp_connectors').update({
           status: isConnected ? 'connected' : 'disconnected',
@@ -85,38 +85,52 @@ serve(async (req) => {
       }
 
       case 'get_qrcode': {
+        const statusResp = await chatproFetch(`${apiBase}/status`, 'GET', connector.token_hash);
+        const statusData = await safeJson(statusResp);
+        console.log(`[ChatPro Proxy] qr status check status=${statusResp.status} data=${JSON.stringify(statusData)}`);
+
+        if (statusResp.ok && isConnectedPayload(statusData)) {
+          await supabase.from('engine_whatsapp_connectors').update({
+            status: 'connected',
+            last_connected_at: new Date().toISOString(),
+            last_error: null,
+          }).eq('id', connector_id);
+
+          return jsonResponse({ connected: true, status: 'connected', details: statusData });
+        }
+
         // Try multiple QR code endpoint patterns used by ChatPro
         let resp: Response;
         let data: any;
         let qrValue: string | null = null;
 
-        // Attempt 1: POST /generate_qrcode
-        resp = await chatproFetch(`${apiBase}/generate_qrcode`, 'POST', connector.token_hash);
-        data = await safeJson(resp);
-        console.log(`[ChatPro Proxy] qr attempt1 POST /generate_qrcode status=${resp.status} data=${JSON.stringify(data)}`);
-        
-        if (resp.ok && data) {
-          qrValue = data?.qr || data?.base64 || data?.qrcode || data?.value || data?.data?.qrcode || data?.data?.base64 || data?.data?.qr;
-        }
+        const attempts = [
+          { label: 'attempt1 POST /generate_qrcode', url: `${apiBase}/generate_qrcode`, method: 'POST' },
+          { label: 'attempt2 GET /generate_qrcode', url: `${apiBase}/generate_qrcode`, method: 'GET' },
+          { label: 'attempt3 POST /qrcode', url: `${apiBase}/qrcode`, method: 'POST' },
+          { label: 'attempt4 GET /qrcode', url: `${apiBase}/qrcode`, method: 'GET' },
+        ] as const;
 
-        // Attempt 2: GET /generate_qrcode (some versions use GET)
-        if (!qrValue) {
-          resp = await chatproFetch(`${apiBase}/generate_qrcode`, 'GET', connector.token_hash);
+        for (const attempt of attempts) {
+          resp = await chatproFetch(attempt.url, attempt.method, connector.token_hash);
           data = await safeJson(resp);
-          console.log(`[ChatPro Proxy] qr attempt2 GET /generate_qrcode status=${resp.status} data=${JSON.stringify(data)}`);
-          if (resp.ok && data) {
-            qrValue = data?.qr || data?.base64 || data?.qrcode || data?.value || data?.data?.qrcode || data?.data?.base64 || data?.data?.qr;
-          }
-        }
+          console.log(`[ChatPro Proxy] qr ${attempt.label} status=${resp.status} data=${JSON.stringify(data)}`);
 
-        // Attempt 3: POST /qrcode
-        if (!qrValue) {
-          resp = await chatproFetch(`${apiBase}/qrcode`, 'POST', connector.token_hash);
-          data = await safeJson(resp);
-          console.log(`[ChatPro Proxy] qr attempt3 POST /qrcode status=${resp.status} data=${JSON.stringify(data)}`);
-          if (resp.ok && data) {
-            qrValue = data?.qr || data?.base64 || data?.qrcode || data?.value || data?.data?.qrcode || data?.data?.base64 || data?.data?.qr;
+          if (resp.ok && isConnectedPayload(data)) {
+            await supabase.from('engine_whatsapp_connectors').update({
+              status: 'connected',
+              last_connected_at: new Date().toISOString(),
+              last_error: null,
+            }).eq('id', connector_id);
+
+            return jsonResponse({ connected: true, status: 'connected', details: data });
           }
+
+          if (resp.ok && data) {
+            qrValue = extractQrValue(data);
+          }
+
+          if (qrValue) break;
         }
 
         if (qrValue) {
@@ -137,14 +151,39 @@ serve(async (req) => {
       }
 
       case 'disconnect': {
-        const resp = await chatproFetch(`${apiBase}/disconnect`, 'POST', connector.token_hash);
-        const data = await safeJson(resp);
+        const disconnectAttempts = [
+          { label: 'POST /disconnect', url: `${apiBase}/disconnect`, method: 'POST' },
+          { label: 'GET /disconnect', url: `${apiBase}/disconnect`, method: 'GET' },
+          { label: 'POST /logout', url: `${apiBase}/logout`, method: 'POST' },
+        ] as const;
+
+        let disconnectSuccess = false;
+        let data: any = null;
+
+        for (const attempt of disconnectAttempts) {
+          const resp = await chatproFetch(attempt.url, attempt.method, connector.token_hash);
+          data = await safeJson(resp);
+          console.log(`[ChatPro Proxy] disconnect ${attempt.label} status=${resp.status} data=${JSON.stringify(data)}`);
+          if (resp.ok) {
+            disconnectSuccess = true;
+            break;
+          }
+        }
+
+        const statusResp = await chatproFetch(`${apiBase}/status`, 'GET', connector.token_hash);
+        const statusData = await safeJson(statusResp);
+        const stillConnected = statusResp.ok && isConnectedPayload(statusData);
+
+        if (!disconnectSuccess && stillConnected) {
+          return jsonResponse({ error: 'Não foi possível desconectar a instância.', details: statusData || data }, 400);
+        }
 
         await supabase.from('engine_whatsapp_connectors').update({
           status: 'disconnected',
+          last_error: null,
         }).eq('id', connector_id);
 
-        return jsonResponse({ success: true, details: data });
+        return jsonResponse({ success: true, details: data || statusData });
       }
 
       case 'send_message': {
@@ -242,4 +281,29 @@ async function safeJson(resp: Response) {
   } catch {
     return null;
   }
+}
+
+function extractQrValue(data: any) {
+  const candidates = [
+    data?.qr,
+    data?.base64,
+    data?.qrcode,
+    data?.value,
+    data?.data?.qrcode,
+    data?.data?.base64,
+    data?.data?.qr,
+    data?.data?.value,
+  ];
+
+  const qrValue = candidates.find((value) => typeof value === 'string' && value.trim().length > 0);
+  return qrValue || null;
+}
+
+function isConnectedPayload(data: any) {
+  if (!data) return false;
+  if (data.connected === true) return true;
+  if (data.status === 'connected') return true;
+  if (data.status === true && ['is_loged', 'already_connected', 'connected'].includes(String(data.error || '').toLowerCase())) return true;
+  if (String(data.message || '').toLowerCase().includes('conectado')) return true;
+  return false;
 }
