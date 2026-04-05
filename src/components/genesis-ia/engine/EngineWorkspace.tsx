@@ -90,7 +90,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
       prospect: 'Descoberta', diagnosis: 'Descoberta', pain: 'Descoberta', opportunity: 'Descoberta',
       strategy: 'Estratégia', offer: 'Estratégia', differentials: 'Estratégia', objections: 'Estratégia', approach: 'Estratégia',
       scope: 'Técnico', structure: 'Técnico', integrations: 'Técnico', automation: 'Técnico',
-      followup: 'Execução', checklist: 'Execução', deploy: 'Execução', prompt: 'Execução', notes: 'Execução',
+      followup: 'Execução', checklist: 'Execução', deploy: 'Execução', prompt: 'Execução', notes: 'Execução', whatsapp: 'Execução',
     };
 
     const COL_WIDTH = 320;
