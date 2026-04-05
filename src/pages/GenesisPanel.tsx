@@ -666,6 +666,8 @@ export default function GenesisPanel() {
             </Tabs>
           </div>
         );
+      case 'performance':
+        return <PerformanceDashboard affiliateId={null} userId={user?.id || ''} />;
       case 'users':
         return <div className="text-center py-20 text-muted-foreground">Em desenvolvimento...</div>;
       default:
