@@ -366,7 +366,7 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
                     {r.channel || 'WhatsApp'}
                   </Badge>
                   <span className="text-[10px] text-white/20">
-                    {r.reply_received_at ? format(new Date(r.reply_received_at), 'dd/MM HH:mm', { locale: ptBR }) : '—'}
+                    {r.replied_at ? format(new Date(r.replied_at), 'dd/MM HH:mm', { locale: ptBR }) : '—'}
                   </span>
                 </div>
                 <p className="text-xs text-white/50 line-clamp-2">{r.reply_content || 'Resposta recebida'}</p>
