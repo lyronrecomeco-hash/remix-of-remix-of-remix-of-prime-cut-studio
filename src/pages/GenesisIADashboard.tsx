@@ -276,7 +276,7 @@ const GenesisIADashboard = () => {
       case 'viral-saas': return 'SaaS Virais';
       case 'partner-applications': return 'Inscrições';
       case 'help': return 'Central de Ajuda';
-      case 'oferta-quente': return 'Oferta Quente';
+      case 'oferta-quente': return 'Performance';
       default: return null;
     }
   };
@@ -301,7 +301,7 @@ const GenesisIADashboard = () => {
         'partner-applications': 'Inscrições',
         'help': 'Central de Ajuda',
         'settings': 'Configurações',
-        'oferta-quente': 'Oferta Quente',
+        'oferta-quente': 'Performance',
       };
       setRestrictedModal({ open: true, label: labelMap[tabId] || tabId, id: tabId });
       return;
@@ -331,8 +331,8 @@ const GenesisIADashboard = () => {
     { icon: FileText, label: 'Contratos', tabId: 'contracts' },
     // Promo visível apenas para lyronrp@gmail.com e Santiago
     ...((isSuperAdmin || isSantiagoAdmin) ? [{ icon: Gift, label: 'Promo', tabId: 'promocional' as ActiveTab }] : []),
-    // Oferta Quente visível apenas para lyronrp@gmail.com e Santiago
-    ...((isSuperAdmin || isSantiagoAdmin) ? [{ icon: BarChart3, label: 'Oferta Quente', tabId: 'oferta-quente' as ActiveTab }] : []),
+    // Performance visível apenas para lyronrp@gmail.com e Santiago
+    ...((isSuperAdmin || isSantiagoAdmin) ? [{ icon: BarChart3, label: 'Performance', tabId: 'oferta-quente' as ActiveTab }] : []),
     // Usuários só para admin
     ...(isAdmin ? [{ icon: Users, label: 'Usuários', tabId: 'users' as ActiveTab }] : []),
     { icon: LayoutDashboard, label: 'Financeiro', tabId: 'financial' },

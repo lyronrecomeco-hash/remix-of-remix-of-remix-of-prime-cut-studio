@@ -38,6 +38,7 @@ interface ContractRow {
 export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboardProps) => {
   const [period, setPeriod] = useState<'day' | 'week' | 'month'>('month');
   const [loading, setLoading] = useState(true);
+  const [resolvedAffiliateId, setResolvedAffiliateId] = useState<string | null>(affiliateId);
   const [metrics, setMetrics] = useState({
     leadsToday: 0, leadsWeek: 0, leadsMonth: 0,
     scansTotal: 0, leadsConverted: 0, closeRate: 0,
@@ -52,12 +53,42 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
   const [responsePage, setResponsePage] = useState(0);
   const PAGE_SIZE = 10;
 
+  // Resolve affiliateId from userId if not provided
   useEffect(() => {
-    if (affiliateId) loadData();
-  }, [affiliateId, period]);
+    const resolve = async () => {
+      if (affiliateId) {
+        setResolvedAffiliateId(affiliateId);
+        return;
+      }
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const { data } = await supabase
+          .from('affiliates')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+        setResolvedAffiliateId(data?.id || null);
+      } catch {
+        setResolvedAffiliateId(null);
+      }
+    };
+    resolve();
+  }, [affiliateId, userId]);
+
+  useEffect(() => {
+    if (resolvedAffiliateId) {
+      loadData();
+    } else {
+      setLoading(false);
+    }
+  }, [resolvedAffiliateId, period]);
 
   const loadData = async () => {
-    if (!affiliateId) return;
+    const affId = resolvedAffiliateId;
+    if (!affId) return;
     setLoading(true);
 
     const now = new Date();
@@ -73,17 +104,17 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
         { count: leadsMonth },
         { count: scansTotal },
       ] = await Promise.all([
-        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affiliateId).gte('created_at', todayStart),
-        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affiliateId).gte('created_at', weekStart),
-        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affiliateId).gte('created_at', monthStart),
-        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affiliateId),
+        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affId).gte('created_at', todayStart),
+        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affId).gte('created_at', weekStart),
+        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affId).gte('created_at', monthStart),
+        supabase.from('affiliate_prospects').select('*', { count: 'exact', head: true }).eq('affiliate_id', affId),
       ]);
 
       // Proposals
       const { data: proposals } = await supabase
         .from('affiliate_proposals')
         .select('id, status, proposal_value, created_at, accepted_at')
-        .eq('affiliate_id', affiliateId);
+        .eq('affiliate_id', affId);
 
       const sent = proposals?.length || 0;
       const accepted = proposals?.filter(p => p.status === 'accepted').length || 0;
@@ -110,7 +141,7 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
       const { data: contractsData } = await supabase
         .from('contracts')
         .select('*')
-        .eq('affiliate_id', affiliateId)
+        .eq('affiliate_id', affId)
         .order('created_at', { ascending: false });
 
       const activeContracts = contractsData?.filter(c => c.status === 'active' || c.status === 'signed').length || 0;
@@ -132,7 +163,7 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
       const { data: sendsData } = await supabase
         .from('affiliate_prospect_sends')
         .select('id, status, channel, created_at, sent_at, reply_content, replied_at, prospect_id')
-        .eq('affiliate_id', affiliateId)
+        .eq('affiliate_id', affId)
         .order('created_at', { ascending: false })
         .limit(50);
 
