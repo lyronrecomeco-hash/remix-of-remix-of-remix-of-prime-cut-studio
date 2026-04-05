@@ -204,100 +204,199 @@ Seja específico e use dados do prospect. Nada genérico.`;
 
     // ─── TEXT-BASED OUTPUTS ───
     const outputInstructions: Record<string, string> = {
-      prompt: `Gere um BUILD SPEC COMPLETO e ULTRA DETALHADO — um prompt profissional pronto para criar a solução inteira com IA de desenvolvimento.
+      prompt: `Você é um arquiteto de software sênior e estrategista de produto digital de classe mundial. Gere um BUILD SPEC SUPREMO — o documento mais completo, profissional e encantador que uma IA de desenvolvimento já recebeu.
 
-O prompt DEVE cobrir TODAS as seções abaixo com profundidade máxima:
+Este documento deve ser TÃO BOM que qualquer IA de desenvolvimento consiga construir o sistema inteiro sem uma única pergunta. Cada detalhe importa. Cada seção deve ter profundidade real, não superficial.
 
-## 1. VISÃO GERAL DO PROJETO
-- Nome do projeto, objetivo principal, público-alvo, proposta de valor
-- Problema que resolve, modelo de negócio
+REGRAS DE QUALIDADE ABSOLUTA:
+- Use dados REAIS do prospect nos exemplos, nomes de páginas, textos, branding
+- NUNCA use placeholders genéricos como "Lorem ipsum" ou "[Nome da empresa]" — use o nome real
+- Cada endpoint deve ter método, rota, payload completo e resposta de exemplo
+- Cada tabela deve ter TODOS os campos com tipo, default e constraint
+- Cada página deve ter layout descrito seção por seção
+- O prompt deve ser executável, não um rascunho
 
-## 2. FRONTEND
-- Framework: React 18 + Vite + TypeScript + Tailwind CSS
-- Todas as páginas e rotas (com descrição de cada tela)
-- Componentes reutilizáveis, design system, paleta de cores, tipografia
-- Responsividade mobile-first, animações com Framer Motion
-- SEO: meta tags, Open Graph, sitemap, robots.txt
-- PWA se aplicável
+---
 
-## 3. BACKEND COMPLETO
-- Arquitetura de serviços e controllers
-- APIs RESTful: TODOS os endpoints (método, rota, payload, resposta)
-- Autenticação (email/senha, Google, magic link) com JWT
-- Autorização: roles (admin, user, moderator), permissões por recurso
-- Middlewares: auth, rate limiting, logging, error handling, CORS
-- Validações com Zod em todas as entradas
-- Workers e jobs assíncronos (quando aplicável)
-- Webhooks (receber e enviar)
-- Upload de arquivos e storage
+# 🏗️ BUILD SPEC COMPLETO
 
-## 4. BANCO DE DADOS DETALHADO
-- TODAS as tabelas com campos, tipos, defaults, constraints
-- Relações entre tabelas (foreign keys, indexes)
-- RLS policies para cada tabela (quem pode ler, criar, editar, deletar)
-- Triggers e functions (updated_at, contadores, validações)
-- Seeds de dados iniciais
-- Migrations em ordem
+## 1. IDENTIDADE E VISÃO DO PRODUTO
+- Nome do projeto (sugerir um nome profissional se não tiver)
+- Tagline de produto (uma frase que vende)
+- Problema que resolve (em linguagem do cliente final)
+- Público-alvo primário e secundário com perfil detalhado
+- Proposta de valor única (o que diferencia de TUDO no mercado)
+- Modelo de negócio e monetização
+- Visão de 6 meses: como o produto deve crescer
+- KPIs de sucesso: métricas que definem se o produto está funcionando
 
-## 5. INTEGRAÇÕES
-- Lista de APIs externas com endpoint, autenticação, payload
-- Webhooks de entrada e saída
-- Serviços de email (Resend/SendGrid), SMS, WhatsApp
-- Payment gateways se aplicável
-- Analytics e tracking
+## 2. DESIGN SYSTEM & IDENTIDADE VISUAL
+- Paleta de cores (5-7 cores em HSL): primary, secondary, accent, background, foreground, muted, destructive
+- Tipografia: font-family para headings e body (sugerir Google Fonts específicas para o nicho)
+- Estilo visual: minimalista, bold, editorial, orgânico — definir com convicção baseado no nicho
+- Border radius padrão, shadows, spacing scale
+- Componentes base: Button (3+ variants), Card, Badge, Avatar, Table, Modal
+- Dark mode: sim/não, e se sim, tokens para ambos os modos
+- Ícones: biblioteca recomendada (Lucide, Phosphor, etc.)
+- Animações: transições de página, hover effects, loading animations (Framer Motion)
+- Referências visuais: citar 2-3 sites reais do mesmo nicho como inspiração
 
-## 6. AUTOMAÇÕES
-- Todos os fluxos automáticos: gatilho → condição → ação
-- Notificações (email, push, in-app)
-- Cron jobs e agendamentos
-- Retry strategies e fallbacks
-- Follow-up automático
+## 3. FRONTEND — PÁGINAS E ROTAS COMPLETAS
+Para CADA página, detalhar:
+- **Rota**: /path exato
+- **Título e meta description** (SEO)
+- **Layout**: header, hero/main, sidebar se houver, footer
+- **Seções**: descrever cada seção com conteúdo real (textos, CTAs, imagens sugeridas)
+- **Estados**: loading, empty, error, success
+- **Responsividade**: o que muda em mobile
+- **Interações**: o que acontece ao clicar, hover, scroll
 
-## 7. PAINEL ADMINISTRATIVO
-- Dashboard com métricas e gráficos
-- CRUD completo de todas as entidades
-- Gestão de usuários e permissões
-- Logs e auditoria
-- Configurações do sistema
-- Exportação de dados
+Incluir no mínimo:
+- Landing page com hero, features, testimonials, pricing, CTA, footer
+- Login/Cadastro (com validação e UX amigável)
+- Dashboard principal com métricas reais
+- Páginas de CRUD para cada entidade
+- Página de perfil/configurações
+- Painel admin (se aplicável)
+- Páginas de erro (404, 500)
 
-## 8. UX E EXPERIÊNCIA
-- Fluxos do usuário (onboarding, main flow, edge cases)
-- Feedback visual (loading, success, error states)
-- Empty states, skeleton loaders
-- Acessibilidade (ARIA, keyboard nav, contraste)
-- Internacionalização (se aplicável)
+## 4. BACKEND — ARQUITETURA COMPLETA
+- Framework: Supabase (Edge Functions + PostgreSQL + Auth + Storage + Realtime)
+- Arquitetura de serviços (quais edge functions criar)
+- Para CADA endpoint/function:
+  \`\`\`
+  [MÉTODO] /rota
+  Auth: required | optional | public
+  Payload: { campo: tipo, ... }
+  Resposta 200: { campo: tipo, ... }
+  Resposta 400/401/500: { error: "mensagem" }
+  Validação: regras de cada campo
+  Rate limit: X req/min
+  \`\`\`
+- Autenticação: email/senha + magic link + Google OAuth
+- Autorização por roles: definir CADA role e suas permissões exatas
+- Middlewares: auth verification, input validation (Zod), error handling, CORS, rate limiting
+- File uploads: quais entidades aceitam upload, tamanho máximo, tipos permitidos
+- Webhooks: quais receber, quais enviar, payload de cada um
+- Workers: jobs assíncronos, processamento em background
 
-## 9. PERFORMANCE E SEGURANÇA
-- Cache strategy (browser, CDN, server)
-- Lazy loading e code splitting
-- Rate limiting por endpoint
+## 5. BANCO DE DADOS — SCHEMA COMPLETO
+Para CADA tabela:
+\`\`\`sql
+CREATE TABLE public.nome_tabela (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campo_1 TIPO NOT NULL DEFAULT valor,
+  campo_2 TIPO,
+  -- ... todos os campos
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS
+ALTER TABLE public.nome_tabela ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "descrição" ON public.nome_tabela FOR SELECT USING (condição);
+-- ... todas as policies
+
+-- Indexes
+CREATE INDEX idx_nome ON public.nome_tabela(campo);
+
+-- Triggers
+CREATE TRIGGER update_nome_tabela_updated_at
+  BEFORE UPDATE ON public.nome_tabela
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+\`\`\`
+- Seeds de dados iniciais para cada tabela
+- Relações (foreign keys) documentadas
+- Diagrama de relacionamento em formato textual
+
+## 6. INTEGRAÇÕES EXTERNAS
+Para cada integração:
+- Nome do serviço e finalidade
+- Tipo de auth (API Key, OAuth, Webhook)
+- Endpoints usados com payload e resposta
+- Variáveis de ambiente necessárias
+- Fallback se o serviço estiver fora do ar
+- Incluir: WhatsApp (ChatPro), Email (Resend), Pagamentos (se aplicável), Analytics, Storage
+
+## 7. AUTOMAÇÕES E FLUXOS
+Para cada automação:
+- **Gatilho**: o que dispara (evento, cron, webhook)
+- **Condição**: verificações antes de executar
+- **Ação**: o que acontece
+- **Canal**: email, whatsapp, push, in-app
+- **Delay**: imediato, 1h, 24h, 3 dias
+- **Retry**: quantas tentativas, intervalo
+- **Fallback**: o que fazer se falhar
+- **Log**: o que registrar
+
+Incluir: onboarding automático, follow-up, lembretes, notificações de status, emails transacionais
+
+## 8. PAINEL ADMINISTRATIVO
+- Dashboard com gráficos (Recharts): métricas do dia, semana, mês
+- Tabelas com paginação, busca, filtros e ordenação
+- CRUD completo de cada entidade com formulários validados
+- Gestão de usuários: listar, editar roles, bloquear, excluir
+- Logs de auditoria: quem fez o quê e quando
+- Configurações do sistema: parâmetros editáveis
+- Exportação de dados: CSV, PDF
+
+## 9. UX PREMIUM
+- Onboarding: wizard de primeiro uso, empty states educativos
+- Feedback: toast notifications, modais de confirmação, skeleton loaders
+- Micro-interações: hover effects, transitions suaves, progress indicators
+- Acessibilidade: ARIA labels, keyboard navigation, contraste WCAG AA
+- Performance percebida: optimistic updates, prefetch de dados
+- Empty states com ilustração e CTA
+
+## 10. SEGURANÇA E PERFORMANCE
+- Input sanitization em TODOS os campos
+- Rate limiting por IP e por usuário
 - Proteção contra XSS, CSRF, SQL injection
-- Sanitização de inputs
-- Backup strategy
-- Monitoramento e alertas
+- Validação server-side com Zod em cada endpoint
+- Cache strategy: quais dados cachear, TTL de cada um
+- Lazy loading de rotas e componentes pesados
+- Image optimization: formatos, tamanhos, lazy loading
+- Bundle analysis: manter abaixo de 200KB initial load
 
-## 10. DEPLOY E INFRAESTRUTURA
-- Ambientes: dev, staging, production
-- Environment variables necessárias
-- CI/CD pipeline sugerido
-- Domínio e DNS
-- SSL/TLS
-- Rollback strategy
-- Scripts de setup e terminal
-
-## 11. TESTES
-- Testes unitários para funções críticas
-- Testes de integração para APIs
-- Testes E2E para fluxos principais
-- Cobertura mínima recomendada
+## 11. DEPLOY E INFRAESTRUTURA
+- Ambiente: Supabase (managed) + Vercel/Lovable (frontend)
+- Environment variables: lista COMPLETA com descrição de cada uma
+- Domínio e DNS: configuração
+- SSL: automático via provider
+- CI/CD: testes antes de deploy, rollback strategy
+- Monitoramento: health checks, alertas de erro
+- Backup: frequência, retenção
 
 ## 12. ESTRUTURA DE PASTAS
-- Árvore completa de diretórios e arquivos
-- Convenções de nomenclatura
-- Organização de features/modules
+\`\`\`
+src/
+├── components/
+│   ├── ui/          # Design system base
+│   ├── layout/      # Header, Footer, Sidebar
+│   ├── features/    # Componentes por feature
+│   └── shared/      # Componentes compartilhados
+├── pages/           # Rotas/páginas
+├── hooks/           # Custom hooks
+├── lib/             # Utilitários e helpers
+├── services/        # Lógica de API
+├── types/           # TypeScript types
+├── integrations/    # Configurações de serviços
+└── assets/          # Imagens, fontes
+\`\`\`
+Listar CADA arquivo que deve ser criado com breve descrição.
 
-O resultado deve ser um documento COMPLETO e PRONTO PARA USO que uma IA de desenvolvimento possa seguir para construir o sistema inteiro sem ambiguidade.`,
+## 13. CHECKLIST DE QUALIDADE
+- [ ] Todas as páginas responsivas (mobile, tablet, desktop)
+- [ ] Todos os formulários com validação visual
+- [ ] Todos os endpoints com tratamento de erro
+- [ ] RLS policies em todas as tabelas
+- [ ] SEO completo (meta tags, sitemap, robots.txt)
+- [ ] Performance: Lighthouse > 90
+- [ ] Acessibilidade: WCAG AA
+- [ ] Testes das funções críticas
+- [ ] Documentação de API
+
+O resultado DEVE ser um documento ENCANTADOR, COMPLETO e IMEDIATAMENTE EXECUTÁVEL. Uma IA de desenvolvimento deve conseguir construir o sistema INTEIRO seguindo apenas este documento, sem ambiguidade alguma.`,
 
       scope: `Gere um ESCOPO TÉCNICO COMPLETO e DETALHADO incluindo:
 - Módulos do sistema com descrição detalhada
