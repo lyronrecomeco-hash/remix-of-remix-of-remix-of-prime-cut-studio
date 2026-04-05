@@ -70,8 +70,8 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
 
   // Flow Runtime
   const {
-    flowStatus, validationErrors, executionLogs,
-    validateFlow, runFlow, pauseFlow, resetFlow, retryFailed,
+    flowStatus, validationErrors, executionLogs, preFlightSummary,
+    validateFlow, generatePreFlight, runFlow, pauseFlow, resetFlow, retryFailed,
   } = useFlowRuntime({
     nodes,
     edges,
