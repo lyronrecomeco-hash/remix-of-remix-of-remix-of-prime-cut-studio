@@ -154,7 +154,7 @@ export function useEngineSession(affiliateId: string | null, proposal: ProposalF
 
     const newNode: EngineNode = {
       id: `${type}-${Date.now()}`,
-      type: 'engineNode',
+      type: type === 'whatsapp' ? 'whatsappNode' : 'engineNode',
       position: { x: 250 + Math.random() * 200, y: 200 + Math.random() * 150 },
       data: {
         label: catalog.label,
