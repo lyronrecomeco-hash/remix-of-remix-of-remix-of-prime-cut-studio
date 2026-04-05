@@ -44,7 +44,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
   } = useEngineSession(affiliateId, proposal);
 
   const {
-    isGenerating, streamContent, outputs, lastActionType, generate, clearStream,
+    isGenerating, outputs, lastActionType, generate, messages, activityLog,
   } = useEngineAI({
     nodes,
     edges,
@@ -324,16 +324,14 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                 <div className="h-full overflow-hidden bg-white/[0.02] border-l border-white/[0.06] flex flex-col">
                   <AICommandPanel
                     isGenerating={isGenerating}
-                    streamContent={streamContent}
                     outputs={outputs}
                     onGenerate={handleGenerate}
+                    messages={messages}
+                    activityLog={activityLog}
                     prospectName={proposal.company_name}
                     nodes={nodes}
                     lastActionType={lastActionType}
-                    prospectContext={session?.prospect_context || {}}
                     onAutoArrange={handleAutoArrange}
-                    userId={userId}
-                    sessionId={session?.id}
                     onOpenWhatsApp={() => setShowWhatsAppModal(true)}
                   />
                 </div>
@@ -396,16 +394,14 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
             <div className="flex-1 overflow-hidden">
               <AICommandPanel
                 isGenerating={isGenerating}
-                streamContent={streamContent}
                 outputs={outputs}
                 onGenerate={handleGenerate}
+                messages={messages}
+                activityLog={activityLog}
                 prospectName={proposal.company_name}
                 nodes={nodes}
                 lastActionType={lastActionType}
-                prospectContext={session?.prospect_context || {}}
                 onAutoArrange={handleAutoArrange}
-                userId={userId}
-                sessionId={session?.id}
                 onOpenWhatsApp={() => setShowWhatsAppModal(true)}
               />
             </div>
