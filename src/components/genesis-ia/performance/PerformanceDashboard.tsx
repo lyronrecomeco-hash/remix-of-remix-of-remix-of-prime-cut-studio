@@ -114,7 +114,7 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
         .order('created_at', { ascending: false });
 
       const activeContracts = contractsData?.filter(c => c.status === 'active' || c.status === 'signed').length || 0;
-      const recurringContracts = contractsData?.filter(c => c.payment_method === 'recurring' || c.payment_frequency !== 'once').length || 0;
+      const recurringContracts = contractsData?.filter(c => c.payment_method === 'recurring' || c.payment_method === 'recorrente').length || 0;
       const cancelledContracts = contractsData?.filter(c => c.status === 'cancelled').length || 0;
 
       const contractRows: ContractRow[] = (contractsData || []).map(c => ({
@@ -123,7 +123,7 @@ export const PerformanceDashboard = ({ affiliateId, userId }: PerformanceDashboa
         status: c.status || 'pending',
         value: c.total_value || null,
         type: c.service_type || 'Serviço',
-        recurring: c.payment_frequency !== 'once',
+        recurring: c.payment_method === 'recurring' || c.payment_method === 'recorrente',
         next_billing: c.end_date || null,
         last_interaction: c.updated_at || c.created_at,
       }));
