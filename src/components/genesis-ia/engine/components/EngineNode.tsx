@@ -319,9 +319,16 @@ export const EngineNodeComponent = memo(({ data, selected }: EngineNodeProps) =>
             className="h-full rounded-full transition-all"
             style={{
               width: `${Math.min(100, (content.length / 200) * 100)}%`,
-              background: `${color}60`,
+              background: execStatus === 'success' ? '#34d39960' : execStatus === 'failed' ? '#f8717160' : `${color}60`,
             }}
           />
+        </div>
+      )}
+
+      {/* Execution error */}
+      {data.executionError && (
+        <div className="mx-3 mb-2 px-2 py-1 rounded bg-red-500/[0.08] border border-red-500/[0.12]">
+          <span className="text-[9px] text-red-300/80">{data.executionError}</span>
         </div>
       )}
     </div>
