@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, FileText, Target, Layers, Shield, CheckSquare, BarChart, Send,
   Copy, Loader2, Cpu, Zap, ChevronDown, ChevronRight, Terminal, Rocket,
-  AlertCircle, Lightbulb, Search, LayoutGrid
+  AlertCircle, Lightbulb, Search, LayoutGrid, MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import type { EngineNode } from '../types';
 import { ExecutionPanel } from './ExecutionPanel';
+import { WhatsAppConnectorPanel } from './WhatsAppConnectorPanel';
 
 interface AICommandPanelProps {
   isGenerating: boolean;
