@@ -368,7 +368,11 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                 </button>
               </div>
               <div className="p-3">
-                <NodeCatalogPanel onAddNode={(type) => { addNode(type); setMobileLeftOpen(false); }} />
+                <NodeCatalogPanel onAddNode={(type) => { 
+                  if (type === 'whatsapp') setShowWhatsAppModal(true);
+                  addNode(type); 
+                  setMobileLeftOpen(false); 
+                }} />
               </div>
             </motion.div>
           </>
