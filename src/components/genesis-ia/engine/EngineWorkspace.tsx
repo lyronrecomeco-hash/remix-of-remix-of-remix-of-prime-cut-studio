@@ -33,6 +33,7 @@ import { useEngineSession } from './hooks/useEngineSession';
 import { useEngineAI } from './hooks/useEngineAI';
 import { useFlowRuntime } from './hooks/useFlowRuntime';
 import type { ProposalForEngine, EngineNode, EngineEdge } from './types';
+import { BLOCK_CATEGORIES } from './types';
 
 interface EngineWorkspaceProps {
   affiliateId: string;
