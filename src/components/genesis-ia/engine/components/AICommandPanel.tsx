@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import type { EngineNode } from '../types';
 import { ExecutionPanel } from './ExecutionPanel';
-import { WhatsAppConnectorPanel } from './WhatsAppConnectorPanel';
 
 interface AICommandPanelProps {
   isGenerating: boolean;
@@ -24,6 +23,7 @@ interface AICommandPanelProps {
   onAutoArrange?: () => void;
   userId?: string | null;
   sessionId?: string;
+  onOpenWhatsApp?: () => void;
 }
 
 const ACTION_GROUPS = [
