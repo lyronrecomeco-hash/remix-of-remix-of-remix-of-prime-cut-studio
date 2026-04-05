@@ -264,6 +264,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
                     prospectName={proposal.company_name}
                     nodes={nodes}
                     lastActionType={lastActionType}
+                    prospectContext={session?.prospect_context || {}}
                   />
                 </div>
               </ResizablePanel>
