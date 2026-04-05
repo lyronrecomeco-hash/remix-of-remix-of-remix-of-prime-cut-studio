@@ -104,6 +104,14 @@ const BLOCK_FIELDS: Record<string, { key: string; label: string; placeholder: st
     { key: 'canal', label: 'Canal', placeholder: 'WhatsApp, email, call...' },
     { key: 'template', label: 'Template', placeholder: 'Modelo de mensagem' },
   ],
+  whatsapp: [
+    { key: 'provider', label: 'Provider', placeholder: 'ChatPro' },
+    { key: 'telefone', label: 'Telefone', placeholder: '+55 ...' },
+    { key: 'mensagem', label: 'Mensagem', placeholder: 'Texto a enviar' },
+    { key: 'agendamento', label: 'Agendamento', placeholder: 'Imediato, data...' },
+    { key: 'gatilho', label: 'Gatilho', placeholder: 'Quando disparar' },
+    { key: 'status', label: 'Status', placeholder: 'Pendente, enviado...' },
+  ],
   checklist: [
     { key: 'itens', label: 'Itens', placeholder: 'Lista de tarefas' },
     { key: 'fase', label: 'Fase', placeholder: 'Setup, Core, Deploy...' },
