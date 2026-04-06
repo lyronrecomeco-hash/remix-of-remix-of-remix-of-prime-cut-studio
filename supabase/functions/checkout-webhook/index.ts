@@ -416,6 +416,9 @@ serve(async (req) => {
       );
     }
 
+    // Track if payment was just auto-created (for subscription activation)
+    let wasAutoCreated = false;
+    
     // Find payment by gateway-specific ID
     let payment;
     if (gateway === 'cakto') {
@@ -429,26 +432,148 @@ serve(async (req) => {
       if (error) console.log('Cakto payment lookup error:', error);
       
       // If not found by order_id, try extracting customer email and finding by that
-      if (!payment && body.customer?.email) {
-        const customerEmail = (body.customer?.email || '').toLowerCase();
-        console.log('[Cakto Webhook] Payment not found by ID, trying by customer email:', customerEmail);
+      if (!payment) {
+        const caktoData = body.data || body;
+        const caktoCustomer = caktoData.customer || body.customer || {};
+        const customerEmail = (caktoCustomer.email || caktoData.customerEmail || body.email || '').toLowerCase();
         
-        const { data: customerData } = await supabase
-          .from('checkout_customers')
-          .select('id')
-          .eq('email', customerEmail)
-          .maybeSingle();
-        
-        if (customerData) {
-          const { data: paymentByCustomer } = await supabase
-            .from('checkout_payments')
-            .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
-            .eq('customer_id', customerData.id)
-            .eq('gateway', 'cakto')
-            .order('created_at', { ascending: false })
-            .limit(1)
+        if (customerEmail) {
+          const { data: customerData } = await supabase
+            .from('checkout_customers')
+            .select('id')
+            .eq('email', customerEmail)
             .maybeSingle();
-          payment = paymentByCustomer;
+          
+          if (customerData) {
+            const { data: paymentByCustomer } = await supabase
+              .from('checkout_payments')
+              .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
+              .eq('customer_id', customerData.id)
+              .eq('gateway', 'cakto')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            payment = paymentByCustomer;
+          }
+        }
+
+        // AUTO-CREATE: If still no payment found, create customer + payment from Cakto payload
+        if (!payment && customerEmail) {
+          console.log('[Cakto Auto-Create] Creating customer + payment from webhook data');
+          
+          const caktoOffer = caktoData.offer || body.offer || {};
+          const customerName = caktoCustomer.name || `${caktoCustomer.first_name || ''} ${caktoCustomer.last_name || ''}`.trim() || '';
+          const customerPhone = caktoCustomer.phone || caktoCustomer.cellphone || caktoData.customerCellphone || '';
+          const customerDoc = caktoCustomer.docNumber || caktoData.docNumber || '00000000000';
+          const orderAmount = caktoData.amount || caktoData.baseAmount || caktoOffer.price || 0;
+          const amountCents = Math.round(Number(orderAmount) * 100);
+          
+          // Parse name into first/last
+          const nameParts = customerName.split(' ');
+          const firstName = nameParts[0] || 'Cliente';
+          const lastName = nameParts.slice(1).join(' ') || '';
+          
+          // Upsert customer
+          const { data: existingCust } = await supabase
+            .from('checkout_customers')
+            .select('id')
+            .eq('email', customerEmail)
+            .maybeSingle();
+          
+          let customerId: string;
+          if (existingCust) {
+            customerId = existingCust.id;
+            // Update customer name/phone
+            await supabase
+              .from('checkout_customers')
+              .update({ first_name: firstName, last_name: lastName, phone: customerPhone.replace(/\D/g, '') || '00000000000', updated_at: new Date().toISOString() })
+              .eq('id', customerId);
+            console.log('[Cakto Auto-Create] Updated existing customer:', customerId);
+          } else {
+            const { data: newCust, error: custErr } = await supabase
+              .from('checkout_customers')
+              .insert({
+                email: customerEmail,
+                first_name: firstName,
+                last_name: lastName,
+                phone: customerPhone.replace(/\D/g, '') || '00000000000',
+                cpf: customerDoc.replace(/\D/g, '') || '00000000000',
+              })
+              .select('id')
+              .single();
+            if (custErr || !newCust) {
+              console.error('[Cakto Auto-Create] Customer insert error:', custErr);
+              customerId = '';
+            } else {
+              customerId = newCust.id;
+              console.log('[Cakto Auto-Create] Created customer:', customerId);
+            }
+          }
+          
+          if (customerId) {
+            // Try to match a plan by price
+            let planId: string | null = null;
+            if (amountCents > 0) {
+              const { data: matchedPlan } = await supabase
+                .from('checkout_plans')
+                .select('id')
+                .or(`price_cents.eq.${amountCents},promo_price_cents.eq.${amountCents}`)
+                .eq('is_active', true)
+                .limit(1)
+                .maybeSingle();
+              if (matchedPlan) planId = matchedPlan.id;
+            }
+            // Fallback: monthly plan
+            if (!planId) {
+              const { data: monthlyPlan } = await supabase
+                .from('checkout_plans')
+                .select('id')
+                .eq('name', 'monthly')
+                .eq('is_active', true)
+                .maybeSingle();
+              if (monthlyPlan) planId = monthlyPlan.id;
+            }
+            
+            // Create payment record
+              // Generate payment code
+              const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+              let payCode = 'PAY-';
+              for (let i = 0; i < 12; i++) {
+                payCode += chars[Math.floor(Math.random() * chars.length)];
+                if (i === 3 || i === 7) payCode += '-';
+              }
+
+              const { data: newPayment, error: payErr } = await supabase
+              .from('checkout_payments')
+              .insert({
+                payment_code: payCode,
+                customer_id: customerId,
+                plan_id: planId,
+                amount_cents: amountCents || 19700,
+                currency: 'BRL',
+                gateway: 'cakto',
+                status: newStatus,
+                cakto_order_id: paymentId,
+                paid_at: newStatus === 'paid' ? new Date().toISOString() : null,
+                metadata: {
+                  source: 'cakto_webhook_auto',
+                  cakto_event: rawCaktoEvent,
+                  offer_name: caktoOffer.name || null,
+                  customer_name: customerName,
+                  customer_email: customerEmail,
+                },
+              })
+              .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
+              .single();
+            
+            if (payErr || !newPayment) {
+              console.error('[Cakto Auto-Create] Payment insert error:', payErr);
+            } else {
+              payment = newPayment;
+              wasAutoCreated = true;
+              console.log('[Cakto Auto-Create] ✅ Created payment:', newPayment.id, 'code:', newPayment.payment_code);
+            }
+          }
         }
       }
     } else if (gateway === 'misticpay') {
@@ -505,7 +630,7 @@ serve(async (req) => {
     }
 
     // ============= ACTIVATE SUBSCRIPTION WHEN PAYMENT IS CONFIRMED =============
-    if (newStatus === 'paid' && !wasAlreadyPaid) {
+    if (newStatus === 'paid' && (!wasAlreadyPaid || wasAutoCreated)) {
       console.log('[Subscription Activation] Starting activation flow...');
       
       try {
