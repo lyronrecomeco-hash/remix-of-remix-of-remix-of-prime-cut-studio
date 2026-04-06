@@ -97,11 +97,49 @@ serve(async (req) => {
       const possibleCaktoEvent = normalizedCaktoEvent || rawCaktoEvent;
       gateway = 'cakto';
       
+      // ========= VALIDATE CAKTO SECRET =========
+      // Cakto sends a "secret" field in the body payload
+      const caktoSecret = body.secret;
+      
+      // Get expected Cakto secret from gateway config
+      const { data: caktoGateway } = await supabase
+        .from('checkout_gateway_config')
+        .select('webhook_secret')
+        .eq('gateway', 'cakto')
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      const expectedCaktoSecret = caktoGateway?.webhook_secret || Deno.env.get('CAKTO_WEBHOOK_SECRET');
+      
+      // If we have an expected secret configured, validate it
+      if (expectedCaktoSecret && caktoSecret && caktoSecret !== expectedCaktoSecret) {
+        console.error('[Cakto Webhook] ❌ Invalid secret! Rejecting webhook.');
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized - invalid secret' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       // Cakto sends data nested under body.data
       const caktoData = body.data || body;
       paymentId = caktoData.id || caktoData.refId || body.id || body.transaction_id || body.order_id || null;
+      
+      // ========= VALIDATE PAYMENT STATUS FROM CAKTO DATA =========
+      // For purchase_approved, verify the payment actually has a paidAt timestamp
+      const caktoPaymentStatus = caktoData.status || '';
+      const caktoPaidAt = caktoData.paidAt || null;
+      
+      if (possibleCaktoEvent === 'purchase_approved') {
+        // Cakto should send status as "approved" or "paid" AND have a paidAt date
+        const validStatuses = ['approved', 'paid', 'completed'];
+        if (!validStatuses.includes(caktoPaymentStatus) && !caktoPaidAt) {
+          console.warn(`[Cakto Webhook] ⚠️ purchase_approved received but data.status="${caktoPaymentStatus}" and no paidAt. Treating as pending.`);
+          // Override: don't mark as paid without confirmation
+          newStatus = 'pending';
+        }
+      }
 
-      console.log(`[Cakto Webhook] Event: ${possibleCaktoEvent} (raw: ${rawCaktoEvent}), PaymentId: ${paymentId}`);
+      console.log(`[Cakto Webhook] Event: ${possibleCaktoEvent} (raw: ${rawCaktoEvent}), PaymentId: ${paymentId}, Status: ${caktoPaymentStatus}, PaidAt: ${caktoPaidAt}`);
 
       // Extract customer & product data from real Cakto payload structure
       const caktoCustomer = caktoData.customer || body.customer || {};
@@ -260,10 +298,21 @@ serve(async (req) => {
           eventType = possibleCaktoEvent;
           newStatus = 'pending';
           break;
-        case 'purchase_approved':
-          newStatus = 'paid';
-          eventType = 'payment_confirmed';
+        case 'purchase_approved': {
+          // Only mark as paid if validation passed (newStatus wasn't overridden to pending above)
+          const caktoDataCheck = body.data || body;
+          const hasPaidConfirmation = caktoDataCheck.paidAt || 
+            ['approved', 'paid', 'completed'].includes(caktoDataCheck.status || '');
+          if (hasPaidConfirmation) {
+            newStatus = 'paid';
+            eventType = 'payment_confirmed';
+          } else {
+            newStatus = 'pending';
+            eventType = 'purchase_approved_unconfirmed';
+            console.warn('[Cakto Webhook] ⚠️ purchase_approved without paidAt or valid status — keeping as pending');
+          }
           break;
+        }
         case 'purchase_refused':
           newStatus = 'failed';
           eventType = 'payment_failed';
