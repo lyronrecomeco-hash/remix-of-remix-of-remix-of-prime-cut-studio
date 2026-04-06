@@ -630,7 +630,7 @@ serve(async (req) => {
     }
 
     // ============= ACTIVATE SUBSCRIPTION WHEN PAYMENT IS CONFIRMED =============
-    if (newStatus === 'paid' && !wasAlreadyPaid) {
+    if (newStatus === 'paid' && (!wasAlreadyPaid || wasAutoCreated)) {
       console.log('[Subscription Activation] Starting activation flow...');
       
       try {
