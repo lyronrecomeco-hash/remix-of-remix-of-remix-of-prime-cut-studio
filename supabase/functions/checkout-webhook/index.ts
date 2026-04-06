@@ -298,10 +298,21 @@ serve(async (req) => {
           eventType = possibleCaktoEvent;
           newStatus = 'pending';
           break;
-        case 'purchase_approved':
-          newStatus = 'paid';
-          eventType = 'payment_confirmed';
+        case 'purchase_approved': {
+          // Only mark as paid if validation passed (newStatus wasn't overridden to pending above)
+          const caktoDataCheck = body.data || body;
+          const hasPaidConfirmation = caktoDataCheck.paidAt || 
+            ['approved', 'paid', 'completed'].includes(caktoDataCheck.status || '');
+          if (hasPaidConfirmation) {
+            newStatus = 'paid';
+            eventType = 'payment_confirmed';
+          } else {
+            newStatus = 'pending';
+            eventType = 'purchase_approved_unconfirmed';
+            console.warn('[Cakto Webhook] ⚠️ purchase_approved without paidAt or valid status — keeping as pending');
+          }
           break;
+        }
         case 'purchase_refused':
           newStatus = 'failed';
           eventType = 'payment_failed';
