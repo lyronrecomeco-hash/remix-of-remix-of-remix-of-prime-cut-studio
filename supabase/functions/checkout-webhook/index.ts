@@ -818,6 +818,7 @@ serve(async (req) => {
               status: 'active',
               max_instances: planConfig.max_instances,
               max_flows: planConfig.max_flows,
+              user_type: 'client',
               started_at: now.toISOString(),
               expires_at: expiresAt.toISOString(),
               updated_at: now.toISOString(),
