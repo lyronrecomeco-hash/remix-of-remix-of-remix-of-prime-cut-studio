@@ -570,6 +570,7 @@ serve(async (req) => {
               console.error('[Cakto Auto-Create] Payment insert error:', payErr);
             } else {
               payment = newPayment;
+              wasAutoCreated = true;
               console.log('[Cakto Auto-Create] ✅ Created payment:', newPayment.id, 'code:', newPayment.payment_code);
             }
           }
