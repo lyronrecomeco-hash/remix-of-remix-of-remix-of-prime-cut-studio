@@ -532,9 +532,18 @@ serve(async (req) => {
             }
             
             // Create payment record
-            const { data: newPayment, error: payErr } = await supabase
+              // Generate payment code
+              const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+              let payCode = 'PAY-';
+              for (let i = 0; i < 12; i++) {
+                payCode += chars[Math.floor(Math.random() * chars.length)];
+                if (i === 3 || i === 7) payCode += '-';
+              }
+
+              const { data: newPayment, error: payErr } = await supabase
               .from('checkout_payments')
               .insert({
+                payment_code: payCode,
                 customer_id: customerId,
                 plan_id: planId,
                 amount_cents: amountCents || 19700,
@@ -542,6 +551,7 @@ serve(async (req) => {
                 gateway: 'cakto',
                 status: newStatus,
                 cakto_order_id: paymentId,
+                paid_at: newStatus === 'paid' ? new Date().toISOString() : null,
                 metadata: {
                   source: 'cakto_webhook_auto',
                   cakto_event: rawCaktoEvent,
