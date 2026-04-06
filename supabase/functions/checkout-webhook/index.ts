@@ -416,6 +416,9 @@ serve(async (req) => {
       );
     }
 
+    // Track if payment was just auto-created (for subscription activation)
+    let wasAutoCreated = false;
+    
     // Find payment by gateway-specific ID
     let payment;
     if (gateway === 'cakto') {
