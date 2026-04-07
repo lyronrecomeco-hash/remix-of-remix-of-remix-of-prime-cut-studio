@@ -24,11 +24,18 @@ const CaktoReturn = () => {
   const [alreadyExists, setAlreadyExists] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const emailParam = searchParams.get('email') || searchParams.get('customer_email') || '';
-  const nameParam = searchParams.get('name') || searchParams.get('first_name') || searchParams.get('customer_name') || '';
-  const phoneParam = searchParams.get('phone') || searchParams.get('customer_phone') || '';
-  const planIdParam = searchParams.get('plan_id') || searchParams.get('planId') || '';
-  const userTypeParam = searchParams.get('user_type') || '';
+  // Filter out literal template variables like {email}, {name}, etc.
+  const cleanParam = (val: string | null): string => {
+    if (!val) return '';
+    if (/^\{.*\}$/.test(val.trim())) return ''; // literal template var
+    return val;
+  };
+
+  const emailParam = cleanParam(searchParams.get('email')) || cleanParam(searchParams.get('customer_email'));
+  const nameParam = cleanParam(searchParams.get('name')) || cleanParam(searchParams.get('first_name')) || cleanParam(searchParams.get('customer_name'));
+  const phoneParam = cleanParam(searchParams.get('phone')) || cleanParam(searchParams.get('customer_phone'));
+  const planIdParam = cleanParam(searchParams.get('plan_id')) || cleanParam(searchParams.get('planId'));
+  const userTypeParam = cleanParam(searchParams.get('user_type'));
 
   useEffect(() => {
     if (emailParam) setEmail(emailParam);

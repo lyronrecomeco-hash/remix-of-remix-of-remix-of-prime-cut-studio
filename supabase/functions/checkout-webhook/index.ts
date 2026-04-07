@@ -787,6 +787,8 @@ serve(async (req) => {
             const tempPassword = crypto.randomUUID().substring(0, 16) + 'A1!';
             const displayName = `${customer.first_name} ${customer.last_name}`.trim() || customer.email.split('@')[0];
             
+            let authUserId: string | null = null;
+
             const { data: newAuthUser, error: authError } = await supabase.auth.admin.createUser({
               email: customer.email.toLowerCase(),
               password: tempPassword,
@@ -799,14 +801,31 @@ serve(async (req) => {
               },
             });
 
-            if (authError || !newAuthUser.user) {
-              console.error('[Subscription Activation] Error creating auth user:', authError);
-            } else {
+            if (authError) {
+              // Handle email_exists: look up existing auth user
+              if (authError.message?.includes('already been registered') || (authError as any).code === 'email_exists') {
+                console.log('[Subscription Activation] Auth user already exists, looking up...');
+                const { data: existingUsers } = await supabase.auth.admin.listUsers();
+                const found = existingUsers?.users?.find(
+                  (u: any) => u.email?.toLowerCase() === customer.email.toLowerCase()
+                );
+                if (found) {
+                  authUserId = found.id;
+                  console.log('[Subscription Activation] Found existing auth user:', authUserId);
+                }
+              } else {
+                console.error('[Subscription Activation] Error creating auth user:', authError);
+              }
+            } else if (newAuthUser?.user) {
+              authUserId = newAuthUser.user.id;
+            }
+
+            if (authUserId) {
               // Create genesis_user
               const { data: newGenesisUser, error: guError } = await supabase
                 .from('genesis_users')
                 .insert({
-                  auth_user_id: newAuthUser.user.id,
+                  auth_user_id: authUserId,
                   name: displayName,
                   email: customer.email.toLowerCase(),
                   phone: customer.phone || null,
@@ -819,7 +838,7 @@ serve(async (req) => {
                 console.error('[Subscription Activation] Error creating genesis_user:', guError);
               } else {
                 genesisUser = newGenesisUser;
-                console.log('[Subscription Activation] Created auth + genesis user:', genesisUser.id);
+                console.log('[Subscription Activation] Created genesis user:', genesisUser.id);
               }
             }
           }
