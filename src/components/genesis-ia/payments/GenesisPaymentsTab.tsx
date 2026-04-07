@@ -179,6 +179,13 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
     });
     
     setPayments(paymentsWithData);
+
+    if (selectedPayment) {
+      const updatedSelectedPayment = paymentsWithData.find((payment) => payment.id === selectedPayment.id);
+      if (updatedSelectedPayment) {
+        setSelectedPayment(updatedSelectedPayment);
+      }
+    }
   };
 
   const loadWebhookConfig = async () => {
@@ -340,6 +347,24 @@ export function GenesisPaymentsTab({ userId, onBack }: GenesisPaymentsTabProps) 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (activeTab === 'payments') {
+        loadPayments();
+        loadStats();
+        if (selectedPayment?.id) {
+          loadPaymentEvents(selectedPayment.id);
+        }
+      }
+
+      if (activeTab === 'webhook') {
+        loadWebhookConfig();
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [activeTab, selectedPayment?.id]);
 
   const webhookUrl = `https://xeloigymjjeejvicadar.supabase.co/functions/v1/checkout-webhook`;
 

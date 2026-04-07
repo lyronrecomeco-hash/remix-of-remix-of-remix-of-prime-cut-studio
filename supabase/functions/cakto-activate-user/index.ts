@@ -6,6 +6,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function calculateAccessExpiration(baseDate: Date, durationMonths: number): Date {
+  const days = durationMonths >= 12 ? 365 : Math.max(durationMonths, 1) * 30;
+  return new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -111,13 +116,13 @@ serve(async (req) => {
     } else if (planId) {
       const { data: plan } = await supabase
         .from('checkout_plans')
-        .select('name, duration_months, features')
+        .select('name, display_name, duration_months, features')
         .eq('id', planId)
         .single();
 
       if (plan) {
         durationMonths = plan.duration_months || 1;
-        planName = plan.name || planName;
+        planName = plan.display_name || plan.name || planName;
         
         if (durationMonths === 3) {
           planSlug = 'professional';
@@ -178,8 +183,7 @@ serve(async (req) => {
       expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 3);
     } else {
-      expiresAt = new Date();
-      expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
+      expiresAt = calculateAccessExpiration(new Date(), durationMonths);
     }
 
     const subscriptionData = {
@@ -202,10 +206,9 @@ serve(async (req) => {
 
     if (existingSub) {
       let newExpiresAt = expiresAt;
-      if (!isMentorado && existingSub.expires_at && new Date(existingSub.expires_at) > new Date()) {
-        const curr = new Date(existingSub.expires_at);
-        curr.setMonth(curr.getMonth() + durationMonths);
-        newExpiresAt = curr;
+        if (!isMentorado && existingSub.expires_at && new Date(existingSub.expires_at) > new Date()) {
+          const curr = new Date(existingSub.expires_at);
+          newExpiresAt = calculateAccessExpiration(curr, durationMonths);
       }
 
       await supabase

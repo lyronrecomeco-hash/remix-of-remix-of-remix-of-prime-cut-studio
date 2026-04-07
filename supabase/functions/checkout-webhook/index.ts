@@ -13,6 +13,18 @@ const PLAN_CONFIG: Record<number, { plan: string; plan_name: string; max_instanc
   12: { plan: 'enterprise', plan_name: 'Plano Anual', max_instances: 10, max_flows: 50 },
 };
 
+function calculateAccessExpiration(baseDate: Date, durationMonths: number): string {
+  const days = durationMonths >= 12 ? 365 : Math.max(durationMonths, 1) * 30;
+  return new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function parseCaktoAmountToCents(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = typeof value === 'number' ? value : Number(String(value).replace(',', '.'));
+  if (!Number.isFinite(parsed)) return null;
+  return Math.round(parsed * 100);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -146,7 +158,7 @@ serve(async (req) => {
       const caktoProduct = caktoData.product || body.product || {};
       const caktoOffer = caktoData.offer || body.offer || {};
       const caktoSubscription = caktoData.subscription || {};
-      const orderValue = caktoData.amount || caktoData.baseAmount || caktoOffer.price || null;
+      const orderValue = caktoData.baseAmount || caktoOffer.price || caktoData.amount || null;
 
       // Handle flat Cakto format (customerName, customerEmail at data level)
       const customerName = caktoCustomer.name || `${caktoCustomer.first_name || ''} ${caktoCustomer.last_name || ''}`.trim() || caktoData.customerName || null;
@@ -494,15 +506,27 @@ serve(async (req) => {
             .maybeSingle();
           
           if (customerData) {
-            const { data: paymentByCustomer } = await supabase
+            const { data: paymentCandidates } = await supabase
               .from('checkout_payments')
-              .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
+              .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents, cakto_order_id')
               .eq('customer_id', customerData.id)
               .eq('gateway', 'cakto')
               .order('created_at', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            payment = paymentByCustomer;
+              .limit(10);
+
+            const webhookAmountCents = parseCaktoAmountToCents(caktoData.baseAmount ?? caktoOffer.price ?? caktoData.amount);
+            payment = (paymentCandidates || []).find((candidate) => {
+              if (!webhookAmountCents) return candidate.status === 'pending';
+              return Math.abs((candidate.amount_cents || 0) - webhookAmountCents) <= 100;
+            }) || (paymentCandidates || []).find((candidate) => candidate.status === 'pending') || paymentCandidates?.[0];
+
+            if (payment && !payment.cakto_order_id && paymentId) {
+              await supabase
+                .from('checkout_payments')
+                .update({ cakto_order_id: paymentId, updated_at: new Date().toISOString() })
+                .eq('id', payment.id);
+              payment.cakto_order_id = paymentId;
+            }
           }
         }
 
@@ -514,8 +538,8 @@ serve(async (req) => {
           const customerName = caktoCustomer.name || `${caktoCustomer.first_name || ''} ${caktoCustomer.last_name || ''}`.trim() || '';
           const customerPhone = caktoCustomer.phone || caktoCustomer.cellphone || caktoData.customerCellphone || '';
           const customerDoc = caktoCustomer.docNumber || caktoData.docNumber || '00000000000';
-          const orderAmount = caktoData.amount || caktoData.baseAmount || caktoOffer.price || 0;
-          const amountCents = Math.round(Number(orderAmount) * 100);
+          const orderAmount = caktoData.baseAmount ?? caktoOffer.price ?? caktoData.amount ?? 0;
+          const amountCents = parseCaktoAmountToCents(orderAmount) || 0;
           
           // Parse name into first/last
           const nameParts = customerName.split(' ');
@@ -601,13 +625,14 @@ serve(async (req) => {
                 amount_cents: amountCents || 19700,
                 currency: 'BRL',
                 gateway: 'cakto',
-                status: newStatus,
+                 status: newStatus,
                 cakto_order_id: paymentId,
-                paid_at: newStatus === 'paid' ? new Date().toISOString() : null,
+                 paid_at: newStatus === 'paid' ? (caktoData.paidAt || new Date().toISOString()) : null,
                 metadata: {
                   source: 'cakto_webhook_auto',
                   cakto_event: rawCaktoEvent,
                   offer_name: caktoOffer.name || null,
+                   order_ref_id: caktoData.refId || null,
                   customer_name: customerName,
                   customer_email: customerEmail,
                 },
@@ -666,8 +691,12 @@ serve(async (req) => {
     if (newStatus !== 'pending' && newStatus !== payment.status) {
       const updateData: Record<string, unknown> = { status: newStatus };
       
+      if (gateway === 'cakto' && paymentId) {
+        updateData.cakto_order_id = paymentId;
+      }
+
       if (newStatus === 'paid') {
-        updateData.paid_at = new Date().toISOString();
+        updateData.paid_at = body.data?.paidAt || new Date().toISOString();
       }
 
       await supabase
@@ -801,8 +830,7 @@ serve(async (req) => {
 
             // 4. Calculate expiration date
             const now = new Date();
-            const expiresAt = new Date(now);
-            expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
+            const paidBaseDate = body.data?.paidAt ? new Date(body.data.paidAt) : now;
 
             // 5. Upsert subscription
             const { data: existingSub } = await supabase
@@ -819,8 +847,8 @@ serve(async (req) => {
               max_instances: planConfig.max_instances,
               max_flows: planConfig.max_flows,
               user_type: 'client',
-              started_at: now.toISOString(),
-              expires_at: expiresAt.toISOString(),
+              started_at: paidBaseDate.toISOString(),
+              expires_at: calculateAccessExpiration(paidBaseDate, durationMonths),
               updated_at: now.toISOString(),
             };
 
@@ -828,8 +856,7 @@ serve(async (req) => {
               // If subscription exists and hasn't expired, extend from current expiration
               if (existingSub.expires_at && new Date(existingSub.expires_at) > now) {
                 const currentExpiry = new Date(existingSub.expires_at);
-                currentExpiry.setMonth(currentExpiry.getMonth() + durationMonths);
-                subscriptionData.expires_at = currentExpiry.toISOString();
+                subscriptionData.expires_at = calculateAccessExpiration(currentExpiry, durationMonths);
                 console.log('[Subscription Activation] Extending existing subscription to:', subscriptionData.expires_at);
               }
 
