@@ -641,11 +641,11 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                     <SelectItem value="client">👑 Cliente (Pagante)</SelectItem>
                     <SelectItem value="influencer">✨ Influencer (Promocional)</SelectItem>
                     <SelectItem value="partner">🤝 Parceiro (Promocional)</SelectItem>
-                    <SelectItem value="mentorado">🎓 Mentorado Santiago (3 dias)</SelectItem>
+                    <SelectItem value="mentorado">🎓 Mentorado Santiago (2 dias)</SelectItem>
                   </SelectContent>
                 </Select>
                 {formData.user_type === 'mentorado' && (
-                  <p className="text-[11px] text-amber-400">Acesso de teste: 3 dias</p>
+                  <p className="text-[11px] text-amber-400">Acesso de teste: 2 dias</p>
                 )}
                 {(formData.user_type === 'influencer' || formData.user_type === 'partner') && (
                   <p className="text-[11px] text-emerald-400">Acesso promocional: 1 ano</p>
