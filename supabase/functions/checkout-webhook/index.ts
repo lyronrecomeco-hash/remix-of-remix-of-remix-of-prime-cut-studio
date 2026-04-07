@@ -483,19 +483,28 @@ serve(async (req) => {
     // Find payment by gateway-specific ID
     let payment;
     if (gateway === 'cakto') {
-      // For Cakto, try to find by cakto_order_id first, then by payment_code
-      const { data, error } = await supabase
+      // For Cakto, try to find by cakto_order_id first
+      const { data: exactMatch } = await supabase
         .from('checkout_payments')
         .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
-        .or(`cakto_order_id.eq.${paymentId},payment_code.ilike.%${paymentId}%`)
+        .eq('cakto_order_id', paymentId)
         .maybeSingle();
-      payment = data;
-      if (error) console.log('Cakto payment lookup error:', error);
+      payment = exactMatch;
+      if (!payment) {
+        // Fallback: try payment_code exact match
+        const { data: codeMatch } = await supabase
+          .from('checkout_payments')
+          .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
+          .eq('payment_code', paymentId)
+          .maybeSingle();
+        payment = codeMatch;
+      }
       
       // If not found by order_id, try extracting customer email and finding by that
       if (!payment) {
         const caktoData = body.data || body;
         const caktoCustomer = caktoData.customer || body.customer || {};
+        const caktoOfferLocal = caktoData.offer || body.offer || {};
         const customerEmail = (caktoCustomer.email || caktoData.customerEmail || body.email || '').toLowerCase();
         
         if (customerEmail) {
@@ -514,7 +523,7 @@ serve(async (req) => {
               .order('created_at', { ascending: false })
               .limit(10);
 
-            const webhookAmountCents = parseCaktoAmountToCents(caktoData.baseAmount ?? caktoOffer.price ?? caktoData.amount);
+            const webhookAmountCents = parseCaktoAmountToCents(caktoData.baseAmount ?? caktoOfferLocal.price ?? caktoData.amount);
             payment = (paymentCandidates || []).find((candidate) => {
               if (!webhookAmountCents) return candidate.status === 'pending';
               return Math.abs((candidate.amount_cents || 0) - webhookAmountCents) <= 100;
@@ -787,6 +796,8 @@ serve(async (req) => {
             const tempPassword = crypto.randomUUID().substring(0, 16) + 'A1!';
             const displayName = `${customer.first_name} ${customer.last_name}`.trim() || customer.email.split('@')[0];
             
+            let authUserId: string | null = null;
+
             const { data: newAuthUser, error: authError } = await supabase.auth.admin.createUser({
               email: customer.email.toLowerCase(),
               password: tempPassword,
@@ -799,14 +810,31 @@ serve(async (req) => {
               },
             });
 
-            if (authError || !newAuthUser.user) {
-              console.error('[Subscription Activation] Error creating auth user:', authError);
-            } else {
+            if (authError) {
+              // Handle email_exists: look up existing auth user
+              if (authError.message?.includes('already been registered') || (authError as any).code === 'email_exists') {
+                console.log('[Subscription Activation] Auth user already exists, looking up...');
+                const { data: existingUsers } = await supabase.auth.admin.listUsers();
+                const found = existingUsers?.users?.find(
+                  (u: any) => u.email?.toLowerCase() === customer.email.toLowerCase()
+                );
+                if (found) {
+                  authUserId = found.id;
+                  console.log('[Subscription Activation] Found existing auth user:', authUserId);
+                }
+              } else {
+                console.error('[Subscription Activation] Error creating auth user:', authError);
+              }
+            } else if (newAuthUser?.user) {
+              authUserId = newAuthUser.user.id;
+            }
+
+            if (authUserId) {
               // Create genesis_user
               const { data: newGenesisUser, error: guError } = await supabase
                 .from('genesis_users')
                 .insert({
-                  auth_user_id: newAuthUser.user.id,
+                  auth_user_id: authUserId,
                   name: displayName,
                   email: customer.email.toLowerCase(),
                   phone: customer.phone || null,
@@ -819,7 +847,7 @@ serve(async (req) => {
                 console.error('[Subscription Activation] Error creating genesis_user:', guError);
               } else {
                 genesisUser = newGenesisUser;
-                console.log('[Subscription Activation] Created auth + genesis user:', genesisUser.id);
+                console.log('[Subscription Activation] Created genesis user:', genesisUser.id);
               }
             }
           }

@@ -24,11 +24,18 @@ const CaktoReturn = () => {
   const [alreadyExists, setAlreadyExists] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const emailParam = searchParams.get('email') || searchParams.get('customer_email') || '';
-  const nameParam = searchParams.get('name') || searchParams.get('first_name') || searchParams.get('customer_name') || '';
-  const phoneParam = searchParams.get('phone') || searchParams.get('customer_phone') || '';
-  const planIdParam = searchParams.get('plan_id') || searchParams.get('planId') || '';
-  const userTypeParam = searchParams.get('user_type') || '';
+  // Filter out literal template variables like {email}, {name}, etc.
+  const cleanParam = (val: string | null): string => {
+    if (!val) return '';
+    if (/^\{.*\}$/.test(val.trim())) return ''; // literal template var
+    return val;
+  };
+
+  const emailParam = cleanParam(searchParams.get('email')) || cleanParam(searchParams.get('customer_email'));
+  const nameParam = cleanParam(searchParams.get('name')) || cleanParam(searchParams.get('first_name')) || cleanParam(searchParams.get('customer_name'));
+  const phoneParam = cleanParam(searchParams.get('phone')) || cleanParam(searchParams.get('customer_phone'));
+  const planIdParam = cleanParam(searchParams.get('plan_id')) || cleanParam(searchParams.get('planId'));
+  const userTypeParam = cleanParam(searchParams.get('user_type'));
 
   useEffect(() => {
     if (emailParam) setEmail(emailParam);
@@ -39,7 +46,7 @@ const CaktoReturn = () => {
         const { data } = await supabase
           .from('genesis_users')
           .select('id')
-          .eq('email', emailParam)
+          .eq('email', emailParam.toLowerCase())
           .maybeSingle();
         if (data) setAlreadyExists(true);
       }
@@ -198,12 +205,14 @@ const CaktoReturn = () => {
           transition={{ delay: 0.4 }}
           className="bg-[#12121a] border border-white/5 rounded-2xl p-6 space-y-5"
         >
-          {/* Email (locked) */}
+          {/* Email */}
           <div className="space-y-2">
             <Label className="text-gray-300 text-sm">E-mail</Label>
             <Input
               value={email}
-              disabled
+              onChange={emailParam ? undefined : (e) => setEmail(e.target.value)}
+              disabled={!!emailParam}
+              placeholder="Seu e-mail de compra"
               className="bg-white/5 border-white/10 text-gray-300 h-11 rounded-xl"
             />
           </div>
