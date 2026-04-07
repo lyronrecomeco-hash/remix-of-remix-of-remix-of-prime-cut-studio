@@ -252,8 +252,8 @@ export function GenesisSupportChat() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="fixed bottom-5 right-5 z-50 w-[380px] sm:w-[420px] rounded-2xl border border-border/50 bg-card/95 backdrop-blur-xl shadow-2xl shadow-black/20 flex flex-col overflow-hidden"
-            style={{ maxHeight: 'min(720px, calc(100vh - 40px))' }}
+            className="fixed bottom-5 right-5 z-50 w-[400px] sm:w-[440px] rounded-2xl border border-border/40 bg-card shadow-2xl shadow-black/30 flex flex-col overflow-hidden"
+            style={{ maxHeight: 'min(780px, calc(100vh - 40px))' }}
           >
             {/* Header */}
             <div className="relative px-4 py-3.5 border-b border-border/50 overflow-hidden">
@@ -288,7 +288,7 @@ export function GenesisSupportChat() {
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[460px] max-h-[540px] scrollbar-thin">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[500px] max-h-[580px] scrollbar-thin">
               {messages.length === 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
