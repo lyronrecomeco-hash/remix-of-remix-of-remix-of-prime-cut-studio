@@ -80,3 +80,9 @@ verify_jwt = false
 
 [functions.telegram-bot-setup]
 verify_jwt = false
+
+[functions.genesis-support-chat]
+verify_jwt = false
+
+[functions.support-chat-telegram]
+verify_jwt = false
