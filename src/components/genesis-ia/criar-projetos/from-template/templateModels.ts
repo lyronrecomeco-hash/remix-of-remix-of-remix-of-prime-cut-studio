@@ -41,6 +41,16 @@ import imgCrmApp from '@/assets/templates/crm-app.jpg';
 import imgEscolaMusica from '@/assets/templates/escola-musica.jpg';
 import imgConstrutora from '@/assets/templates/construtora.jpg';
 import imgAgenciaViagens from '@/assets/templates/agencia-viagens.jpg';
+import imgNutricionista from '@/assets/templates/nutricionista.jpg';
+import imgFisioterapia from '@/assets/templates/fisioterapia.jpg';
+import imgArquitetura from '@/assets/templates/arquitetura.jpg';
+import imgCorretor from '@/assets/templates/corretor.jpg';
+import imgProteseDentaria from '@/assets/templates/protese-dentaria.jpg';
+import imgAutoescola from '@/assets/templates/autoescola.jpg';
+import imgEscolaInfantil from '@/assets/templates/escola-infantil.jpg';
+import imgAgenciaMarketing from '@/assets/templates/agencia-marketing.jpg';
+import imgPersonalTrainer from '@/assets/templates/personal-trainer.jpg';
+import imgFarmacia from '@/assets/templates/farmacia.jpg';
 
 export type TemplateCategory = 'site' | 'app';
 
