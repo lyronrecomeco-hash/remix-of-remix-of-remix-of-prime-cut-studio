@@ -87,8 +87,9 @@ import { GenesisSupportChat } from "@/components/genesis-ia/support/GenesisSuppo
 import { TrialCountdownBadge } from "@/components/genesis-ia/trial/TrialCountdownBadge";
 import { TrialInfoModal } from "@/components/genesis-ia/trial/TrialInfoModal";
 import { GenesisNotificationBell } from "@/components/genesis-ia/notifications/GenesisNotificationBell";
+import { GenesisNotificationsTab } from "@/components/genesis-ia/notifications/GenesisNotificationsTab";
 
-type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas' | 'partner-applications' | 'help' | 'oferta-quente';
+type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas' | 'partner-applications' | 'help' | 'oferta-quente' | 'notifications';
 
 // Icon mapping for dynamic rendering
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -278,6 +279,7 @@ const GenesisIADashboard = () => {
       case 'partner-applications': return 'Inscrições';
       case 'help': return 'Central de Ajuda';
       case 'oferta-quente': return 'Performance';
+      case 'notifications': return 'Notificações';
       default: return null;
     }
   };
@@ -822,6 +824,10 @@ const GenesisIADashboard = () => {
       return <HelpCenterTab />;
     }
 
+    if (activeTab === 'notifications') {
+      return <GenesisNotificationsTab onNavigate={(tab) => setActiveTab(tab as ActiveTab)} />;
+    }
+
     if (activeTab === 'oferta-quente') {
       return <OfertaQuenteTab onBack={() => setActiveTab('dashboard')} />;
     }
@@ -891,7 +897,7 @@ const GenesisIADashboard = () => {
                       />
                     )}
                     {/* Notification Bell */}
-                    <GenesisNotificationBell onViewAll={() => setActiveTab('help')} />
+                    <GenesisNotificationBell onViewAll={() => setActiveTab('notifications')} />
                   </div>
                 </div>
               </div>
