@@ -59,9 +59,10 @@ async function sendTelegramPhoto(chatId: number | string, fileBase64: string, fi
   return res.json();
 }
 
-async function setupWebhook(supabaseUrl: string) {
+async function setupWebhook(supabaseUrl: string, anonKey: string) {
   const botToken = getBotToken();
-  const webhookUrl = `${supabaseUrl}/functions/v1/support-chat-telegram`;
+  // Include anon key so Supabase gateway accepts Telegram's raw POST
+  const webhookUrl = `${supabaseUrl}/functions/v1/support-chat-telegram?apikey=${anonKey}`;
 
   const res = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
     method: 'POST',
@@ -83,6 +84,7 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
 
   if (!supabaseUrl || !supabaseKey) {
     return new Response(JSON.stringify({ error: 'Server configuration error' }), {
@@ -105,7 +107,7 @@ serve(async (req) => {
      }
 
      if (action === 'setup_webhook') {
-       const result = await setupWebhook(supabaseUrl);
+       const result = await setupWebhook(supabaseUrl, anonKey);
        return new Response(JSON.stringify({ success: Boolean(result?.ok), result }), {
          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
        });
