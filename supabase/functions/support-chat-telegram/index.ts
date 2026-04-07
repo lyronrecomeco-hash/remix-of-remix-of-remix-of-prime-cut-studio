@@ -8,6 +8,24 @@ const corsHeaders = {
 
 const BOT_TOKEN = '8682592618:AAFtm4eyffbspScQ0LRm9miKGKiY7ltbR94';
 
+async function getBotStatus(supabase: ReturnType<typeof createClient>) {
+  const { data: settings } = await supabase
+    .from('admin_settings')
+    .select('settings')
+    .eq('setting_type', 'telegram_support_bot')
+    .maybeSingle();
+
+  const rawSettings = (settings?.settings as any) || {};
+  const enabled = Boolean(rawSettings.enabled);
+  const chatId = rawSettings.telegram_chat_id ? String(rawSettings.telegram_chat_id) : null;
+
+  return {
+    enabled,
+    adminChatId: chatId,
+    available: enabled && Boolean(chatId),
+  };
+}
+
 async function sendTelegramMessage(chatId: number | string, text: string, replyMarkup?: any) {
   const body: any = { chat_id: chatId, text, parse_mode: 'HTML' };
   if (replyMarkup) body.reply_markup = JSON.stringify(replyMarkup);
@@ -25,30 +43,37 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+  if (!supabaseUrl || !supabaseKey) {
+    return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
     const body = await req.json();
     const { action } = body;
 
+     if (action === 'get_status') {
+       const status = await getBotStatus(supabase);
+       return new Response(JSON.stringify({ success: true, ...status }), {
+         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+       });
+     }
+
     // Action: notify_new_session — Called when user requests live support
     if (action === 'notify_new_session') {
       const { session_id, user_name, user_email, first_message } = body;
 
-      // Get admin telegram chat_id from settings
-      const { data: settings } = await supabase
-        .from('admin_settings')
-        .select('settings')
-        .eq('setting_type', 'telegram_support_bot')
-        .maybeSingle();
-
-      const adminChatId = (settings?.settings as any)?.telegram_chat_id;
-      if (!adminChatId) {
-        return new Response(JSON.stringify({ error: 'Bot not configured' }), {
-          status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+       const { adminChatId, available, enabled } = await getBotStatus(supabase);
+       if (!available || !adminChatId) {
+         return new Response(JSON.stringify({ success: false, available, enabled, error: 'Bot not configured' }), {
+           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+         });
       }
 
       const text = `🆕 <b>Novo Report de Suporte</b>\n\n👤 <b>Nome:</b> ${user_name || 'N/A'}\n📧 <b>Email:</b> ${user_email || 'N/A'}\n\n💬 <b>Mensagem:</b>\n${first_message || 'Sem mensagem inicial'}`;
@@ -70,7 +95,7 @@ serve(async (req) => {
           .eq('id', session_id);
       }
 
-      return new Response(JSON.stringify({ success: true }), {
+       return new Response(JSON.stringify({ success: true, available: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -86,15 +111,15 @@ serve(async (req) => {
         .single();
 
       if (!session?.admin_telegram_chat_id) {
-        return new Response(JSON.stringify({ error: 'No active admin' }), {
-          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+         return new Response(JSON.stringify({ success: false, error: 'No active admin' }), {
+           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
       const text = `💬 <b>${session.user_name || 'Usuário'}:</b>\n${message}`;
       await sendTelegramMessage(session.admin_telegram_chat_id, text);
 
-      return new Response(JSON.stringify({ success: true }), {
+       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }

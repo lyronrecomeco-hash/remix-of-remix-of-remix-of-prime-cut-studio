@@ -755,7 +755,7 @@ const GenesisIADashboard = () => {
     }
 
     if (activeTab === 'settings') {
-      return <GenesisSettingsTab userId={userId} />;
+      return <GenesisSettingsTab userId={userId} authUserId={authUserId} />;
     }
 
     if (activeTab === 'financial') {
