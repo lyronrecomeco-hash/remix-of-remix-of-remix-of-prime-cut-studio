@@ -31,6 +31,7 @@ const PetshopPrimoPage = lazy(() => import("./pages/petshop-primo"));
 const PetshopMonPage = lazy(() => import("./pages/petshop-mon"));
 const CasapetPage = lazy(() => import("./pages/casapet"));
 const StarpetshopPage = lazy(() => import("./pages/starpetshop"));
+const PromoPage = lazy(() => import("./pages/PromoPage"));
 
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
