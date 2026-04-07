@@ -496,6 +496,7 @@ serve(async (req) => {
       if (!payment) {
         const caktoData = body.data || body;
         const caktoCustomer = caktoData.customer || body.customer || {};
+        const caktoOfferLocal = caktoData.offer || body.offer || {};
         const customerEmail = (caktoCustomer.email || caktoData.customerEmail || body.email || '').toLowerCase();
         
         if (customerEmail) {
@@ -514,7 +515,7 @@ serve(async (req) => {
               .order('created_at', { ascending: false })
               .limit(10);
 
-            const webhookAmountCents = parseCaktoAmountToCents(caktoData.baseAmount ?? caktoOffer.price ?? caktoData.amount);
+            const webhookAmountCents = parseCaktoAmountToCents(caktoData.baseAmount ?? caktoOfferLocal.price ?? caktoData.amount);
             payment = (paymentCandidates || []).find((candidate) => {
               if (!webhookAmountCents) return candidate.status === 'pending';
               return Math.abs((candidate.amount_cents || 0) - webhookAmountCents) <= 100;
