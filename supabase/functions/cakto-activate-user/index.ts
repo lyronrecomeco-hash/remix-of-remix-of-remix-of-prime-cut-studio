@@ -107,7 +107,7 @@ serve(async (req) => {
     const isMentorado = userType === 'mentorado';
     
     if (isMentorado) {
-      // Mentorados Santiago get 3-day trial
+      // Mentorados Santiago get 2-day trial
       durationMonths = 0; // Will use days instead
       planName = 'Mentorado Santiago (Trial)';
       planSlug = 'starter';
