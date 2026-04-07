@@ -995,14 +995,12 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                                   e.stopPropagation();
                                   if (opp.company_phone) {
                                     const cleanPhone = opp.company_phone.replace(/\D/g, '');
-                                    // Map country codes to phone codes
                                     const countryPhoneCodes: Record<string, string> = {
                                       'BR': '55', 'USA': '1', 'PT': '351', 'ES': '34',
                                       'MX': '52', 'AR': '54', 'CO': '57', 'CL': '56',
                                       'Europe': '44', 'LATAM': '55'
                                     };
                                     const countryCode = countryPhoneCodes[opp.company_country || 'BR'] || '55';
-                                    // Only add country code if not already present
                                     const phone = cleanPhone.startsWith(countryCode) ? cleanPhone : `${countryCode}${cleanPhone}`;
                                     window.open(`https://wa.me/${phone}`, '_blank');
                                   }
@@ -1041,6 +1039,62 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                                 <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
                               </Button>
 
+                              {/* Save to Proposals Button */}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (!affiliateId) {
+                                    toast.error('Afiliado não encontrado');
+                                    return;
+                                  }
+                                  try {
+                                    // Check for duplicates
+                                    const { data: existing } = await supabase
+                                      .from('affiliate_proposals')
+                                      .select('id')
+                                      .eq('affiliate_id', affiliateId)
+                                      .eq('company_name', opp.company_name)
+                                      .maybeSingle();
+                                    
+                                    if (existing) {
+                                      toast.info('Empresa já está nas propostas aceitas');
+                                      return;
+                                    }
+
+                                    const { error } = await supabase
+                                      .from('affiliate_proposals')
+                                      .insert({
+                                        affiliate_id: affiliateId,
+                                        company_name: opp.company_name,
+                                        company_phone: opp.company_phone,
+                                        company_email: opp.company_email,
+                                        status: 'accepted',
+                                        accepted_at: new Date().toISOString(),
+                                        questionnaire_answers: {
+                                          niche: opp.niche,
+                                          address: opp.company_address,
+                                          city: opp.company_city,
+                                          website: opp.company_website,
+                                          score: opp.opportunity_score,
+                                          source: 'radar',
+                                        },
+                                      });
+                                    if (error) throw error;
+                                    toast.success(`${opp.company_name} salva em Propostas Aceitas!`);
+                                    onAccepted?.();
+                                  } catch (err) {
+                                    console.error('Save error:', err);
+                                    toast.error('Erro ao salvar proposta');
+                                  }
+                                }}
+                                className="h-9 w-9 sm:h-10 sm:w-10 p-0 border-white/20 text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 hover:border-amber-500/30"
+                                title="Salvar em Propostas Aceitas"
+                              >
+                                <Star className="w-4 h-4 sm:w-5 sm:h-5" />
+                              </Button>
+
                                {/* Ver Perfil Button - redirects to Google */}
                               <Button
                                 size="sm"
@@ -1053,7 +1107,7 @@ export const GlobalRadarTab = ({ userId, affiliateId: affiliateIdProp, onAccepte
                                 className="flex-1 h-9 sm:h-10 border-white/20 text-white/70 hover:text-white hover:bg-white/10 text-xs sm:text-sm"
                               >
                                 <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
-                                Ver perfil google
+                                Ver perfil
                               </Button>
                             </div>
                           </CardContent>

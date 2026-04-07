@@ -307,11 +307,11 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ delay: index * 0.02 }}
                     >
-                      <Card className="relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-white/20 bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
+                      <Card className="relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-white/20 bg-white/5 border-white/10 flex flex-col" style={{ borderRadius: '14px', minHeight: '320px' }}>
                         {/* Accent bar */}
                         <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
 
-                        <CardContent className="p-5 pt-6">
+                        <CardContent className="p-5 pt-6 flex flex-col flex-1">
                           {/* Header Row */}
                           <div className="flex items-start gap-3 mb-4">
                             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
@@ -341,7 +341,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                           </div>
 
                           {/* Info Section */}
-                          <div className="space-y-2 mb-4 p-3 bg-white/5 rounded-lg border border-white/5">
+                          <div className="space-y-2 mb-4 p-3 bg-white/5 rounded-lg border border-white/5 flex-1">
                             {qa.address && (
                               <div className="flex items-center gap-2 text-sm text-white/50">
                                 <MapPin className="w-3.5 h-3.5 shrink-0" />
@@ -370,7 +370,7 @@ export const AcceptedProposalsTab = ({ affiliateId }: AcceptedProposalsTabProps)
                             )}
                           </div>
 
-                          {/* Actions */}
+                          {/* Actions - pinned to bottom */}
                           <div className="flex gap-2">
                             <Button
                               size="sm"
