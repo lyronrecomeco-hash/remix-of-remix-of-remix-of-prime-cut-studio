@@ -259,6 +259,63 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
     setShowPassword(false);
   };
 
+  const handleExtendDays = async () => {
+    if (!extendDaysUser) return;
+    const days = parseInt(extendDaysValue);
+    if (isNaN(days) || days < 1) {
+      toast.error('Informe um número válido de dias');
+      return;
+    }
+    setExtendingDays(true);
+    try {
+      // Get current subscription
+      const { data: sub } = await supabase
+        .from('genesis_subscriptions')
+        .select('id, expires_at')
+        .eq('user_id', extendDaysUser.id)
+        .maybeSingle();
+
+      if (sub) {
+        const currentExpiry = new Date(sub.expires_at);
+        const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
+        const newExpiry = new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000);
+        
+        await supabase
+          .from('genesis_subscriptions')
+          .update({ expires_at: newExpiry.toISOString(), status: 'active', updated_at: new Date().toISOString() })
+          .eq('id', sub.id);
+      } else {
+        // Create subscription if none exists
+        await supabase.from('genesis_subscriptions').insert({
+          user_id: extendDaysUser.id,
+          plan: 'starter' as any,
+          plan_name: 'Acesso Manual',
+          status: 'active',
+          max_instances: 3,
+          max_flows: 10,
+          user_type: 'client',
+          started_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
+        });
+      }
+
+      // Ensure user is active
+      await supabase
+        .from('genesis_users')
+        .update({ is_active: true })
+        .eq('id', extendDaysUser.id);
+
+      toast.success(`+${days} dias adicionados para ${extendDaysUser.name}`);
+      setExtendDaysUser(null);
+      fetchUsers();
+    } catch (error) {
+      console.error('Error extending days:', error);
+      toast.error('Erro ao estender acesso');
+    } finally {
+      setExtendingDays(false);
+    }
+  };
+
   const openCreateModal = () => { resetForm(); setIsModalOpen(true); };
 
   const openEditModal = (user: GenesisUser) => {
