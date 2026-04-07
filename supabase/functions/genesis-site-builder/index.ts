@@ -114,27 +114,45 @@ serve(async (req) => {
   try {
     const { messages } = await req.json();
     
+    // Try OpenAI first, fallback to Lovable AI Gateway
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'API key não configurada' }), {
+    
+    let apiUrl: string;
+    let apiKey: string;
+    let model: string;
+    
+    if (OPENAI_API_KEY) {
+      apiUrl = 'https://api.openai.com/v1/chat/completions';
+      apiKey = OPENAI_API_KEY;
+      model = 'gpt-4o';
+    } else if (LOVABLE_API_KEY) {
+      apiUrl = 'https://ai.gateway.lovable.dev/v1/chat/completions';
+      apiKey = LOVABLE_API_KEY;
+      model = 'google/gemini-2.5-flash';
+    } else {
+      return new Response(JSON.stringify({ error: 'Nenhuma API key configurada (OpenAI ou Lovable AI)' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    console.log(`Using AI provider: ${OPENAI_API_KEY ? 'OpenAI (gpt-4o)' : 'Lovable AI Gateway'}`);
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model,
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           ...messages,
         ],
         stream: true,
+        ...(OPENAI_API_KEY ? { max_tokens: 16000 } : {}),
       }),
     });
 
@@ -150,8 +168,8 @@ serve(async (req) => {
         });
       }
       const t = await response.text();
-      console.error('AI gateway error:', response.status, t);
-      return new Response(JSON.stringify({ error: 'Erro no gateway de IA' }), {
+      console.error('AI API error:', response.status, t);
+      return new Response(JSON.stringify({ error: `Erro na API de IA (${response.status})` }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

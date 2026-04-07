@@ -7,41 +7,29 @@ const GenesisCommercialFooter = () => {
 
   return (
     <footer className="bg-card border-t border-border/40">
-      <div className="container px-4 py-10 max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 items-start">
+      <div className="container px-6 py-12 max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-8">
           
-          {/* Col 1 — Brand */}
-          <div className="flex flex-col gap-2">
-            <Link to="/" className="flex items-center gap-2.5">
-              <img src={genesisLogo} alt="Genesis Hub" className="w-8 h-8 object-contain" />
-              <span className="text-sm font-bold text-foreground tracking-tight">{texts.footer.brandName}</span>
-            </Link>
-            <p className="text-[11px] text-muted-foreground/40 leading-relaxed mt-1">
-              Automação inteligente para escalar seu negócio.
-            </p>
-          </div>
+          {/* Brand */}
+          <Link to="/" className="flex items-center gap-3">
+            <img src={genesisLogo} alt="Genesis Hub" className="w-10 h-10 object-contain" />
+            <span className="text-lg font-bold text-foreground">{texts.footer.brandName}</span>
+          </Link>
 
-          {/* Col 2 — Navegação */}
-          <div className="flex flex-col gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-1">Navegação</span>
-            <a href="#recursos" className="text-xs text-muted-foreground/60 hover:text-foreground transition-colors">Recursos</a>
-            <a href="#planos" className="text-xs text-muted-foreground/60 hover:text-foreground transition-colors">Planos</a>
-          </div>
-
-          {/* Col 3 — Redes Sociais */}
-          <div className="flex flex-col gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-1">Redes Sociais</span>
+          {/* Redes Sociais */}
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Redes Sociais</span>
             <a
               href="https://instagram.com/genesishub_saas"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-muted-foreground/60 hover:text-foreground transition-colors w-fit"
+              className="flex items-center justify-center w-10 h-10 rounded-xl bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
               aria-label="Instagram"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -53,14 +41,23 @@ const GenesisCommercialFooter = () => {
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
               </svg>
-              <span className="text-xs">@genesishub_saas</span>
+            </a>
+          </div>
+
+          {/* Links rápidos */}
+          <div className="flex items-center gap-6">
+            <a href="#recursos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Recursos
+            </a>
+            <a href="#planos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Planos
             </a>
           </div>
         </div>
 
         {/* Divider + Copyright */}
-        <div className="h-px w-full bg-border/30 mt-8 mb-4" />
-        <p className="text-[11px] text-muted-foreground/30 text-center">
+        <div className="h-px w-full bg-border/30 mt-8 mb-5" />
+        <p className="text-sm text-muted-foreground/50 text-center">
           {texts.footer.copyright}
         </p>
       </div>
