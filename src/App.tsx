@@ -32,6 +32,7 @@ const PetshopMonPage = lazy(() => import("./pages/petshop-mon"));
 const CasapetPage = lazy(() => import("./pages/casapet"));
 const StarpetshopPage = lazy(() => import("./pages/starpetshop"));
 const PromoPage = lazy(() => import("./pages/PromoPage"));
+const SiteBuilder = lazy(() => import("./pages/SiteBuilder"));
 
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
@@ -150,6 +151,9 @@ const AppContent = () => {
 
             {/* Promo - partner links */}
             <Route path="/promo/:codigo" element={<PromoPage />} />
+
+            {/* Site Builder */}
+            <Route path="/creat-site" element={<SiteBuilder />} />
 
             {/* 404 */}
             <Route path="*" element={<NotFound />} />

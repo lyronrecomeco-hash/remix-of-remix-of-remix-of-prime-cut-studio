@@ -86,7 +86,7 @@ import { RestrictedAccessModal } from "@/components/admin/RestrictedAccessModal"
 import { GenesisSupportChat } from "@/components/genesis-ia/support/GenesisSupportChat";
 import { TrialCountdownBadge } from "@/components/genesis-ia/trial/TrialCountdownBadge";
 import { TrialInfoModal } from "@/components/genesis-ia/trial/TrialInfoModal";
-import { GenesisNotificationBell } from "@/components/genesis-ia/notifications/GenesisNotificationBell";
+import { GenesisNotificationBell, GenesisNotificationProvider, useGenesisNotifications } from "@/components/genesis-ia/notifications/GenesisNotificationBell";
 import { GenesisNotificationsTab } from "@/components/genesis-ia/notifications/GenesisNotificationsTab";
 
 type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas' | 'partner-applications' | 'help' | 'oferta-quente' | 'notifications';
@@ -97,6 +97,20 @@ const ICON_MAP: Record<string, React.ElementType> = {
   User, Users, Mail, Phone, Calendar, Clock, Bell, Heart, Bookmark, Flag,
   Zap, Target, TrendingUp, BarChart, PieChart, Activity, Globe, Map,
   Navigation, Compass, Layers, Box
+};
+
+// Connected notifications tab that reads from the shared store
+const NotificationsTabConnected = () => {
+  const { notifications, markAllRead, clearAll, markRead, removeNotification } = useGenesisNotifications();
+  return (
+    <GenesisNotificationsTab
+      notifications={notifications}
+      onMarkAllRead={markAllRead}
+      onClearAll={clearAll}
+      onMarkRead={markRead}
+      onRemove={removeNotification}
+    />
+  );
 };
 
 const GenesisIADashboard = () => {
@@ -825,7 +839,7 @@ const GenesisIADashboard = () => {
     }
 
     if (activeTab === 'notifications') {
-      return <GenesisNotificationsTab onNavigate={(tab) => setActiveTab(tab as ActiveTab)} />;
+      return <NotificationsTabConnected />;
     }
 
     if (activeTab === 'oferta-quente') {
@@ -836,6 +850,7 @@ const GenesisIADashboard = () => {
   };
 
   return (
+    <GenesisNotificationProvider>
     <FullPageEditor>
       {(ctx) => {
         const { config, isEditMode } = ctx;
@@ -1106,6 +1121,7 @@ const GenesisIADashboard = () => {
         );
       }}
     </FullPageEditor>
+    </GenesisNotificationProvider>
   );
 };
 
