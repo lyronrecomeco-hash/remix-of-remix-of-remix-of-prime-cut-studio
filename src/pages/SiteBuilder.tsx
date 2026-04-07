@@ -835,14 +835,16 @@ export default function SiteBuilder() {
           try {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
+              if (content) {
               fullContent += content;
               setRawOutput(fullContent);
 
+              // Parse files more frequently during streaming
               const currentFiles = parseFiles(fullContent);
+              setLiveFiles(currentFiles);
+              
               if (currentFiles.length > 0) {
-                setLiveFiles(currentFiles);
-                // Update preview progressively
+                // Update preview progressively - show as soon as possible
                 const previewHtml = getPreviewHtml(currentFiles);
                 if (previewHtml) setLiveHtml(previewHtml);
 
