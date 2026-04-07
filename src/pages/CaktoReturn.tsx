@@ -46,7 +46,7 @@ const CaktoReturn = () => {
         const { data } = await supabase
           .from('genesis_users')
           .select('id')
-          .eq('email', emailParam)
+          .eq('email', emailParam.toLowerCase())
           .maybeSingle();
         if (data) setAlreadyExists(true);
       }
