@@ -24,6 +24,17 @@ interface Message {
   timestamp?: string;
 }
 
+interface SupportChatMessageRow {
+  id: string;
+  message: string;
+  sender_type: string;
+  created_at?: string | null;
+}
+
+interface SupportChatSessionRow {
+  status?: string;
+}
+
 type ChatMode = 'ai' | 'connecting' | 'live' | 'closed';
 
 const ts = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -82,10 +93,10 @@ export function GenesisSupportChat() {
     const channel = supabase
       .channel(`support_${liveSessionId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'support_chat_messages', filter: `session_id=eq.${liveSessionId}` },
-        (payload) => handle(payload.new as any))
+        (payload) => handle(payload.new as SupportChatMessageRow))
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'support_chat_sessions', filter: `id=eq.${liveSessionId}` },
         (payload) => {
-          const s = payload.new as any;
+          const s = payload.new as SupportChatSessionRow;
           if (s.status === 'active') setChatMode('live');
           if (s.status === 'closed') setChatMode('closed');
         })

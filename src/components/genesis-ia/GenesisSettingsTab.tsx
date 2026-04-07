@@ -448,8 +448,8 @@ export const GenesisSettingsTab = ({ userId, authUserId }: GenesisSettingsTabPro
                   checked={settings.botEnabled ?? false}
                   onCheckedChange={async (v) => {
                     try {
-                      const nextSettings = { ...settings, botEnabled: v };
-                      setSettings(nextSettings as any);
+                      const nextSettings: GenesisSettings = { ...settings, botEnabled: v };
+                      setSettings(nextSettings);
                       await saveBotSettings(v, nextSettings.telegramChatId || '');
                       toast.success(v ? 'Bot ativado' : 'Bot desativado');
                     } catch (error) {
@@ -466,14 +466,14 @@ export const GenesisSettingsTab = ({ userId, authUserId }: GenesisSettingsTabPro
                   <input
                     type="text"
                     placeholder="Ex: 123456789"
-                    value={(settings as any).telegramChatId || ''}
-                    onChange={(e) => setSettings({ ...settings, telegramChatId: e.target.value } as any)}
+                    value={settings.telegramChatId || ''}
+                    onChange={(e) => setSettings({ ...settings, telegramChatId: e.target.value })}
                     className="flex-1 h-9 px-3 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-primary/50"
                   />
                   <Button
                     size="sm"
                     onClick={async () => {
-                      const chatId = (settings as any).telegramChatId;
+                      const chatId = settings.telegramChatId;
                       if (!chatId) { toast.error('Insira o Chat ID'); return; }
 
                       try {
