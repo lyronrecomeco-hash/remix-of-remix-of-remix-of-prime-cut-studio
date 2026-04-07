@@ -1,34 +1,42 @@
 import { Link } from 'react-router-dom';
-import { Bot, ExternalLink } from 'lucide-react';
 import { useSiteTexts } from '@/pages/GenesisCommercial';
+import genesisLogo from '@/assets/genesis-logo.png';
 
 const GenesisCommercialFooter = () => {
   const texts = useSiteTexts();
 
   return (
-    <footer className="bg-card/80 backdrop-blur-sm border-t border-border/50">
+    <footer className="bg-card border-t border-border/40">
       <div className="container px-4 py-10 max-w-6xl mx-auto">
-        {/* Top row */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-          {/* Brand */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10 group-hover:border-primary/30 transition-colors">
-              <Bot className="w-4.5 h-4.5 text-primary" />
-            </div>
-            <div className="flex flex-col">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 items-start">
+          
+          {/* Col 1 — Brand */}
+          <div className="flex flex-col gap-2">
+            <Link to="/" className="flex items-center gap-2.5">
+              <img src={genesisLogo} alt="Genesis Hub" className="w-8 h-8 object-contain" />
               <span className="text-sm font-bold text-foreground tracking-tight">{texts.footer.brandName}</span>
-              <span className="text-[10px] text-muted-foreground/50 leading-none">Automação Inteligente</span>
-            </div>
-          </Link>
+            </Link>
+            <p className="text-[11px] text-muted-foreground/40 leading-relaxed mt-1">
+              Automação inteligente para escalar seu negócio.
+            </p>
+          </div>
 
-          {/* Social + Links */}
-          <div className="flex items-center gap-3">
+          {/* Col 2 — Navegação */}
+          <div className="flex flex-col gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-1">Navegação</span>
+            <a href="#recursos" className="text-xs text-muted-foreground/60 hover:text-foreground transition-colors">Recursos</a>
+            <a href="#planos" className="text-xs text-muted-foreground/60 hover:text-foreground transition-colors">Planos</a>
+          </div>
+
+          {/* Col 3 — Redes Sociais */}
+          <div className="flex flex-col gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-1">Redes Sociais</span>
             <a
               href="https://instagram.com/genesishub_saas"
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-500/10 text-muted-foreground transition-all hover:border-pink-500/30 hover:text-pink-400 hover:scale-[1.02]"
-              aria-label="Siga no Instagram"
+              className="flex items-center gap-2 text-muted-foreground/60 hover:text-foreground transition-colors w-fit"
+              aria-label="Instagram"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -40,35 +48,21 @@ const GenesisCommercialFooter = () => {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="transition-colors group-hover:text-pink-400"
               >
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
               </svg>
-              <span className="text-xs font-medium">Instagram</span>
-              <ExternalLink className="w-3 h-3 opacity-40 group-hover:opacity-70 transition-opacity" />
+              <span className="text-xs">@genesishub_saas</span>
             </a>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-border/50 to-transparent mb-5" />
-
-        {/* Bottom row */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-          <p className="text-xs text-muted-foreground/40">
-            {texts.footer.copyright}
-          </p>
-          <div className="flex items-center gap-4">
-            <a href="#planos" className="text-[11px] text-muted-foreground/30 hover:text-primary/60 transition-colors">
-              Planos
-            </a>
-            <a href="#recursos" className="text-[11px] text-muted-foreground/30 hover:text-primary/60 transition-colors">
-              Recursos
-            </a>
-          </div>
-        </div>
+        {/* Divider + Copyright */}
+        <div className="h-px w-full bg-border/30 mt-8 mb-4" />
+        <p className="text-[11px] text-muted-foreground/30 text-center">
+          {texts.footer.copyright}
+        </p>
       </div>
     </footer>
   );
