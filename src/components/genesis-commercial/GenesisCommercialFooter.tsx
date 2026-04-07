@@ -8,17 +8,51 @@ const GenesisCommercialFooter = () => {
   return (
     <footer className="bg-card border-t border-border/40">
       <div className="container px-6 py-12 max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           
-          {/* Brand */}
-          <Link to="/" className="flex items-center gap-3">
-            <img src={genesisLogo} alt="Genesis Hub" className="w-10 h-10 object-contain" />
-            <span className="text-lg font-bold text-foreground">{texts.footer.brandName}</span>
-          </Link>
+          {/* Col 1 — Brand */}
+          <div className="flex flex-col gap-3 sm:col-span-2 md:col-span-1">
+            <Link to="/" className="flex items-center gap-3">
+              <img src={genesisLogo} alt="Genesis Hub" className="w-10 h-10 object-contain" />
+              <span className="text-lg font-bold text-foreground">{texts.footer.brandName}</span>
+            </Link>
+            <p className="text-sm text-muted-foreground/50 leading-relaxed">
+              Automação inteligente para escalar seu negócio.
+            </p>
+          </div>
 
-          {/* Redes Sociais */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Redes Sociais</span>
+          {/* Col 2 — Navegação */}
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1">Navegação</span>
+            <a href="#recursos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Recursos</a>
+            <a href="#planos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Planos</a>
+            <a
+              href="https://wa.me/5527920005215"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Contato
+            </a>
+          </div>
+
+          {/* Col 3 — Legal */}
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1">Legal</span>
+            <Link to="/termos-de-uso" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Termos de Uso
+            </Link>
+            <Link to="/politica-de-privacidade" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Política de Privacidade
+            </Link>
+            <Link to="/politica-de-cookies" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Política de Cookies
+            </Link>
+          </div>
+
+          {/* Col 4 — Redes Sociais */}
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1">Redes Sociais</span>
             <a
               href="https://instagram.com/genesishub_saas"
               target="_blank"
@@ -43,23 +77,20 @@ const GenesisCommercialFooter = () => {
               </svg>
             </a>
           </div>
-
-          {/* Links rápidos */}
-          <div className="flex items-center gap-6">
-            <a href="#recursos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Recursos
-            </a>
-            <a href="#planos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Planos
-            </a>
-          </div>
         </div>
 
         {/* Divider + Copyright */}
-        <div className="h-px w-full bg-border/30 mt-8 mb-5" />
-        <p className="text-sm text-muted-foreground/50 text-center">
-          {texts.footer.copyright}
-        </p>
+        <div className="h-px w-full bg-border/30 mt-10 mb-5" />
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground/40">
+            © Genesis Hub 2026. Todos os direitos reservados.
+          </p>
+          <div className="flex items-center gap-4">
+            <Link to="/termos-de-uso" className="text-xs text-muted-foreground/40 hover:text-foreground transition-colors">Termos</Link>
+            <Link to="/politica-de-privacidade" className="text-xs text-muted-foreground/40 hover:text-foreground transition-colors">Privacidade</Link>
+            <Link to="/politica-de-cookies" className="text-xs text-muted-foreground/40 hover:text-foreground transition-colors">Cookies</Link>
+          </div>
+        </div>
       </div>
     </footer>
   );
