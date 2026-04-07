@@ -148,6 +148,9 @@ const AppContent = () => {
             <Route path="/casapet" element={<CasapetPage />} />
             <Route path="/starpetshop" element={<StarpetshopPage />} />
 
+            {/* Promo - partner links */}
+            <Route path="/promo/:codigo" element={<PromoPage />} />
+
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
