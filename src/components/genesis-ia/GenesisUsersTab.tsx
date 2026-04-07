@@ -572,6 +572,9 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                         <KeyRound className="w-4 h-4 mr-2" />Acessos
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openEditModal(user)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => { setExtendDaysUser(user); setExtendDaysValue('7'); }}>
+                        <CalendarPlus className="w-4 h-4 mr-2" />Aumentar Dias
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleToggleActive(user)}>
                         {user.is_active ? <><UserX className="w-4 h-4 mr-2" />Desativar</> : <><UserCheck className="w-4 h-4 mr-2" />Ativar</>}
                       </DropdownMenuItem>
