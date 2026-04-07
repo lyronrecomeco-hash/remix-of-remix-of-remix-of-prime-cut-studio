@@ -92,6 +92,10 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
 
       setPromoCode(promoLinkData.promo_code);
       setPromoLinkId(promoLinkData.id);
+      if ((promoLinkData as any).custom_slug) {
+        setCustomSlug((promoLinkData as any).custom_slug);
+        setSlugInput((promoLinkData as any).custom_slug);
+      }
 
       const { data: referralData } = await supabase
         .from('promo_referrals')
