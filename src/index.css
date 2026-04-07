@@ -808,3 +808,27 @@ img {
 .animate-dash-flow {
   animation: dash-flow 1s linear infinite;
 }
+
+/* Transparent/invisible scrollbar for site builder */
+.scrollbar-transparent::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-transparent::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+.scrollbar-transparent:hover::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted) / 0.3);
+}
+.scrollbar-transparent {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.scrollbar-transparent:hover {
+  scrollbar-color: hsl(var(--muted) / 0.3) transparent;
+}
