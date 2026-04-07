@@ -45,6 +45,9 @@ interface PromocionalTabProps {
 
 export function PromocionalTab({ userId }: PromocionalTabProps) {
   const [promoCode, setPromoCode] = useState<string>('');
+  const [customSlug, setCustomSlug] = useState<string>('');
+  const [editingSlug, setEditingSlug] = useState(false);
+  const [slugInput, setSlugInput] = useState('');
   const [promoLinkId, setPromoLinkId] = useState<string>('');
   const [referrals, setReferrals] = useState<PromoReferral[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +55,9 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
   const [availableBalance, setAvailableBalance] = useState(0);
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
 
-  const promoLink = `https://genesishub.cloud/promo/${promoCode}`;
+  const promoLink = customSlug
+    ? `https://genesishub.cloud/promo/${customSlug}`
+    : `https://genesishub.cloud/promo/${promoCode}`;
 
   useEffect(() => {
     loadPromoData();
