@@ -21,9 +21,10 @@ import {
   Timer,
   MonitorSmartphone,
   Clock,
-  KeyRound,
-  Star
-} from 'lucide-react';
+    KeyRound,
+    Star,
+    CalendarPlus
+  } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -100,6 +101,9 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [extendDaysUser, setExtendDaysUser] = useState<GenesisUser | null>(null);
+  const [extendDaysValue, setExtendDaysValue] = useState('7');
+  const [extendingDays, setExtendingDays] = useState(false);
   const [permissionsUser, setPermissionsUser] = useState<{ user_id: string; name: string; email: string } | null>(null);
   const [createdUserData, setCreatedUserData] = useState<{
     name: string;
@@ -253,6 +257,63 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
     setFormData({ name: '', email: '', password: '', phone: '', company_name: '', is_active: true, user_type: 'client' as 'client' | 'influencer' | 'partner' | 'mentorado' });
     setEditingUser(null);
     setShowPassword(false);
+  };
+
+  const handleExtendDays = async () => {
+    if (!extendDaysUser) return;
+    const days = parseInt(extendDaysValue);
+    if (isNaN(days) || days < 1) {
+      toast.error('Informe um número válido de dias');
+      return;
+    }
+    setExtendingDays(true);
+    try {
+      // Get current subscription
+      const { data: sub } = await supabase
+        .from('genesis_subscriptions')
+        .select('id, expires_at')
+        .eq('user_id', extendDaysUser.id)
+        .maybeSingle();
+
+      if (sub) {
+        const currentExpiry = new Date(sub.expires_at);
+        const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
+        const newExpiry = new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000);
+        
+        await supabase
+          .from('genesis_subscriptions')
+          .update({ expires_at: newExpiry.toISOString(), status: 'active', updated_at: new Date().toISOString() })
+          .eq('id', sub.id);
+      } else {
+        // Create subscription if none exists
+        await supabase.from('genesis_subscriptions').insert({
+          user_id: extendDaysUser.id,
+          plan: 'starter' as any,
+          plan_name: 'Acesso Manual',
+          status: 'active',
+          max_instances: 3,
+          max_flows: 10,
+          user_type: 'client',
+          started_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
+        });
+      }
+
+      // Ensure user is active
+      await supabase
+        .from('genesis_users')
+        .update({ is_active: true })
+        .eq('id', extendDaysUser.id);
+
+      toast.success(`+${days} dias adicionados para ${extendDaysUser.name}`);
+      setExtendDaysUser(null);
+      fetchUsers();
+    } catch (error) {
+      console.error('Error extending days:', error);
+      toast.error('Erro ao estender acesso');
+    } finally {
+      setExtendingDays(false);
+    }
   };
 
   const openCreateModal = () => { resetForm(); setIsModalOpen(true); };
@@ -511,6 +572,9 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                         <KeyRound className="w-4 h-4 mr-2" />Acessos
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openEditModal(user)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => { setExtendDaysUser(user); setExtendDaysValue('7'); }}>
+                        <CalendarPlus className="w-4 h-4 mr-2" />Aumentar Dias
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleToggleActive(user)}>
                         {user.is_active ? <><UserX className="w-4 h-4 mr-2" />Desativar</> : <><UserCheck className="w-4 h-4 mr-2" />Ativar</>}
                       </DropdownMenuItem>
@@ -577,11 +641,11 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                     <SelectItem value="client">👑 Cliente (Pagante)</SelectItem>
                     <SelectItem value="influencer">✨ Influencer (Promocional)</SelectItem>
                     <SelectItem value="partner">🤝 Parceiro (Promocional)</SelectItem>
-                    <SelectItem value="mentorado">🎓 Mentorado Santiago (3 dias)</SelectItem>
+                    <SelectItem value="mentorado">🎓 Mentorado Santiago (2 dias)</SelectItem>
                   </SelectContent>
                 </Select>
                 {formData.user_type === 'mentorado' && (
-                  <p className="text-[11px] text-amber-400">Acesso de teste: 3 dias</p>
+                  <p className="text-[11px] text-amber-400">Acesso de teste: 2 dias</p>
                 )}
                 {(formData.user_type === 'influencer' || formData.user_type === 'partner') && (
                   <p className="text-[11px] text-emerald-400">Acesso promocional: 1 ano</p>
@@ -631,6 +695,50 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
         onOpenChange={(open) => !open && setPermissionsUser(null)}
         user={permissionsUser}
       />
+
+      {/* Modal Aumentar Dias */}
+      <Dialog open={!!extendDaysUser} onOpenChange={(o) => !o && setExtendDaysUser(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Aumentar Dias de Acesso</DialogTitle>
+            <DialogDescription>
+              {extendDaysUser?.name} — {extendDaysUser?.email}
+              {extendDaysUser?.subscription_expires_at && (
+                <span className="block mt-1 text-xs">
+                  Expira: {new Date(extendDaysUser.subscription_expires_at).toLocaleDateString('pt-BR')}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Dias a adicionar</Label>
+              <Input
+                className="h-9"
+                type="number"
+                min="1"
+                value={extendDaysValue}
+                onChange={(e) => setExtendDaysValue(e.target.value)}
+                placeholder="7"
+              />
+            </div>
+            <div className="flex gap-2">
+              {[3, 7, 15, 30].map(d => (
+                <Button key={d} variant="outline" size="sm" onClick={() => setExtendDaysValue(String(d))} className={extendDaysValue === String(d) ? 'border-primary' : ''}>
+                  {d}d
+                </Button>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setExtendDaysUser(null)}>Cancelar</Button>
+            <Button size="sm" onClick={handleExtendDays} disabled={extendingDays}>
+              {extendingDays && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Adicionar +{extendDaysValue} dias
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
