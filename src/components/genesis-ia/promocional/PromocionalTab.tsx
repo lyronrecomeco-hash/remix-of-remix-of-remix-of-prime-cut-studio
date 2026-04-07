@@ -146,6 +146,34 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
     return code;
   };
 
+  const saveCustomSlug = async () => {
+    const slug = slugInput.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
+    if (!slug || slug.length < 3) {
+      toast.error('O slug deve ter no mínimo 3 caracteres (letras, números e hífens)');
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('promo_links')
+        .update({ custom_slug: slug } as any)
+        .eq('id', promoLinkId);
+      if (error) {
+        if (error.code === '23505') {
+          toast.error('Esse nome já está em uso. Escolha outro.');
+        } else {
+          throw error;
+        }
+        return;
+      }
+      setCustomSlug(slug);
+      setEditingSlug(false);
+      toast.success('Link personalizado salvo!');
+    } catch (error) {
+      console.error('Erro ao salvar slug:', error);
+      toast.error('Erro ao salvar link personalizado');
+    }
+  };
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
