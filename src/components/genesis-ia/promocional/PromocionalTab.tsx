@@ -352,6 +352,35 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
               {copiedLink ? 'Copiado' : 'Copiar'}
             </Button>
           </div>
+
+          {/* Personalizar slug */}
+          <div className="mt-4 pt-4 border-t border-white/10">
+            {editingSlug ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-white/50 whitespace-nowrap">genesishub.cloud/promo/</span>
+                <Input
+                  value={slugInput}
+                  onChange={(e) => setSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                  placeholder="seu-nome"
+                  className="bg-white/5 border-white/10 text-white h-9 text-sm flex-1"
+                />
+                <Button size="sm" onClick={saveCustomSlug} className="bg-primary hover:bg-primary/90 h-9">
+                  Salvar
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingSlug(false)} className="h-9">
+                  Cancelar
+                </Button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setSlugInput(customSlug || ''); setEditingSlug(true); }}
+                className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                {customSlug ? 'Editar link personalizado' : 'Personalizar link com seu nome'}
+              </button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
