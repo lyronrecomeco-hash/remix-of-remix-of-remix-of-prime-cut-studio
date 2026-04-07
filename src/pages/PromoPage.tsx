@@ -80,11 +80,21 @@ export default function PromoPage() {
     }
 
     try {
-      const { data } = await supabase
+      // Try matching by custom_slug first, then promo_code
+      let { data } = await supabase
         .from('promo_links')
         .select('id')
-        .eq('promo_code', codigo)
+        .eq('custom_slug', codigo.toLowerCase())
         .maybeSingle();
+
+      if (!data) {
+        const res = await supabase
+          .from('promo_links')
+          .select('id')
+          .eq('promo_code', codigo)
+          .maybeSingle();
+        data = res.data;
+      }
 
       setIsValidCode(!!data);
       if (data?.id) {

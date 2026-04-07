@@ -17,7 +17,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Wallet,
-  Banknote
+  Banknote,
+  Pencil
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { WithdrawalModal } from './WithdrawalModal';
+import { Input } from '@/components/ui/input';
 
 interface PromoReferral {
   id: string;
@@ -43,6 +45,9 @@ interface PromocionalTabProps {
 
 export function PromocionalTab({ userId }: PromocionalTabProps) {
   const [promoCode, setPromoCode] = useState<string>('');
+  const [customSlug, setCustomSlug] = useState<string>('');
+  const [editingSlug, setEditingSlug] = useState(false);
+  const [slugInput, setSlugInput] = useState('');
   const [promoLinkId, setPromoLinkId] = useState<string>('');
   const [referrals, setReferrals] = useState<PromoReferral[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +55,9 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
   const [availableBalance, setAvailableBalance] = useState(0);
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
 
-  const promoLink = `https://genesishub.cloud/promo/${promoCode}`;
+  const promoLink = customSlug
+    ? `https://genesishub.cloud/promo/${customSlug}`
+    : `https://genesishub.cloud/promo/${promoCode}`;
 
   useEffect(() => {
     loadPromoData();
@@ -85,6 +92,10 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
 
       setPromoCode(promoLinkData.promo_code);
       setPromoLinkId(promoLinkData.id);
+      if ((promoLinkData as any).custom_slug) {
+        setCustomSlug((promoLinkData as any).custom_slug);
+        setSlugInput((promoLinkData as any).custom_slug);
+      }
 
       const { data: referralData } = await supabase
         .from('promo_referrals')
@@ -133,6 +144,34 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return code;
+  };
+
+  const saveCustomSlug = async () => {
+    const slug = slugInput.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
+    if (!slug || slug.length < 3) {
+      toast.error('O slug deve ter no mínimo 3 caracteres (letras, números e hífens)');
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('promo_links')
+        .update({ custom_slug: slug } as any)
+        .eq('id', promoLinkId);
+      if (error) {
+        if (error.code === '23505') {
+          toast.error('Esse nome já está em uso. Escolha outro.');
+        } else {
+          throw error;
+        }
+        return;
+      }
+      setCustomSlug(slug);
+      setEditingSlug(false);
+      toast.success('Link personalizado salvo!');
+    } catch (error) {
+      console.error('Erro ao salvar slug:', error);
+      toast.error('Erro ao salvar link personalizado');
+    }
   };
 
   const copyToClipboard = async (text: string) => {
@@ -312,6 +351,35 @@ export function PromocionalTab({ userId }: PromocionalTabProps) {
               {copiedLink ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
               {copiedLink ? 'Copiado' : 'Copiar'}
             </Button>
+          </div>
+
+          {/* Personalizar slug */}
+          <div className="mt-4 pt-4 border-t border-white/10">
+            {editingSlug ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-white/50 whitespace-nowrap">genesishub.cloud/promo/</span>
+                <Input
+                  value={slugInput}
+                  onChange={(e) => setSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                  placeholder="seu-nome"
+                  className="bg-white/5 border-white/10 text-white h-9 text-sm flex-1"
+                />
+                <Button size="sm" onClick={saveCustomSlug} className="bg-primary hover:bg-primary/90 h-9">
+                  Salvar
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingSlug(false)} className="h-9">
+                  Cancelar
+                </Button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setSlugInput(customSlug || ''); setEditingSlug(true); }}
+                className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                {customSlug ? 'Editar link personalizado' : 'Personalizar link com seu nome'}
+              </button>
+            )}
           </div>
         </CardContent>
       </Card>

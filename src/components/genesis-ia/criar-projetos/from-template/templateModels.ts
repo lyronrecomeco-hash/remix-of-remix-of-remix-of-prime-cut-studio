@@ -41,6 +41,16 @@ import imgCrmApp from '@/assets/templates/crm-app.jpg';
 import imgEscolaMusica from '@/assets/templates/escola-musica.jpg';
 import imgConstrutora from '@/assets/templates/construtora.jpg';
 import imgAgenciaViagens from '@/assets/templates/agencia-viagens.jpg';
+import imgNutricionista from '@/assets/templates/nutricionista.jpg';
+import imgFisioterapia from '@/assets/templates/fisioterapia.jpg';
+import imgArquitetura from '@/assets/templates/arquitetura.jpg';
+import imgCorretor from '@/assets/templates/corretor.jpg';
+import imgProteseDentaria from '@/assets/templates/protese-dentaria.jpg';
+import imgAutoescola from '@/assets/templates/autoescola.jpg';
+import imgEscolaInfantil from '@/assets/templates/escola-infantil.jpg';
+import imgAgenciaMarketing from '@/assets/templates/agencia-marketing.jpg';
+import imgPersonalTrainer from '@/assets/templates/personal-trainer.jpg';
+import imgFarmacia from '@/assets/templates/farmacia.jpg';
 
 export type TemplateCategory = 'site' | 'app';
 
@@ -513,5 +523,113 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     suggestedPages: ['Dashboard', 'Clientes', 'Pipeline', 'Tarefas', 'Relatorios', 'Configuracoes'],
     suggestedFeatures: ['Pipeline de vendas', 'Cadastro de clientes', 'Gestao de tarefas', 'Relatorios e graficos', 'Integracao WhatsApp', 'Notificacoes'],
     objectives: ['Gerenciar clientes', 'Pipeline de vendas', 'Acompanhar tarefas', 'Relatorios de performance', 'Automatizar follow-ups'],
+  },
+
+  // ========== NOVOS TEMPLATES - SAÚDE & BEM-ESTAR ==========
+  {
+    id: 'nutricionista',
+    name: 'Nutricionista',
+    description: 'Consultas, planos alimentares e dicas',
+    image: imgNutricionista,
+    category: 'site',
+    suggestedPages: ['Home', 'Sobre', 'Servicos', 'Planos Alimentares', 'Blog', 'Agendamento', 'Contato'],
+    suggestedFeatures: ['Agendamento online', 'Planos alimentares personalizados', 'Blog de nutricao', 'Depoimentos', 'Botao WhatsApp', 'Receitas saudaveis'],
+    objectives: ['Agendar consultas', 'Apresentar especialidades', 'Educar pacientes', 'Captar clientes', 'Mostrar resultados'],
+  },
+  {
+    id: 'fisioterapia',
+    name: 'Fisioterapia / Reabilitação',
+    description: 'Tratamentos fisioterapeuticos e recuperação',
+    image: imgFisioterapia,
+    category: 'site',
+    suggestedPages: ['Home', 'Tratamentos', 'Equipe', 'Estrutura', 'Agendamento', 'Contato'],
+    suggestedFeatures: ['Lista de tratamentos', 'Agendamento online', 'Galeria da clinica', 'Perfil profissional', 'Botao WhatsApp', 'Convenios aceitos'],
+    objectives: ['Agendar sessoes', 'Apresentar tratamentos', 'Mostrar estrutura', 'Informar convenios', 'Gerar confianca'],
+  },
+  {
+    id: 'protese-dentaria',
+    name: 'Protese Dentaria',
+    description: 'Laboratorio de proteses e implantes',
+    image: imgProteseDentaria,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Antes e Depois', 'Tecnologia', 'Agendamento', 'Contato'],
+    suggestedFeatures: ['Catalogo de servicos', 'Galeria antes/depois', 'Tecnologia utilizada', 'Agendamento online', 'Botao WhatsApp', 'Depoimentos'],
+    objectives: ['Mostrar resultados', 'Agendar avaliacoes', 'Apresentar tecnologia', 'Gerar confianca', 'Captar pacientes'],
+  },
+  {
+    id: 'farmacia',
+    name: 'Farmacia / Drogaria',
+    description: 'Catalogo de produtos e delivery',
+    image: imgFarmacia,
+    category: 'site',
+    suggestedPages: ['Home', 'Produtos', 'Manipulados', 'Delivery', 'Promocoes', 'Contato'],
+    suggestedFeatures: ['Catalogo de produtos', 'Pedidos via WhatsApp', 'Delivery de medicamentos', 'Promocoes', 'Botao WhatsApp', 'Horario de funcionamento'],
+    objectives: ['Vender produtos', 'Delivery', 'Promover ofertas', 'Captar clientes locais', 'Fidelizar'],
+  },
+
+  // ========== NOVOS TEMPLATES - SERVIÇOS PROFISSIONAIS ==========
+  {
+    id: 'arquitetura',
+    name: 'Arquitetura / Design Interior',
+    description: 'Portfolio de projetos e orcamentos',
+    image: imgArquitetura,
+    category: 'site',
+    suggestedPages: ['Home', 'Portfolio', 'Servicos', 'Processo', 'Sobre', 'Contato'],
+    suggestedFeatures: ['Galeria de projetos', 'Portfolio 3D', 'Formulario de orcamento', 'Depoimentos', 'Botao WhatsApp', 'Blog de tendencias'],
+    objectives: ['Mostrar portfolio', 'Gerar orcamentos', 'Apresentar processo criativo', 'Captar clientes', 'Gerar autoridade'],
+  },
+  {
+    id: 'corretor',
+    name: 'Corretor de Imoveis',
+    description: 'Catalogo pessoal de imoveis',
+    image: imgCorretor,
+    category: 'site',
+    suggestedPages: ['Home', 'Imoveis a Venda', 'Aluguel', 'Sobre Mim', 'Depoimentos', 'Contato'],
+    suggestedFeatures: ['Catalogo com filtros', 'Tour virtual', 'Perfil profissional', 'Formulario de interesse', 'Botao WhatsApp', 'Mapa de localizacao'],
+    objectives: ['Mostrar imoveis', 'Captar leads', 'Gerar credibilidade', 'Facilitar contato', 'Agendamento de visitas'],
+  },
+  {
+    id: 'agencia-marketing',
+    name: 'Agencia de Marketing',
+    description: 'Servicos de marketing digital e resultados',
+    image: imgAgenciaMarketing,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Cases', 'Planos', 'Blog', 'Contato'],
+    suggestedFeatures: ['Apresentacao de servicos', 'Cases de sucesso', 'Tabela de planos', 'Blog de marketing', 'Botao WhatsApp', 'Formulario de briefing'],
+    objectives: ['Captar clientes', 'Mostrar resultados', 'Vender planos', 'Gerar autoridade', 'Apresentar servicos'],
+  },
+  {
+    id: 'autoescola',
+    name: 'Autoescola / CFC',
+    description: 'Cursos, categorias e matriculas',
+    image: imgAutoescola,
+    category: 'site',
+    suggestedPages: ['Home', 'Cursos', 'Categorias', 'Simulado', 'Matricula', 'Contato'],
+    suggestedFeatures: ['Lista de cursos e categorias', 'Formulario de matricula', 'Simulado online', 'Horarios de aulas', 'Botao WhatsApp', 'Depoimentos'],
+    objectives: ['Captar alunos', 'Facilitar matricula', 'Informar cursos', 'Mostrar aprovacoes', 'Agendamento de aulas'],
+  },
+
+  // ========== NOVOS TEMPLATES - EDUCAÇÃO ==========
+  {
+    id: 'escola-infantil',
+    name: 'Escola Infantil / Creche',
+    description: 'Matriculas, atividades e estrutura',
+    image: imgEscolaInfantil,
+    category: 'site',
+    suggestedPages: ['Home', 'Proposta Pedagogica', 'Estrutura', 'Atividades', 'Matricula', 'Contato'],
+    suggestedFeatures: ['Tour virtual', 'Proposta pedagogica', 'Galeria de atividades', 'Formulario de matricula', 'Botao WhatsApp', 'Calendario escolar'],
+    objectives: ['Captar matriculas', 'Mostrar estrutura', 'Apresentar metodologia', 'Gerar confianca', 'Facilitar contato'],
+  },
+
+  // ========== NOVOS TEMPLATES - FITNESS ==========
+  {
+    id: 'personal-trainer',
+    name: 'Personal Trainer',
+    description: 'Treinos personalizados e resultados',
+    image: imgPersonalTrainer,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Resultados', 'Planos', 'Sobre', 'Contato'],
+    suggestedFeatures: ['Galeria de resultados', 'Planos de treino', 'Agendamento de avaliacao', 'Depoimentos', 'Botao WhatsApp', 'Blog fitness'],
+    objectives: ['Captar alunos', 'Mostrar resultados', 'Vender planos', 'Agendar avaliacoes', 'Gerar autoridade'],
   },
 ];

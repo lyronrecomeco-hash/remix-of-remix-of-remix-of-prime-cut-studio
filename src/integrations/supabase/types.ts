@@ -12086,6 +12086,7 @@ export type Database = {
           affiliate_id: string | null
           commission_rate: number | null
           created_at: string
+          custom_slug: string | null
           id: string
           promo_code: string
           updated_at: string
@@ -12095,6 +12096,7 @@ export type Database = {
           affiliate_id?: string | null
           commission_rate?: number | null
           created_at?: string
+          custom_slug?: string | null
           id?: string
           promo_code: string
           updated_at?: string
@@ -12104,6 +12106,7 @@ export type Database = {
           affiliate_id?: string | null
           commission_rate?: number | null
           created_at?: string
+          custom_slug?: string | null
           id?: string
           promo_code?: string
           updated_at?: string
