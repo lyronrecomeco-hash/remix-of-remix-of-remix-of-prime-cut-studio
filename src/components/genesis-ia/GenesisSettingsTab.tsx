@@ -238,6 +238,16 @@ export const GenesisSettingsTab = ({ userId, authUserId }: GenesisSettingsTabPro
     if (error) throw error;
   };
 
+  const syncBotWebhook = async () => {
+    const { data, error } = await supabase.functions.invoke('support-chat-telegram', {
+      body: { action: 'setup_webhook' },
+    });
+
+    if (error || !data?.success) {
+      throw error || new Error(data?.result?.description || 'Webhook não configurado');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -451,6 +461,7 @@ export const GenesisSettingsTab = ({ userId, authUserId }: GenesisSettingsTabPro
                       const nextSettings: GenesisSettings = { ...settings, botEnabled: v };
                       setSettings(nextSettings);
                       await saveBotSettings(v, nextSettings.telegramChatId || '');
+                      if (v) await syncBotWebhook();
                       toast.success(v ? 'Bot ativado' : 'Bot desativado');
                     } catch (error) {
                       console.error('Error saving bot status:', error);
@@ -478,6 +489,7 @@ export const GenesisSettingsTab = ({ userId, authUserId }: GenesisSettingsTabPro
 
                       try {
                         await saveBotSettings(settings.botEnabled ?? true, chatId);
+                        await syncBotWebhook();
                         setSettings(prev => ({ ...prev, botEnabled: true }));
                         toast.success('Chat ID salvo!');
                       } catch (error) {

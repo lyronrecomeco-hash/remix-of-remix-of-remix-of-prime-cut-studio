@@ -5,6 +5,7 @@ import {
   Bot,
   ChevronDown,
   Headphones,
+  ImagePlus,
   Loader2,
   MessageCircle,
   Send,
@@ -59,7 +60,9 @@ export function GenesisSupportChat() {
   const [liveSessionId, setLiveSessionId] = useState<string | null>(null);
   const [showSupportOptions, setShowSupportOptions] = useState(false);
   const [liveSupportAvailable, setLiveSupportAvailable] = useState<boolean | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -280,6 +283,51 @@ export function GenesisSupportChat() {
     }
   };
 
+  const handleImageUpload = async (file?: File | null) => {
+    if (!file) return;
+
+    if (chatMode !== 'live' || !liveSessionId) {
+      append(msg('system', 'O envio de imagem fica disponível durante o atendimento humano no chat.'));
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || '');
+          const content = result.includes(',') ? result.split(',')[1] : result;
+          resolve(content);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      await supabase.from('support_chat_messages').insert({
+        session_id: liveSessionId,
+        sender_type: 'user',
+        message: `🖼️ Imagem enviada: ${file.name}`,
+      });
+
+      await callTelegram({
+        action: 'send_to_telegram',
+        session_id: liveSessionId,
+        file_base64: base64,
+        file_name: file.name,
+      });
+
+      append(msg('system', `Imagem enviada: ${file.name}`));
+    } catch (error) {
+      console.error('Image upload error:', error);
+      append(msg('system', 'Não foi possível enviar a imagem. Tente novamente.'));
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const reset = () => {
     setChatMode('ai');
     setLiveSessionId(null);
@@ -461,6 +509,22 @@ export function GenesisSupportChat() {
         ) : (
           <div className="flex items-center gap-2">
             <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => void handleImageUpload(e.target.files?.[0] ?? null)}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={chatMode === 'connecting' || isUploadingImage}
+              className="flex h-11 w-11 items-center justify-center rounded-2xl border border-input bg-secondary text-primary transition-opacity hover:opacity-90 disabled:opacity-30"
+              aria-label="Enviar imagem"
+            >
+              {isUploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+            </button>
+            <input
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
@@ -472,7 +536,7 @@ export function GenesisSupportChat() {
             <button
               type="button"
               onClick={() => sendMessage()}
-              disabled={!input.trim() || isLoading || chatMode === 'connecting'}
+              disabled={!input.trim() || isLoading || isUploadingImage || chatMode === 'connecting'}
               className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-30"
             >
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

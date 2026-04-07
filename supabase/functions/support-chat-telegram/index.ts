@@ -6,7 +6,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const BOT_TOKEN = '8682592618:AAFtm4eyffbspScQ0LRm9miKGKiY7ltbR94';
+const FALLBACK_BOT_TOKEN = '8682592618:AAFtm4eyffbspScQ0LRm9miKGKiY7ltbR94';
+
+function getBotToken() {
+  return Deno.env.get('TELEGRAM_BOT_TOKEN') || FALLBACK_BOT_TOKEN;
+}
 
 async function getBotStatus(supabase: ReturnType<typeof createClient>) {
   const { data: settings } = await supabase
@@ -29,13 +33,47 @@ async function getBotStatus(supabase: ReturnType<typeof createClient>) {
 async function sendTelegramMessage(chatId: number | string, text: string, replyMarkup?: any) {
   const body: any = { chat_id: chatId, text, parse_mode: 'HTML' };
   if (replyMarkup) body.reply_markup = JSON.stringify(replyMarkup);
+  const botToken = getBotToken();
   
-  const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   return res.json();
+}
+
+async function sendTelegramPhoto(chatId: number | string, fileBase64: string, fileName: string, caption?: string) {
+  const botToken = getBotToken();
+  const bytes = Uint8Array.from(atob(fileBase64), (char) => char.charCodeAt(0));
+  const formData = new FormData();
+  formData.append('chat_id', String(chatId));
+  if (caption) formData.append('caption', caption);
+  formData.append('photo', new Blob([bytes]), fileName || 'imagem-suporte.png');
+
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  return res.json();
+}
+
+async function setupWebhook(supabaseUrl: string) {
+  const botToken = getBotToken();
+  const webhookUrl = `${supabaseUrl}/functions/v1/support-chat-telegram`;
+
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      url: webhookUrl,
+      allowed_updates: ['message', 'callback_query'],
+      drop_pending_updates: false,
+    }),
+  });
+
+  return await res.json();
 }
 
 serve(async (req) => {
@@ -56,11 +94,19 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { action } = body;
+    const inferredWebhookUpdate = body?.update_id || body?.message || body?.callback_query;
+    const action = body?.action || (inferredWebhookUpdate ? 'telegram_webhook' : undefined);
 
      if (action === 'get_status') {
        const status = await getBotStatus(supabase);
        return new Response(JSON.stringify({ success: true, ...status }), {
+         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+       });
+     }
+
+     if (action === 'setup_webhook') {
+       const result = await setupWebhook(supabaseUrl);
+       return new Response(JSON.stringify({ success: Boolean(result?.ok), result }), {
          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
        });
      }
@@ -102,7 +148,7 @@ serve(async (req) => {
 
     // Action: send_to_telegram — Forward user message to admin telegram
     if (action === 'send_to_telegram') {
-      const { session_id, message } = body;
+      const { session_id, message, file_base64, file_name } = body;
       
       const { data: session } = await supabase
         .from('support_chat_sessions')
@@ -116,8 +162,17 @@ serve(async (req) => {
         });
       }
 
-      const text = `💬 <b>${session.user_name || 'Usuário'}:</b>\n${message}`;
-      await sendTelegramMessage(session.admin_telegram_chat_id, text);
+      if (file_base64) {
+        await sendTelegramPhoto(
+          session.admin_telegram_chat_id,
+          String(file_base64),
+          String(file_name || 'imagem-suporte.png'),
+          `🖼️ ${session.user_name || 'Usuário'} enviou uma imagem`
+        );
+      } else {
+        const text = `💬 <b>${session.user_name || 'Usuário'}:</b>\n${message}`;
+        await sendTelegramMessage(session.admin_telegram_chat_id, text);
+      }
 
        return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -126,7 +181,7 @@ serve(async (req) => {
 
     // Action: telegram_webhook — Handle Telegram updates (callback queries + messages)
     if (action === 'telegram_webhook') {
-      const update = body.update;
+      const update = body.update || body;
       
       // Handle callback query (accept report)
       if (update?.callback_query) {
@@ -151,7 +206,7 @@ serve(async (req) => {
             });
 
           // Answer callback
-          await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+          await fetch(`https://api.telegram.org/bot${getBotToken()}/answerCallbackQuery`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
