@@ -1068,7 +1068,7 @@ export default function SiteBuilder() {
   const sidebarContent = (
     <div className="flex h-full flex-col">
       {/* Chat Logs */}
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 overflow-y-auto p-3 scrollbar-transparent">
         <div className="space-y-1.5">
           {chatLogEntries.map(entry => <ChatLogItem key={entry.id} entry={entry} />)}
           {isGenerating && chatLogEntries.length > 0 && chatLogEntries[chatLogEntries.length - 1]?.type !== 'thinking' && (
@@ -1080,7 +1080,7 @@ export default function SiteBuilder() {
 
       {/* Pipeline */}
       {(isGenerating || buildStage !== 'idle') && (
-        <div className="border-t border-white/[0.06] bg-card/30 p-3 max-h-52 overflow-y-auto">
+        <div className="border-t border-white/[0.06] bg-card/30 p-3 max-h-52 overflow-y-auto scrollbar-transparent">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-muted-foreground/25">Pipeline</p>
             <span className="text-[10px] text-primary/50">{STAGE_META[buildStage].pct}%</span>
@@ -1226,7 +1226,7 @@ export default function SiteBuilder() {
             <ResizableHandle withHandle className="w-px bg-white/[0.06] hover:bg-primary/30 transition-colors" />
             <ResizablePanel defaultSize={75} minSize={50}>
               <div className="flex h-full flex-col overflow-hidden">
-                <div className="relative flex-1 overflow-auto p-3">
+                <div className="relative flex-1 overflow-auto p-3 scrollbar-transparent">
                   <AnimatePresence mode="wait">
                     {centerMode === 'preview' && (
                       <motion.div key="preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative h-full">
@@ -1292,7 +1292,7 @@ export default function SiteBuilder() {
 
         {/* Mobile: Full width */}
         <div className="flex sm:hidden flex-1 flex-col overflow-hidden">
-          <div className="relative flex-1 overflow-auto p-2">
+          <div className="relative flex-1 overflow-auto p-2 scrollbar-transparent">
             <AnimatePresence mode="wait">
               {centerMode === 'preview' && (
                 <motion.div key="preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative h-full">
