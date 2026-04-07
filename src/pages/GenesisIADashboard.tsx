@@ -86,6 +86,7 @@ import { RestrictedAccessModal } from "@/components/admin/RestrictedAccessModal"
 import { GenesisSupportChat } from "@/components/genesis-ia/support/GenesisSupportChat";
 import { TrialCountdownBadge } from "@/components/genesis-ia/trial/TrialCountdownBadge";
 import { TrialInfoModal } from "@/components/genesis-ia/trial/TrialInfoModal";
+import { GenesisNotificationBell } from "@/components/genesis-ia/notifications/GenesisNotificationBell";
 
 type ActiveTab = 'dashboard' | 'prospects' | 'radar' | 'accepted_proposals' | 'users' | 'settings' | 'financial' | 'criar-projetos' | 'contracts' | 'promocional' | 'payments' | 'page-builder' | 'academia' | 'proposals' | 'sprint-mission' | 'api-keys' | 'viral-saas' | 'partner-applications' | 'help' | 'oferta-quente';
 
@@ -881,13 +882,17 @@ const GenesisIADashboard = () => {
 
                   {/* Welcome badge removed - using hero section instead */}
                   
-                  {/* Trial Countdown for Mentorado users */}
-                  {isTrialUser && trialExpiresAt && !isTrialExpired && (
-                    <TrialCountdownBadge 
-                      expiresAt={trialExpiresAt} 
-                      onClick={() => setShowTrialModal(true)} 
-                    />
-                  )}
+                  <div className="flex items-center gap-2">
+                    {/* Trial Countdown for Mentorado users */}
+                    {isTrialUser && trialExpiresAt && !isTrialExpired && (
+                      <TrialCountdownBadge 
+                        expiresAt={trialExpiresAt} 
+                        onClick={() => setShowTrialModal(true)} 
+                      />
+                    )}
+                    {/* Notification Bell */}
+                    <GenesisNotificationBell onViewAll={() => setActiveTab('help')} />
+                  </div>
                 </div>
               </div>
             </header>
