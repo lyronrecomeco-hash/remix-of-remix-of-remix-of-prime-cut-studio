@@ -402,7 +402,7 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
                       user_id: userId,
                       setting_type: 'telegram_support_bot',
                       settings: { enabled: v, telegram_chat_id: (settings as any).telegramChatId || '' },
-                    }, { onConflict: 'user_id,setting_type' });
+                    }, { onConflict: 'setting_type' });
                     toast.success(v ? 'Bot ativado' : 'Bot desativado');
                   }}
                 />
@@ -426,7 +426,7 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
                         user_id: userId,
                         setting_type: 'telegram_support_bot',
                         settings: { enabled: true, telegram_chat_id: chatId },
-                      }, { onConflict: 'user_id,setting_type' });
+                      }, { onConflict: 'setting_type' });
                       toast.success('Chat ID salvo!');
                     }}
                     className="h-9"
