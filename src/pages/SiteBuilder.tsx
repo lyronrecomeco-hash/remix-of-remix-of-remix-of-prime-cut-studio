@@ -5,7 +5,7 @@ import {
   Send, ArrowLeft, Code2, Eye, Copy, Download, Trash2,
   Loader2, Monitor, Tablet, Smartphone, Sparkles,
   MessageSquare, Clock, Plus, Check, Globe, Layers,
-  ChevronRight, Zap, X
+  Zap, X, FolderOpen, FileCode, Palette, Settings2
 } from 'lucide-react';
 import genesisLogo from '@/assets/genesis-logo.png';
 
@@ -59,188 +59,299 @@ function saveProjects(projects: Project[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
 }
 
-/* ─── Code Generation Animation Lines ─── */
+/* ─── Floating Particles Background ─── */
+const FloatingParticles = memo(() => {
+  const particles = Array.from({ length: 20 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: Math.random() * 3 + 1,
+    duration: Math.random() * 15 + 10,
+    delay: Math.random() * 5,
+  }));
+
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {/* Gradient orbs */}
+      <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full opacity-[0.03]"
+        style={{ background: 'radial-gradient(circle, hsl(200 80% 50%) 0%, transparent 70%)' }} />
+      <div className="absolute -bottom-48 -right-32 h-[500px] w-[500px] rounded-full opacity-[0.04]"
+        style={{ background: 'radial-gradient(circle, hsl(210 70% 40%) 0%, transparent 70%)' }} />
+      <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full opacity-[0.02]"
+        style={{ background: 'radial-gradient(circle, hsl(190 90% 50%) 0%, transparent 70%)' }} />
+
+      {/* Floating dots */}
+      {particles.map(p => (
+        <motion.div
+          key={p.id}
+          className="absolute rounded-full"
+          style={{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: p.size,
+            height: p.size,
+            background: `hsl(200 70% 60% / 0.15)`,
+          }}
+          animate={{
+            y: [0, -30, 0],
+            x: [0, Math.random() * 20 - 10, 0],
+            opacity: [0.1, 0.3, 0.1],
+          }}
+          transition={{
+            duration: p.duration,
+            repeat: Infinity,
+            delay: p.delay,
+            ease: 'easeInOut',
+          }}
+        />
+      ))}
+
+      {/* Grid pattern overlay */}
+      <div className="absolute inset-0 opacity-[0.015]"
+        style={{
+          backgroundImage: `linear-gradient(hsl(200 50% 50%) 1px, transparent 1px), linear-gradient(90deg, hsl(200 50% 50%) 1px, transparent 1px)`,
+          backgroundSize: '60px 60px',
+        }}
+      />
+    </div>
+  );
+});
+FloatingParticles.displayName = 'FloatingParticles';
+
+/* ─── Code Generation Terminal ─── */
 const CODE_LINES = [
-  '<!DOCTYPE html>',
-  '<html lang="pt-BR">',
-  '<head>',
-  '  <meta charset="UTF-8">',
-  '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
-  '  <title>Meu Site</title>',
-  '  <script src="https://cdn.tailwindcss.com"><\/script>',
-  '</head>',
-  '<body class="bg-gray-50">',
-  '  <!-- Header -->',
-  '  <header class="bg-white shadow-sm">',
-  '    <nav class="max-w-7xl mx-auto px-4 py-4 flex justify-between">',
-  '      <div class="text-2xl font-bold text-blue-600">Logo</div>',
-  '      <div class="hidden md:flex gap-8 items-center">',
-  '        <a href="#" class="text-gray-700 hover:text-blue-600">Início</a>',
-  '        <a href="#" class="text-gray-700 hover:text-blue-600">Serviços</a>',
-  '        <a href="#" class="text-gray-700 hover:text-blue-600">Contato</a>',
-  '      </div>',
-  '    </nav>',
-  '  </header>',
-  '',
-  '  <!-- Hero Section -->',
-  '  <section class="relative bg-gradient-to-br from-blue-600 to-blue-800">',
-  '    <div class="max-w-7xl mx-auto px-4 py-24 text-center">',
-  '      <h1 class="text-5xl font-bold text-white mb-6">',
-  '        Transforme sua presença digital',
-  '      </h1>',
-  '      <p class="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">',
-  '        Soluções profissionais para o seu negócio crescer.',
-  '      </p>',
-  '      <a href="#contato" class="bg-white text-blue-600 px-8 py-4 rounded-full">',
-  '        Começar Agora',
-  '      </a>',
-  '    </div>',
-  '  </section>',
-  '',
-  '  <!-- Features -->',
-  '  <section class="py-20 bg-white">',
-  '    <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-3 gap-8">',
-  '      <div class="p-6 rounded-2xl bg-gray-50 border">',
-  '        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">',
-  '          <svg class="w-6 h-6 text-blue-600">...</svg>',
-  '        </div>',
-  '        <h3 class="text-xl font-semibold mt-4">Design Moderno</h3>',
-  '        <p class="text-gray-600 mt-2">Interfaces elegantes e responsivas.</p>',
-  '      </div>',
-  '    </div>',
-  '  </section>',
-  '',
-  '  <!-- Footer -->',
-  '  <footer class="bg-gray-900 text-white py-12">',
-  '    <div class="max-w-7xl mx-auto px-4 text-center">',
-  '      <p class="text-gray-400">&copy; 2024 Todos os direitos reservados.</p>',
-  '    </div>',
-  '  </footer>',
-  '</body>',
-  '</html>',
+  { text: '<!DOCTYPE html>', type: 'tag' },
+  { text: '<html lang="pt-BR">', type: 'tag' },
+  { text: '<head>', type: 'tag' },
+  { text: '  <meta charset="UTF-8">', type: 'attr' },
+  { text: '  <meta name="viewport" content="width=device-width, initial-scale=1.0">', type: 'attr' },
+  { text: '  <title>Meu Site Profissional</title>', type: 'text' },
+  { text: '  <script src="https://cdn.tailwindcss.com"><\/script>', type: 'attr' },
+  { text: '</head>', type: 'tag' },
+  { text: '<body class="bg-gray-50 antialiased">', type: 'tag' },
+  { text: '', type: 'empty' },
+  { text: '  <!-- ═══ Navigation ═══ -->', type: 'comment' },
+  { text: '  <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-lg">', type: 'tag' },
+  { text: '    <nav class="max-w-7xl mx-auto px-6 py-4 flex justify-between">', type: 'tag' },
+  { text: '      <div class="text-2xl font-bold text-blue-600">Brand</div>', type: 'text' },
+  { text: '      <div class="hidden md:flex gap-8 items-center">', type: 'tag' },
+  { text: '        <a href="#" class="text-gray-700 hover:text-blue-600">Início</a>', type: 'text' },
+  { text: '        <a href="#" class="text-gray-700 hover:text-blue-600">Serviços</a>', type: 'text' },
+  { text: '      </div>', type: 'tag' },
+  { text: '    </nav>', type: 'tag' },
+  { text: '  </header>', type: 'tag' },
+  { text: '', type: 'empty' },
+  { text: '  <!-- ═══ Hero Section ═══ -->', type: 'comment' },
+  { text: '  <section class="relative overflow-hidden">', type: 'tag' },
+  { text: '    <div class="max-w-7xl mx-auto px-6 py-24 text-center">', type: 'tag' },
+  { text: '      <h1 class="text-5xl font-bold text-gray-900 mb-6">', type: 'tag' },
+  { text: '        Transforme sua presença digital', type: 'text' },
+  { text: '      </h1>', type: 'tag' },
+  { text: '      <p class="text-xl text-gray-600 max-w-2xl mx-auto mb-10">', type: 'tag' },
+  { text: '        Soluções profissionais para seu negócio crescer.', type: 'text' },
+  { text: '      </p>', type: 'tag' },
+  { text: '      <a href="#contato" class="inline-flex items-center bg-blue-600">', type: 'attr' },
+  { text: '        Começar Agora', type: 'text' },
+  { text: '      </a>', type: 'tag' },
+  { text: '    </div>', type: 'tag' },
+  { text: '  </section>', type: 'tag' },
+  { text: '', type: 'empty' },
+  { text: '  <!-- ═══ Features Grid ═══ -->', type: 'comment' },
+  { text: '  <section class="py-20 bg-white">', type: 'tag' },
+  { text: '    <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-8">', type: 'tag' },
+  { text: '      <div class="p-8 rounded-2xl bg-gray-50 border border-gray-100">', type: 'tag' },
+  { text: '        <h3 class="text-xl font-semibold mt-4">Design Moderno</h3>', type: 'text' },
+  { text: '        <p class="text-gray-600 mt-2">Interfaces responsivas.</p>', type: 'text' },
+  { text: '      </div>', type: 'tag' },
+  { text: '    </div>', type: 'tag' },
+  { text: '  </section>', type: 'tag' },
+  { text: '', type: 'empty' },
+  { text: '  <!-- ═══ Footer ═══ -->', type: 'comment' },
+  { text: '  <footer class="bg-gray-900 text-white py-12">', type: 'tag' },
+  { text: '    <div class="max-w-7xl mx-auto px-6 text-center">', type: 'tag' },
+  { text: '      <p class="text-gray-400">&copy; 2024 Todos os direitos.</p>', type: 'text' },
+  { text: '    </div>', type: 'tag' },
+  { text: '  </footer>', type: 'tag' },
+  { text: '</body>', type: 'tag' },
+  { text: '</html>', type: 'tag' },
 ];
 
-/* ─── Building Animation Component ─── */
-const BuildingAnimation = memo(({ progress }: { progress: number }) => {
+const getLineColor = (type: string) => {
+  switch (type) {
+    case 'tag': return 'text-blue-400/70';
+    case 'attr': return 'text-cyan-300/60';
+    case 'text': return 'text-emerald-300/60';
+    case 'comment': return 'text-white/20';
+    default: return 'text-white/10';
+  }
+};
+
+const BuildingTerminal = memo(({ progress }: { progress: number }) => {
   const visibleLines = Math.floor((progress / 100) * CODE_LINES.length);
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden rounded-xl border border-sky-500/20 bg-slate-950">
-      {/* Terminal header */}
-      <div className="flex items-center gap-2 border-b border-sky-500/10 bg-slate-900/80 px-4 py-2.5">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-[hsl(220_25%_8%)]">
+      {/* Terminal chrome */}
+      <div className="flex items-center gap-3 border-b border-white/[0.06] bg-white/[0.02] px-4 py-3">
         <div className="flex gap-1.5">
-          <div className="h-2.5 w-2.5 rounded-full bg-red-500/60" />
-          <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/60" />
-          <div className="h-2.5 w-2.5 rounded-full bg-green-500/60" />
+          <div className="h-2.5 w-2.5 rounded-full bg-[hsl(0_60%_50%/0.5)]" />
+          <div className="h-2.5 w-2.5 rounded-full bg-[hsl(40_60%_50%/0.5)]" />
+          <div className="h-2.5 w-2.5 rounded-full bg-[hsl(130_50%_45%/0.5)]" />
         </div>
-        <span className="ml-2 text-[10px] font-mono text-sky-400/60">genesis-builder — generating site...</span>
-        <div className="ml-auto flex items-center gap-2">
-          <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-400" />
-          <span className="text-[10px] font-mono text-sky-400/40">{progress}%</span>
+        <div className="flex-1 text-center">
+          <span className="rounded-md bg-white/[0.04] px-3 py-0.5 font-mono text-[10px] text-white/30">
+            genesis-builder ~/projeto/index.html
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <motion.div
+            animate={{ opacity: progress < 100 ? [0.3, 1, 0.3] : 1 }}
+            transition={{ duration: 1, repeat: progress < 100 ? Infinity : 0 }}
+            className={`h-1.5 w-1.5 rounded-full ${progress >= 100 ? 'bg-emerald-400/60' : 'bg-blue-400/60'}`}
+          />
+          <span className="font-mono text-[10px] text-white/20">{Math.round(progress)}%</span>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="h-0.5 w-full bg-slate-800">
+      <div className="h-px w-full bg-white/[0.04]">
         <motion.div
-          className="h-full bg-gradient-to-r from-sky-500 via-cyan-400 to-sky-500"
-          style={{ width: `${progress}%` }}
+          className="h-full"
+          style={{
+            width: `${progress}%`,
+            background: 'linear-gradient(90deg, hsl(200 80% 50% / 0.6), hsl(180 70% 50% / 0.4))',
+          }}
           transition={{ duration: 0.3 }}
         />
       </div>
 
-      {/* Code area */}
-      <div className="flex-1 overflow-hidden p-4 font-mono text-[11px] leading-5">
-        <div className="space-y-0">
-          {CODE_LINES.slice(0, visibleLines).map((line, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.15 }}
-              className="flex"
-            >
-              <span className="mr-4 inline-block w-6 select-none text-right text-sky-500/20">{i + 1}</span>
-              <span className={
-                line.startsWith('  <!--') ? 'text-sky-500/30' :
-                line.includes('class=') ? 'text-cyan-300/80' :
-                line.startsWith('<') ? 'text-sky-400/70' :
-                'text-white/50'
-              }>
-                {line || '\u00A0'}
-              </span>
-            </motion.div>
-          ))}
-          {progress < 100 && (
-            <motion.div
-              animate={{ opacity: [0.3, 1, 0.3] }}
-              transition={{ duration: 0.8, repeat: Infinity }}
-              className="flex items-center mt-1"
-            >
-              <span className="mr-4 inline-block w-6 select-none text-right text-sky-500/20">{visibleLines + 1}</span>
-              <span className="inline-block h-4 w-2 bg-sky-400" />
-            </motion.div>
-          )}
-        </div>
+      {/* Code editor */}
+      <div className="flex-1 overflow-hidden px-5 py-4 font-mono text-[11px] leading-[20px]">
+        {CODE_LINES.slice(0, visibleLines).map((line, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -6 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.1 }}
+            className="flex"
+          >
+            <span className="mr-5 inline-block w-5 select-none text-right text-white/[0.08]">{i + 1}</span>
+            <span className={getLineColor(line.type)}>{line.text || '\u00A0'}</span>
+          </motion.div>
+        ))}
+        {progress < 100 && (
+          <motion.div
+            animate={{ opacity: [0.2, 0.8, 0.2] }}
+            transition={{ duration: 0.6, repeat: Infinity }}
+            className="mt-0.5 flex items-center"
+          >
+            <span className="mr-5 inline-block w-5 select-none text-right text-white/[0.08]">{visibleLines + 1}</span>
+            <span className="inline-block h-[14px] w-[7px] rounded-[1px] bg-blue-400/50" />
+          </motion.div>
+        )}
       </div>
 
       {/* Status bar */}
-      <div className="flex items-center justify-between border-t border-sky-500/10 bg-slate-900/60 px-4 py-1.5">
+      <div className="flex items-center justify-between border-t border-white/[0.04] bg-white/[0.015] px-4 py-1.5">
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 text-[10px] text-emerald-400/60">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/60" />
-            {progress < 100 ? 'Gerando...' : 'Concluído'}
+          <span className="flex items-center gap-1.5 text-[10px]">
+            <span className={`h-1.5 w-1.5 rounded-full ${progress >= 100 ? 'bg-emerald-400/50' : 'bg-blue-400/40'}`} />
+            <span className="text-white/20">{progress >= 100 ? 'Build concluído' : 'Gerando código...'}</span>
           </span>
-          <span className="text-[10px] text-sky-400/30">HTML • Tailwind CSS • JavaScript</span>
         </div>
-        <span className="text-[10px] text-sky-400/30">{visibleLines} linhas</span>
+        <div className="flex items-center gap-4 text-[10px] text-white/15">
+          <span>HTML5</span>
+          <span>Tailwind CSS</span>
+          <span>UTF-8</span>
+        </div>
       </div>
     </div>
   );
 });
-BuildingAnimation.displayName = 'BuildingAnimation';
+BuildingTerminal.displayName = 'BuildingTerminal';
 
-/* ─── Folder Structure Animation ─── */
-const FolderStructure = memo(({ progress }: { progress: number }) => {
+/* ─── Build Sidebar ─── */
+const BuildSidebar = memo(({ progress }: { progress: number }) => {
   const folders = [
-    { name: 'src/', icon: '📁', delay: 0 },
-    { name: '  components/', icon: '📂', delay: 5 },
-    { name: '    Header.tsx', icon: '📄', delay: 10 },
-    { name: '    Hero.tsx', icon: '📄', delay: 15 },
-    { name: '    Features.tsx', icon: '📄', delay: 20 },
-    { name: '    Footer.tsx', icon: '📄', delay: 30 },
-    { name: '  styles/', icon: '📂', delay: 40 },
-    { name: '    globals.css', icon: '🎨', delay: 45 },
-    { name: '  assets/', icon: '📂', delay: 55 },
-    { name: '    logo.svg', icon: '🖼️', delay: 60 },
-    { name: '  index.html', icon: '📄', delay: 70 },
-    { name: '  app.js', icon: '⚡', delay: 80 },
-    { name: 'package.json', icon: '📦', delay: 90 },
+    { name: 'projeto/', icon: FolderOpen, indent: 0, at: 0 },
+    { name: 'src/', icon: FolderOpen, indent: 1, at: 5 },
+    { name: 'components/', icon: FolderOpen, indent: 2, at: 8 },
+    { name: 'Header.tsx', icon: FileCode, indent: 3, at: 12 },
+    { name: 'Hero.tsx', icon: FileCode, indent: 3, at: 18 },
+    { name: 'Features.tsx', icon: FileCode, indent: 3, at: 28 },
+    { name: 'Footer.tsx', icon: FileCode, indent: 3, at: 38 },
+    { name: 'styles/', icon: Palette, indent: 2, at: 45 },
+    { name: 'globals.css', icon: FileCode, indent: 3, at: 50 },
+    { name: 'index.html', icon: Globe, indent: 1, at: 60 },
+    { name: 'tailwind.config.js', icon: Settings2, indent: 1, at: 75 },
+    { name: 'package.json', icon: FileCode, indent: 1, at: 85 },
+  ];
+
+  const steps = [
+    { label: 'Analisando prompt', at: 5 },
+    { label: 'Criando estrutura', at: 15 },
+    { label: 'Gerando componentes', at: 35 },
+    { label: 'Aplicando estilos', at: 60 },
+    { label: 'Otimizando código', at: 80 },
+    { label: 'Finalizando build', at: 95 },
   ];
 
   return (
-    <div className="rounded-lg border border-sky-500/10 bg-slate-900/40 p-3">
-      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-sky-400/40">Estrutura do Projeto</p>
-      <div className="space-y-0.5 font-mono text-[11px]">
-        {folders.filter(f => progress >= f.delay).map((f, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-1.5 text-sky-300/50"
-          >
-            <span className="text-[10px]">{f.icon}</span>
-            <span>{f.name.trim()}</span>
-            {progress >= f.delay + 5 && (
-              <Check className="ml-auto h-3 w-3 text-emerald-400/50" />
-            )}
-          </motion.div>
-        ))}
+    <div className="flex w-52 flex-shrink-0 flex-col gap-3">
+      {/* File tree */}
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+        <p className="mb-3 text-[9px] font-semibold uppercase tracking-[0.15em] text-white/20">Arquivos</p>
+        <div className="space-y-0.5 font-mono text-[11px]">
+          {folders.filter(f => progress >= f.at).map((f, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-1.5"
+              style={{ paddingLeft: f.indent * 12 }}
+            >
+              <f.icon className="h-3 w-3 shrink-0 text-blue-400/30" />
+              <span className="text-white/40">{f.name}</span>
+              {progress >= f.at + 8 && (
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                  <Check className="ml-auto h-2.5 w-2.5 text-emerald-400/40" />
+                </motion.div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Steps */}
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+        <p className="mb-3 text-[9px] font-semibold uppercase tracking-[0.15em] text-white/20">Pipeline</p>
+        <div className="space-y-2">
+          {steps.map((step, i) => {
+            const done = progress >= step.at;
+            const active = progress >= step.at - 10 && progress < step.at;
+            return (
+              <div key={i} className="flex items-center gap-2 text-[11px]">
+                {done ? (
+                  <div className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400/10">
+                    <Check className="h-2.5 w-2.5 text-emerald-400/60" />
+                  </div>
+                ) : active ? (
+                  <div className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-400/10">
+                    <Loader2 className="h-2.5 w-2.5 animate-spin text-blue-400/50" />
+                  </div>
+                ) : (
+                  <div className="h-4 w-4 rounded-full border border-white/[0.08]" />
+                )}
+                <span className={done ? 'text-white/40' : active ? 'text-blue-400/50' : 'text-white/15'}>{step.label}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 });
-FolderStructure.displayName = 'FolderStructure';
+BuildSidebar.displayName = 'BuildSidebar';
 
 /* ─── Main Page ─── */
 export default function SiteBuilderPage() {
@@ -255,7 +366,6 @@ export default function SiteBuilderPage() {
   const [copied, setCopied] = useState(false);
   const [phase, setPhase] = useState<Phase>('chat');
   const [buildProgress, setBuildProgress] = useState(0);
-  const [streamingCode, setStreamingCode] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -265,17 +375,13 @@ export default function SiteBuilderPage() {
   useEffect(() => { saveProjects(projects); }, [projects]);
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [activeProject?.messages]);
 
-  // Switch to building phase when generating starts
   useEffect(() => {
     if (isGenerating && activeProjectId) {
       setPhase('building');
       setBuildProgress(0);
       progressRef.current = setInterval(() => {
-        setBuildProgress(prev => {
-          if (prev >= 95) return 95;
-          return prev + Math.random() * 3 + 0.5;
-        });
-      }, 200);
+        setBuildProgress(prev => prev >= 95 ? 95 : prev + Math.random() * 2.5 + 0.3);
+      }, 250);
     } else if (!isGenerating && progressRef.current) {
       setBuildProgress(100);
       clearInterval(progressRef.current);
@@ -288,10 +394,8 @@ export default function SiteBuilderPage() {
     const project: Project = {
       id: generateId(),
       name: name || `Projeto ${projects.length + 1}`,
-      messages: [],
-      generatedCode: '',
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      messages: [], generatedCode: '',
+      createdAt: new Date(), updatedAt: new Date(),
     };
     setProjects(prev => [project, ...prev]);
     setActiveProjectId(project.id);
@@ -302,10 +406,7 @@ export default function SiteBuilderPage() {
 
   const deleteProject = (id: string) => {
     setProjects(prev => prev.filter(p => p.id !== id));
-    if (activeProjectId === id) {
-      setActiveProjectId(null);
-      setPhase('chat');
-    }
+    if (activeProjectId === id) { setActiveProjectId(null); setPhase('chat'); }
   };
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
@@ -314,26 +415,15 @@ export default function SiteBuilderPage() {
 
   const handleSend = async () => {
     if (!input.trim() || isGenerating) return;
-
     let projectId = activeProjectId;
-    if (!projectId) {
-      projectId = createProject(input.slice(0, 40));
-    }
+    if (!projectId) projectId = createProject(input.slice(0, 40));
 
-    const userMsg: ChatMessage = {
-      id: generateId(),
-      role: 'user',
-      content: input.trim(),
-      timestamp: new Date(),
-    };
-
+    const userMsg: ChatMessage = { id: generateId(), role: 'user', content: input.trim(), timestamp: new Date() };
     const currentProject = projects.find(p => p.id === projectId);
     const allMessages = [...(currentProject?.messages || []), userMsg];
-    
     updateProject(projectId!, { messages: allMessages });
     setInput('');
     setIsGenerating(true);
-    setStreamingCode('');
 
     try {
       const resp = await fetch(CHAT_URL, {
@@ -342,12 +432,8 @@ export default function SiteBuilderPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({
-          messages: allMessages.map(m => ({ role: m.role, content: m.content })),
-          projectId,
-        }),
+        body: JSON.stringify({ messages: allMessages.map(m => ({ role: m.role, content: m.content })), projectId }),
       });
-
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: 'Erro desconhecido' }));
         throw new Error(err.error || `Erro ${resp.status}`);
@@ -355,14 +441,12 @@ export default function SiteBuilderPage() {
 
       const reader = resp.body!.getReader();
       const decoder = new TextDecoder();
-      let buffer = '';
-      let fullContent = '';
+      let buffer = '', fullContent = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-
         let newlineIndex: number;
         while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
           let line = buffer.slice(0, newlineIndex);
@@ -376,45 +460,27 @@ export default function SiteBuilderPage() {
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               fullContent += content;
-              setStreamingCode(fullContent);
-              const assistantMsg: ChatMessage = {
-                id: `assistant-${projectId}`,
-                role: 'assistant',
-                content: fullContent,
-                timestamp: new Date(),
-              };
+              const assistantMsg: ChatMessage = { id: `assistant-${projectId}`, role: 'assistant', content: fullContent, timestamp: new Date() };
               const updatedMsgs = [...allMessages];
-              const existingIdx = updatedMsgs.findIndex(m => m.id === assistantMsg.id);
-              if (existingIdx >= 0) updatedMsgs[existingIdx] = assistantMsg;
-              else updatedMsgs.push(assistantMsg);
+              const idx = updatedMsgs.findIndex(m => m.id === assistantMsg.id);
+              if (idx >= 0) updatedMsgs[idx] = assistantMsg; else updatedMsgs.push(assistantMsg);
               const html = extractHtml(fullContent);
               updateProject(projectId!, { messages: updatedMsgs, generatedCode: html || '' });
             }
-          } catch { /* partial json */ }
+          } catch { /* partial */ }
         }
       }
 
       const html = extractHtml(fullContent);
-      const finalAssistantMsg: ChatMessage = {
-        id: generateId(),
-        role: 'assistant',
-        content: fullContent,
-        timestamp: new Date(),
-      };
       updateProject(projectId!, {
-        messages: [...allMessages, finalAssistantMsg],
+        messages: [...allMessages, { id: generateId(), role: 'assistant', content: fullContent, timestamp: new Date() }],
         generatedCode: html || '',
         name: currentProject?.name || input.slice(0, 40),
       });
-
     } catch (err: any) {
-      const errorMsg: ChatMessage = {
-        id: generateId(),
-        role: 'assistant',
-        content: `❌ Erro: ${err.message}`,
-        timestamp: new Date(),
-      };
-      updateProject(projectId!, { messages: [...allMessages, errorMsg] });
+      updateProject(projectId!, {
+        messages: [...allMessages, { id: generateId(), role: 'assistant', content: `❌ Erro: ${err.message}`, timestamp: new Date() }],
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -439,11 +505,7 @@ export default function SiteBuilderPage() {
     URL.revokeObjectURL(url);
   };
 
-  const viewportWidths: Record<ViewMode, string> = {
-    desktop: '100%',
-    tablet: '768px',
-    mobile: '375px',
-  };
+  const viewportWidths: Record<ViewMode, string> = { desktop: '100%', tablet: '768px', mobile: '375px' };
 
   const suggestions = [
     { icon: Globe, text: 'Site para barbearia moderna com agendamento online' },
@@ -451,68 +513,67 @@ export default function SiteBuilderPage() {
     { icon: Zap, text: 'Site de pizzaria com cardápio digital e pedidos' },
   ];
 
-  /* ─── CHAT PHASE (initial screen) ─── */
+  /* ════════ CHAT PHASE ════════ */
   if (phase === 'chat' && (!activeProject || activeProject.messages.length === 0)) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center px-4"
-        style={{ background: 'linear-gradient(180deg, hsl(215 30% 6%) 0%, hsl(220 35% 9%) 50%, hsl(215 30% 6%) 100%)' }}>
+      <div
+        className="relative flex min-h-screen flex-col items-center justify-center px-4"
+        style={{ background: 'linear-gradient(180deg, hsl(220 25% 10%) 0%, hsl(230 30% 12%) 50%, hsl(220 25% 10%) 100%)' }}
+      >
+        <FloatingParticles />
 
-        {/* Back button */}
-        <button
-          onClick={() => navigate('/login/dashboard')}
-          className="fixed left-4 top-4 z-50 flex items-center gap-2 rounded-xl border border-sky-500/10 bg-slate-900/60 px-3 py-2 text-xs text-sky-400/60 backdrop-blur-xl transition-colors hover:bg-slate-800/80 hover:text-sky-300"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Voltar
-        </button>
-
-        {/* History button */}
-        {projects.length > 0 && (
+        {/* Top bar */}
+        <div className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between px-5 py-4">
           <button
-            onClick={() => setShowHistory(true)}
-            className="fixed right-4 top-4 z-50 flex items-center gap-2 rounded-xl border border-sky-500/10 bg-slate-900/60 px-3 py-2 text-xs text-sky-400/60 backdrop-blur-xl transition-colors hover:bg-slate-800/80 hover:text-sky-300"
+            onClick={() => navigate('/login/dashboard')}
+            className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3.5 py-2 text-[11px] text-white/40 backdrop-blur-xl transition-all hover:bg-white/[0.06] hover:text-white/60"
           >
-            <Clock className="h-3.5 w-3.5" /> Projetos ({projects.length})
+            <ArrowLeft className="h-3.5 w-3.5" /> Voltar
           </button>
-        )}
+          {projects.length > 0 && (
+            <button
+              onClick={() => setShowHistory(true)}
+              className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3.5 py-2 text-[11px] text-white/40 backdrop-blur-xl transition-all hover:bg-white/[0.06] hover:text-white/60"
+            >
+              <Clock className="h-3.5 w-3.5" /> Projetos ({projects.length})
+            </button>
+          )}
+        </div>
 
-        {/* History Overlay */}
+        {/* History modal */}
         <AnimatePresence>
           {showHistory && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
               onClick={() => setShowHistory(false)}
             >
               <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
+                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
                 onClick={e => e.stopPropagation()}
-                className="w-full max-w-md rounded-2xl border border-sky-500/10 bg-slate-900/95 p-6 shadow-2xl backdrop-blur-xl"
+                className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[hsl(220_25%_12%)] p-5 shadow-2xl"
               >
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-white">Seus Projetos</h3>
-                  <button onClick={() => setShowHistory(false)} className="text-white/40 hover:text-white">
-                    <X className="h-4 w-4" />
-                  </button>
+                  <h3 className="text-sm font-semibold text-white/80">Seus Projetos</h3>
+                  <button onClick={() => setShowHistory(false)} className="text-white/30 hover:text-white/60"><X className="h-4 w-4" /></button>
                 </div>
-                <div className="max-h-64 space-y-1 overflow-y-auto">
+                <div className="max-h-72 space-y-1 overflow-y-auto">
                   {projects.map(p => (
                     <div
                       key={p.id}
-                      className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs text-white/60 transition-colors cursor-pointer hover:bg-sky-500/10 hover:text-white"
+                      className="group flex items-center gap-3 rounded-xl px-3 py-3 text-xs transition-all cursor-pointer hover:bg-white/[0.04]"
                       onClick={() => { setActiveProjectId(p.id); setShowHistory(false); setPhase('building'); }}
                     >
-                      <MessageSquare className="h-4 w-4 shrink-0 text-sky-400/40" />
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                        <MessageSquare className="h-3.5 w-3.5 text-blue-400/50" />
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="truncate font-medium">{p.name}</p>
-                        <p className="text-[10px] text-white/30">{p.messages.length} mensagens</p>
+                        <p className="truncate font-medium text-white/60">{p.name}</p>
+                        <p className="text-[10px] text-white/25">{p.messages.length} msgs • {p.updatedAt.toLocaleDateString('pt-BR')}</p>
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteProject(p.id); }}
-                        className="shrink-0 rounded-lg p-1 text-white/20 opacity-0 transition-all hover:text-red-400 group-hover:opacity-100"
+                        className="shrink-0 rounded-lg p-1.5 text-white/15 opacity-0 transition-all hover:bg-red-500/10 hover:text-red-400/60 group-hover:opacity-100"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -524,30 +585,32 @@ export default function SiteBuilderPage() {
           )}
         </AnimatePresence>
 
-        {/* Main content */}
+        {/* Center content */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="w-full max-w-2xl text-center"
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="relative z-10 w-full max-w-2xl text-center"
         >
-          <div className="mb-6 flex justify-center">
+          {/* Logo */}
+          <div className="mb-8 flex justify-center">
             <div className="relative">
-              <div className="absolute -inset-3 rounded-full bg-sky-500/10 blur-xl" />
-              <img src={genesisLogo} alt="Genesis" className="relative h-14 w-14" />
+              <div className="absolute -inset-4 rounded-full opacity-30"
+                style={{ background: 'radial-gradient(circle, hsl(200 80% 50% / 0.15), transparent 70%)' }} />
+              <img src={genesisLogo} alt="Genesis" className="relative h-12 w-12" />
             </div>
           </div>
 
-          <h1 className="mb-2 text-2xl font-bold text-white md:text-3xl">
-            Genesis <span className="text-sky-400">Site Builder</span>
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-white/90 md:text-3xl">
+            Genesis <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Site Builder</span>
           </h1>
-          <p className="mb-10 text-sm text-white/40">
-            Descreva o site que deseja criar e a IA construirá em tempo real.
+          <p className="mb-10 text-sm text-white/30">
+            Descreva seu site e a IA construirá tudo em tempo real
           </p>
 
-          {/* Input box */}
-          <div className="relative mx-auto w-full">
-            <div className="rounded-2xl border border-sky-500/15 bg-slate-900/60 p-1.5 shadow-xl shadow-sky-500/5 backdrop-blur-xl transition-all focus-within:border-sky-500/30 focus-within:shadow-sky-500/10">
+          {/* Input */}
+          <div className="mx-auto w-full max-w-xl">
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-1 shadow-xl shadow-black/20 backdrop-blur-xl transition-all focus-within:border-blue-500/20 focus-within:shadow-blue-500/5">
               <textarea
                 ref={inputRef}
                 value={input}
@@ -555,15 +618,20 @@ export default function SiteBuilderPage() {
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                 placeholder="Descreva o site que deseja criar..."
                 rows={3}
-                className="w-full resize-none bg-transparent px-4 py-3 text-sm text-white placeholder-white/25 outline-none"
+                className="w-full resize-none bg-transparent px-5 py-4 text-sm text-white/80 placeholder-white/20 outline-none"
                 autoFocus
               />
-              <div className="flex items-center justify-between px-3 pb-2">
-                <span className="text-[10px] text-white/20">Shift+Enter para nova linha</span>
+              <div className="flex items-center justify-between px-4 pb-3">
+                <span className="text-[10px] text-white/15">Shift+Enter para nova linha</span>
                 <button
                   onClick={handleSend}
                   disabled={!input.trim() || isGenerating}
-                  className="flex items-center gap-2 rounded-xl bg-sky-500/20 px-4 py-2 text-xs font-medium text-sky-400 transition-all hover:bg-sky-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 rounded-xl px-5 py-2 text-xs font-medium transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+                  style={{
+                    background: input.trim() ? 'linear-gradient(135deg, hsl(210 80% 50% / 0.2), hsl(190 70% 50% / 0.15))' : 'transparent',
+                    color: input.trim() ? 'hsl(200 80% 70%)' : 'hsl(200 10% 40%)',
+                    border: `1px solid ${input.trim() ? 'hsl(200 60% 50% / 0.15)' : 'transparent'}`,
+                  }}
                 >
                   {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                   Criar Site
@@ -573,16 +641,19 @@ export default function SiteBuilderPage() {
           </div>
 
           {/* Suggestions */}
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <div className="mt-8 flex flex-wrap justify-center gap-2">
             {suggestions.map((s, i) => (
-              <button
+              <motion.button
                 key={i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + i * 0.1 }}
                 onClick={() => setInput(s.text)}
-                className="flex items-center gap-2 rounded-xl border border-sky-500/8 bg-slate-900/40 px-4 py-2.5 text-xs text-white/40 transition-all hover:border-sky-500/20 hover:bg-slate-800/60 hover:text-white/60"
+                className="flex items-center gap-2 rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-2.5 text-[11px] text-white/30 transition-all hover:border-white/[0.1] hover:bg-white/[0.04] hover:text-white/50"
               >
-                <s.icon className="h-3.5 w-3.5 text-sky-400/40" />
+                <s.icon className="h-3.5 w-3.5 text-blue-400/30" />
                 {s.text}
-              </button>
+              </motion.button>
             ))}
           </div>
         </motion.div>
@@ -590,66 +661,66 @@ export default function SiteBuilderPage() {
     );
   }
 
-  /* ─── BUILDING PHASE (chat + preview/build animation) ─── */
+  /* ════════ BUILDING PHASE ════════ */
   return (
-    <div className="flex h-screen flex-col"
-      style={{ background: 'linear-gradient(180deg, hsl(215 30% 6%) 0%, hsl(220 35% 9%) 50%, hsl(215 30% 6%) 100%)' }}>
-
+    <div
+      className="flex h-screen flex-col"
+      style={{ background: 'linear-gradient(180deg, hsl(220 25% 10%) 0%, hsl(230 30% 12%) 50%, hsl(220 25% 10%) 100%)' }}
+    >
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-sky-500/10 bg-slate-950/80 px-4 py-2.5 backdrop-blur-xl">
+      <header className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.02] px-5 py-2.5 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <button
             onClick={() => { setPhase('chat'); setActiveProjectId(null); }}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition-colors hover:bg-white/5 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition-colors hover:bg-white/[0.05] hover:text-white/60"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <img src={genesisLogo} alt="Genesis" className="h-6 w-6" />
           <div>
-            <h1 className="text-xs font-semibold text-white">{activeProject?.name || 'Novo Projeto'}</h1>
-            <p className="text-[10px] text-sky-400/40">Site Builder</p>
+            <h1 className="text-xs font-semibold text-white/70">{activeProject?.name || 'Novo Projeto'}</h1>
+            <p className="text-[10px] text-white/20">Site Builder</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => { setPhase('chat'); createProject(); }}
-            className="flex items-center gap-1.5 rounded-lg border border-sky-500/10 px-3 py-1.5 text-[11px] text-sky-400/60 transition-colors hover:bg-sky-500/10 hover:text-sky-400"
-          >
-            <Plus className="h-3 w-3" /> Novo
-          </button>
-        </div>
+        <button
+          onClick={() => { setPhase('chat'); createProject(); }}
+          className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-[11px] text-white/40 transition-colors hover:bg-white/[0.05] hover:text-white/60"
+        >
+          <Plus className="h-3 w-3" /> Novo Projeto
+        </button>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Chat Panel */}
-        <div className="flex w-full max-w-sm flex-col border-r border-sky-500/10 lg:max-w-md">
+        <div className="flex w-full max-w-sm flex-col border-r border-white/[0.06] lg:max-w-md">
           <div className="flex-1 overflow-y-auto p-4">
             {activeProject && activeProject.messages.length > 0 ? (
               <div className="space-y-3">
                 {activeProject.messages.map(msg => (
                   <motion.div
                     key={msg.id}
-                    initial={{ opacity: 0, y: 6 }}
+                    initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed ${
+                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-[13px] leading-relaxed ${
                       msg.role === 'user'
-                        ? 'bg-sky-500/15 text-white border border-sky-500/10'
-                        : 'bg-slate-800/60 text-white/70 border border-sky-500/5'
+                        ? 'bg-blue-500/10 text-white/70 border border-blue-500/10'
+                        : 'bg-white/[0.03] text-white/50 border border-white/[0.05]'
                     }`}>
                       {msg.role === 'assistant' && extractHtml(msg.content) ? (
                         <div className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-emerald-400" />
-                          <span className="text-xs text-emerald-400">Site gerado! Veja o preview →</span>
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400/10">
+                            <Check className="h-3 w-3 text-emerald-400/70" />
+                          </div>
+                          <span className="text-xs text-emerald-400/60">Site gerado com sucesso</span>
                         </div>
                       ) : (
-                        <p className="whitespace-pre-wrap break-words">{msg.content.length > 200 && msg.role === 'assistant'
-                          ? msg.content.slice(0, 200) + '...'
-                          : msg.content
-                        }</p>
+                        <p className="whitespace-pre-wrap break-words">
+                          {msg.content.length > 200 && msg.role === 'assistant' ? msg.content.slice(0, 200) + '...' : msg.content}
+                        </p>
                       )}
-                      <p className="mt-1.5 text-[10px] opacity-30">
+                      <p className="mt-1.5 text-[10px] text-white/15">
                         {msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -657,9 +728,18 @@ export default function SiteBuilderPage() {
                 ))}
                 {isGenerating && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                    <div className="flex items-center gap-2 rounded-2xl border border-sky-500/10 bg-slate-800/60 px-4 py-3">
-                      <Loader2 className="h-4 w-4 animate-spin text-sky-400" />
-                      <span className="text-xs text-white/40">Construindo seu site...</span>
+                    <div className="flex items-center gap-2.5 rounded-2xl border border-white/[0.05] bg-white/[0.03] px-4 py-3">
+                      <div className="flex gap-1">
+                        {[0, 1, 2].map(i => (
+                          <motion.div
+                            key={i}
+                            animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.8, 0.3] }}
+                            transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
+                            className="h-1.5 w-1.5 rounded-full bg-blue-400/50"
+                          />
+                        ))}
+                      </div>
+                      <span className="text-[11px] text-white/25">Construindo...</span>
                     </div>
                   </motion.div>
                 )}
@@ -667,27 +747,27 @@ export default function SiteBuilderPage() {
               </div>
             ) : (
               <div className="flex h-full items-center justify-center">
-                <p className="text-xs text-white/20">Envie uma mensagem para começar</p>
+                <p className="text-xs text-white/15">Envie uma mensagem para começar</p>
               </div>
             )}
           </div>
 
           {/* Input */}
-          <div className="border-t border-sky-500/10 p-3">
-            <div className="flex items-end gap-2 rounded-xl border border-sky-500/10 bg-slate-900/40 px-3 py-2 transition-all focus-within:border-sky-500/20">
+          <div className="border-t border-white/[0.06] p-3">
+            <div className="flex items-end gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 transition-all focus-within:border-blue-500/15">
               <textarea
                 ref={inputRef}
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                placeholder="Descreva alterações ou um novo site..."
+                placeholder="Descreva alterações ou novo site..."
                 rows={2}
-                className="flex-1 resize-none bg-transparent text-sm text-white placeholder-white/25 outline-none"
+                className="flex-1 resize-none bg-transparent text-sm text-white/70 placeholder-white/20 outline-none"
               />
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || isGenerating}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/20 text-sky-400 transition-all hover:bg-sky-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/15 text-blue-400/60 transition-all hover:bg-blue-500/25 hover:text-blue-400 disabled:opacity-20 disabled:cursor-not-allowed"
               >
                 <Send className="h-4 w-4" />
               </button>
@@ -695,10 +775,10 @@ export default function SiteBuilderPage() {
           </div>
         </div>
 
-        {/* Preview / Build Animation Panel */}
+        {/* Preview / Build Panel */}
         <div className="hidden flex-1 flex-col lg:flex">
           {/* Toolbar */}
-          <div className="flex items-center justify-between border-b border-sky-500/10 bg-slate-950/60 px-4 py-2">
+          <div className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.015] px-5 py-2">
             <div className="flex items-center gap-1">
               {([
                 { mode: 'desktop' as ViewMode, icon: Monitor, label: 'Desktop' },
@@ -708,19 +788,21 @@ export default function SiteBuilderPage() {
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
-                  className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] transition-colors ${
-                    viewMode === mode ? 'bg-sky-500/15 text-sky-400' : 'text-white/30 hover:text-white/60'
+                  className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] transition-all ${
+                    viewMode === mode
+                      ? 'bg-blue-500/10 text-blue-400/70'
+                      : 'text-white/20 hover:text-white/40'
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" /> {label}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => setShowCode(c => !c)}
-                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] transition-colors ${
-                  showCode ? 'bg-emerald-500/15 text-emerald-400' : 'text-white/30 hover:text-white/60'
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] transition-all ${
+                  showCode ? 'bg-emerald-500/10 text-emerald-400/60' : 'text-white/20 hover:text-white/40'
                 }`}
               >
                 <Code2 className="h-3.5 w-3.5" /> Código
@@ -728,69 +810,51 @@ export default function SiteBuilderPage() {
               <button
                 onClick={copyCode}
                 disabled={!activeProject?.generatedCode}
-                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] text-white/30 transition-colors hover:text-white/60 disabled:opacity-20"
+                className="rounded-lg p-2 text-white/20 transition-all hover:bg-white/[0.04] hover:text-white/40 disabled:opacity-15"
               >
-                {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? <Check className="h-3.5 w-3.5 text-emerald-400/60" /> : <Copy className="h-3.5 w-3.5" />}
               </button>
               <button
                 onClick={downloadHtml}
                 disabled={!activeProject?.generatedCode}
-                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] text-white/30 transition-colors hover:text-white/60 disabled:opacity-20"
+                className="rounded-lg p-2 text-white/20 transition-all hover:bg-white/[0.04] hover:text-white/40 disabled:opacity-15"
               >
                 <Download className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
 
-          {/* Preview content */}
+          {/* Content */}
           <div className="flex-1 overflow-auto p-4">
             {isGenerating ? (
-              /* Building animation */
               <div className="flex h-full gap-4">
                 <div className="flex-1">
-                  <BuildingAnimation progress={Math.min(buildProgress, 100)} />
+                  <BuildingTerminal progress={Math.min(buildProgress, 100)} />
                 </div>
-                <div className="w-56 flex-shrink-0 space-y-3">
-                  <FolderStructure progress={Math.min(buildProgress, 100)} />
-                  <div className="rounded-lg border border-sky-500/10 bg-slate-900/40 p-3">
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-sky-400/40">Status</p>
-                    <div className="space-y-2">
-                      {[
-                        { label: 'Analisando prompt', done: buildProgress > 10 },
-                        { label: 'Gerando estrutura', done: buildProgress > 30 },
-                        { label: 'Criando componentes', done: buildProgress > 50 },
-                        { label: 'Aplicando estilos', done: buildProgress > 70 },
-                        { label: 'Otimizando código', done: buildProgress > 90 },
-                      ].map((step, i) => (
-                        <div key={i} className="flex items-center gap-2 text-[11px]">
-                          {step.done ? (
-                            <Check className="h-3 w-3 text-emerald-400/60" />
-                          ) : (
-                            <div className="h-3 w-3 rounded-full border border-sky-500/20" />
-                          )}
-                          <span className={step.done ? 'text-white/50' : 'text-white/20'}>{step.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <BuildSidebar progress={Math.min(buildProgress, 100)} />
               </div>
             ) : showCode ? (
-              <pre className="h-full overflow-auto rounded-xl border border-sky-500/10 bg-slate-900/60 p-4 font-mono text-xs text-emerald-400/70 leading-5">
+              <pre className="h-full overflow-auto rounded-2xl border border-white/[0.06] bg-[hsl(220_25%_8%)] p-5 font-mono text-[11px] leading-5 text-emerald-300/50">
                 <code>{activeProject?.generatedCode || '// Nenhum código gerado ainda'}</code>
               </pre>
             ) : activeProject?.generatedCode ? (
-              <div className="mx-auto h-full" style={{ maxWidth: viewportWidths[viewMode] }}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }}
+                className="mx-auto h-full"
+                style={{ maxWidth: viewportWidths[viewMode] }}
+              >
                 <iframe
                   srcDoc={activeProject.generatedCode}
-                  className="h-full w-full rounded-xl border border-sky-500/10 bg-white shadow-2xl shadow-sky-500/5"
+                  className="h-full w-full rounded-2xl border border-white/[0.08] bg-white shadow-2xl shadow-black/30"
                   sandbox="allow-scripts allow-same-origin"
                   title="Preview"
                 />
-              </div>
+              </motion.div>
             ) : (
-              <div className="flex h-full flex-col items-center justify-center text-white/15">
-                <Eye className="mb-3 h-16 w-16 opacity-20" />
+              <div className="flex h-full flex-col items-center justify-center text-white/10">
+                <Eye className="mb-3 h-14 w-14 opacity-20" />
                 <p className="text-sm">Preview aparecerá aqui</p>
               </div>
             )}
