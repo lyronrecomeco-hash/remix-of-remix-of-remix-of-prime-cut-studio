@@ -705,6 +705,7 @@ export default function SiteBuilderPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('desktop');
   const [centerMode, setCenterMode] = useState<CenterMode>('preview');
+  const [customWidth, setCustomWidth] = useState(1440);
   const [showHistory, setShowHistory] = useState(false);
   const [copied, setCopied] = useState(false);
   const [phase, setPhase] = useState<'chat' | 'building'>('chat');
@@ -895,7 +896,8 @@ export default function SiteBuilderPage() {
     URL.revokeObjectURL(url);
   };
 
-  const viewportWidths: Record<ViewMode, string> = { desktop: '100%', tablet: '768px', mobile: '375px' };
+  const viewportPresets: Record<ViewMode, number> = { desktop: 1440, tablet: 768, mobile: 375 };
+  const handleViewMode = (mode: ViewMode) => { setViewMode(mode); setCustomWidth(viewportPresets[mode]); };
   const previewCode = liveHtml || activeProject?.generatedCode || '';
   const displayFiles = liveFiles.length > 0 ? liveFiles : activeProject?.files || [];
 
