@@ -101,6 +101,9 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [extendDaysUser, setExtendDaysUser] = useState<GenesisUser | null>(null);
+  const [extendDaysValue, setExtendDaysValue] = useState('7');
+  const [extendingDays, setExtendingDays] = useState(false);
   const [permissionsUser, setPermissionsUser] = useState<{ user_id: string; name: string; email: string } | null>(null);
   const [createdUserData, setCreatedUserData] = useState<{
     name: string;
