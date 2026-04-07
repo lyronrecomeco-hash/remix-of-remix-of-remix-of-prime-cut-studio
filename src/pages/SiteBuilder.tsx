@@ -1245,7 +1245,7 @@ export default function SiteBuilder() {
                                 </div>
                               </div>
                             )}
-                            <iframe srcDoc={previewCode} className="h-full w-full rounded-xl border border-white/[0.06] bg-white shadow-lg" sandbox="allow-scripts allow-same-origin" title="Preview" />
+                            <iframe srcDoc={previewCode} className="h-full w-full bg-white" sandbox="allow-scripts allow-same-origin" title="Preview" style={{ border: 'none' }} />
                           </div>
                         ) : isGenerating ? (
                           <SkeletonPreview stage={buildStage} />
@@ -1306,7 +1306,7 @@ export default function SiteBuilder() {
                           <span className="text-[9px] text-primary/50">{STAGE_META[buildStage].pct}%</span>
                         </div>
                       )}
-                      <iframe srcDoc={previewCode} className="h-full w-full rounded-xl border border-white/[0.06] bg-white" sandbox="allow-scripts allow-same-origin" title="Preview" />
+                      <iframe srcDoc={previewCode} className="h-full w-full bg-white" sandbox="allow-scripts allow-same-origin" title="Preview" style={{ border: 'none' }} />
                     </div>
                   ) : isGenerating ? (
                     <SkeletonPreview stage={buildStage} />
