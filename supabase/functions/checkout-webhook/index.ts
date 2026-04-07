@@ -483,14 +483,22 @@ serve(async (req) => {
     // Find payment by gateway-specific ID
     let payment;
     if (gateway === 'cakto') {
-      // For Cakto, try to find by cakto_order_id first, then by payment_code
-      const { data, error } = await supabase
+      // For Cakto, try to find by cakto_order_id first
+      const { data: exactMatch } = await supabase
         .from('checkout_payments')
         .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
-        .or(`cakto_order_id.eq.${paymentId},payment_code.ilike.%${paymentId}%`)
+        .eq('cakto_order_id', paymentId)
         .maybeSingle();
-      payment = data;
-      if (error) console.log('Cakto payment lookup error:', error);
+      payment = exactMatch;
+      if (!payment) {
+        // Fallback: try payment_code exact match
+        const { data: codeMatch } = await supabase
+          .from('checkout_payments')
+          .select('id, status, payment_code, plan_id, customer_id, promo_link_id, amount_cents')
+          .eq('payment_code', paymentId)
+          .maybeSingle();
+        payment = codeMatch;
+      }
       
       // If not found by order_id, try extracting customer email and finding by that
       if (!payment) {
