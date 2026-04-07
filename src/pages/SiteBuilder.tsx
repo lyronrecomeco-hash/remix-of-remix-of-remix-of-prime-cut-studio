@@ -7,7 +7,8 @@ import {
   MessageSquare, Clock, Plus, Check, Globe, Layers,
   Zap, X, LayoutGrid, Server, Database, FileCode,
   FolderOpen, ChevronRight, Sparkles, ChevronDown,
-  FileText, Settings, Image, Coffee, File, Menu, PanelLeftClose
+  FileText, Settings, Image, Coffee, File, Menu, PanelLeftClose,
+  FolderTree, Hash, Braces
 } from 'lucide-react';
 import genesisLogo from '@/assets/genesis-logo.png';
 import GenesisBackground from '@/components/genesis-ia/GenesisBackground';
@@ -44,23 +45,10 @@ interface Project {
 type ViewMode = 'desktop' | 'tablet' | 'mobile';
 type CenterMode = 'preview' | 'code' | 'structure';
 type BuildStage =
-  | 'idle'
-  | 'entendendo_prompt'
-  | 'definindo_arquitetura'
-  | 'criando_estrutura'
-  | 'gerando_preview'
-  | 'escrevendo_frontend'
-  | 'criando_estilos'
-  | 'criando_javascript'
-  | 'escrevendo_backend'
-  | 'criando_includes'
-  | 'criando_paginas'
-  | 'criando_config'
-  | 'ajustando_responsividade'
-  | 'refinando_experiencia'
-  | 'finalizando'
-  | 'pronto'
-  | 'erro';
+  | 'idle' | 'entendendo_prompt' | 'definindo_arquitetura' | 'criando_estrutura'
+  | 'gerando_preview' | 'escrevendo_frontend' | 'criando_estilos' | 'criando_javascript'
+  | 'escrevendo_backend' | 'criando_includes' | 'criando_paginas' | 'criando_config'
+  | 'ajustando_responsividade' | 'refinando_experiencia' | 'finalizando' | 'pronto' | 'erro';
 
 /* ─── Helpers ─── */
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -78,13 +66,11 @@ function parseFiles(rawText: string): ProjectFile[] {
     if (!path || !content) continue;
     let category: ProjectFile['category'] = 'frontend';
     if (path === 'preview.html') category = 'preview';
-    else if (path.endsWith('.php') && (path.includes('controller') || path.includes('model') || path.includes('config') || path.includes('helper'))) category = 'backend';
-    else if (path.includes('includes/')) category = 'backend';
-    else if (path.includes('admin/')) category = 'backend';
+    else if (/controller|model|config|helper/i.test(path) && path.endsWith('.php')) category = 'backend';
+    else if (path.includes('includes/') || path.includes('admin/')) category = 'backend';
     else if (path.includes('database/')) category = 'database';
     else if (path.includes('config/')) category = 'config';
-    else if (path.endsWith('.css') || path.endsWith('.js') || path.includes('assets/')) category = 'assets';
-    else if (path.endsWith('.php')) category = 'frontend';
+    else if (/\.css$|\.js$|assets\//i.test(path)) category = 'assets';
     files.push({ path, content, category });
   }
   return files;
@@ -92,13 +78,17 @@ function parseFiles(rawText: string): ProjectFile[] {
 
 function getPreviewHtml(files: ProjectFile[]): string {
   const preview = files.find(f => f.path === 'preview.html');
-  return preview?.content || '';
+  if (!preview) return '';
+  // Only return if it has enough content to render
+  const c = preview.content;
+  if (c.includes('</html>') || c.includes('</body>') || c.length > 500) return c;
+  return '';
 }
 
 function categorizeFile(path: string): { icon: typeof File; color: string } {
   if (path.endsWith('.php')) return { icon: FileCode, color: 'text-purple-400' };
   if (path.endsWith('.css')) return { icon: FileText, color: 'text-blue-400' };
-  if (path.endsWith('.js')) return { icon: FileCode, color: 'text-yellow-400' };
+  if (path.endsWith('.js')) return { icon: Braces, color: 'text-yellow-400' };
   if (path.endsWith('.sql')) return { icon: Database, color: 'text-emerald-400' };
   if (path.endsWith('.html')) return { icon: Globe, color: 'text-orange-400' };
   if (path === '.htaccess') return { icon: Settings, color: 'text-red-400' };
@@ -110,11 +100,8 @@ function loadProjects(): Project[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     return JSON.parse(raw).map((p: any) => ({
-      ...p,
-      files: p.files || [],
-      rawOutput: p.rawOutput || '',
-      createdAt: new Date(p.createdAt),
-      updatedAt: new Date(p.updatedAt),
+      ...p, files: p.files || [], rawOutput: p.rawOutput || '',
+      createdAt: new Date(p.createdAt), updatedAt: new Date(p.updatedAt),
       messages: p.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })),
     }));
   } catch { return []; }
@@ -125,24 +112,24 @@ function saveProjects(projects: Project[]) {
 }
 
 /* ─── Stage metadata ─── */
-const STAGE_META: Record<BuildStage, { label: string; icon: string; pct: number; group: string }> = {
-  idle:                     { label: '',                              icon: '',   pct: 0,   group: '' },
-  entendendo_prompt:        { label: 'Entendendo seu pedido',         icon: '🧠', pct: 5,   group: 'Análise' },
-  definindo_arquitetura:    { label: 'Definindo a arquitetura',       icon: '📐', pct: 10,  group: 'Análise' },
-  criando_estrutura:        { label: 'Criando estrutura do projeto',  icon: '🏗️', pct: 16,  group: 'Estrutura' },
-  gerando_preview:          { label: 'Gerando preview visual',        icon: '🎨', pct: 24,  group: 'Frontend' },
-  escrevendo_frontend:      { label: 'Escrevendo páginas PHP',        icon: '📄', pct: 32,  group: 'Frontend' },
-  criando_estilos:          { label: 'Criando estilos CSS',           icon: '🎨', pct: 42,  group: 'Frontend' },
-  criando_javascript:       { label: 'Criando JavaScript',            icon: '⚡', pct: 50,  group: 'Frontend' },
-  escrevendo_backend:       { label: 'Estruturando backend PHP',      icon: '🔧', pct: 58,  group: 'Backend' },
-  criando_includes:         { label: 'Criando includes e templates',  icon: '🧩', pct: 66,  group: 'Backend' },
-  criando_paginas:          { label: 'Criando páginas adicionais',    icon: '📑', pct: 74,  group: 'Backend' },
-  criando_config:           { label: 'Configurando ambiente',         icon: '⚙️', pct: 80,  group: 'Config' },
-  ajustando_responsividade: { label: 'Ajustando responsividade',      icon: '📱', pct: 86,  group: 'Refinamento' },
-  refinando_experiencia:    { label: 'Refinando a experiência',       icon: '✨', pct: 92,  group: 'Refinamento' },
-  finalizando:              { label: 'Finalizando o build',           icon: '🚀', pct: 98,  group: 'Refinamento' },
-  pronto:                   { label: 'Build concluído!',              icon: '✅', pct: 100, group: 'Concluído' },
-  erro:                     { label: 'Erro na geração',               icon: '❌', pct: 0,   group: '' },
+const STAGE_META: Record<BuildStage, { label: string; pct: number; group: string }> = {
+  idle:                     { label: '',                              pct: 0,   group: '' },
+  entendendo_prompt:        { label: 'Entendendo seu pedido...',      pct: 5,   group: 'Análise' },
+  definindo_arquitetura:    { label: 'Definindo a arquitetura...',    pct: 10,  group: 'Análise' },
+  criando_estrutura:        { label: 'Criando estrutura do projeto',  pct: 16,  group: 'Estrutura' },
+  gerando_preview:          { label: 'Gerando preview visual',        pct: 24,  group: 'Frontend' },
+  escrevendo_frontend:      { label: 'Escrevendo páginas PHP',        pct: 32,  group: 'Frontend' },
+  criando_estilos:          { label: 'Criando estilos CSS',           pct: 42,  group: 'Frontend' },
+  criando_javascript:       { label: 'Criando JavaScript',            pct: 50,  group: 'Frontend' },
+  escrevendo_backend:       { label: 'Estruturando backend PHP',      pct: 58,  group: 'Backend' },
+  criando_includes:         { label: 'Criando includes e templates',  pct: 66,  group: 'Backend' },
+  criando_paginas:          { label: 'Criando páginas adicionais',    pct: 74,  group: 'Backend' },
+  criando_config:           { label: 'Configurando ambiente',         pct: 80,  group: 'Config' },
+  ajustando_responsividade: { label: 'Ajustando responsividade',      pct: 86,  group: 'Refinamento' },
+  refinando_experiencia:    { label: 'Refinando a experiência',       pct: 92,  group: 'Refinamento' },
+  finalizando:              { label: 'Finalizando o build',           pct: 98,  group: 'Refinamento' },
+  pronto:                   { label: 'Build concluído!',              pct: 100, group: 'Concluído' },
+  erro:                     { label: 'Erro na geração',               pct: 0,   group: '' },
 };
 
 const STAGE_ORDER: BuildStage[] = [
@@ -153,262 +140,146 @@ const STAGE_ORDER: BuildStage[] = [
   'ajustando_responsividade', 'refinando_experiencia', 'finalizando', 'pronto',
 ];
 
-function inferStage(text: string): BuildStage {
+function inferStage(text: string, fileCount: number): BuildStage {
   const len = text.length;
   const hasPreview = text.includes('===FILE:preview.html===');
-  const hasPhp = /===FILE:.*\.php===/i.test(text);
-  const hasCss = /===FILE:.*\.css===/i.test(text);
-  const hasJs = /===FILE:.*\.js===/i.test(text);
+  const hasPhp = /===FILE:[^=]*\.php===/i.test(text);
+  const hasCss = /===FILE:[^=]*\.css===/i.test(text);
+  const hasJs = /===FILE:[^=]*\.js===/i.test(text);
   const hasIncludes = text.includes('includes/');
   const hasConfig = text.includes('config/');
-  const hasResponsive = text.includes('responsive') || text.includes('@media');
 
-  if (len < 100) return 'entendendo_prompt';
-  if (len < 400) return 'definindo_arquitetura';
-  if (!hasPreview && len < 800) return 'criando_estrutura';
+  if (len < 80) return 'entendendo_prompt';
+  if (len < 300) return 'definindo_arquitetura';
+  if (!hasPreview && len < 600) return 'criando_estrutura';
   if (hasPreview && !hasPhp) return 'gerando_preview';
   if (hasPhp && !hasCss) return 'escrevendo_frontend';
   if (hasCss && !hasJs) return 'criando_estilos';
   if (hasJs && !hasIncludes) return 'criando_javascript';
   if (hasIncludes && !hasConfig) return 'criando_includes';
-  if (hasConfig && !hasResponsive) return 'criando_config';
-  if (hasResponsive && len < 15000) return 'ajustando_responsividade';
-  if (len > 15000) return 'refinando_experiencia';
+  if (hasConfig && fileCount < 10) return 'criando_config';
+  if (fileCount >= 10 && len < 20000) return 'ajustando_responsividade';
+  if (len >= 20000) return 'refinando_experiencia';
   return 'escrevendo_backend';
 }
 
-/* ─── Dark Genesis Skeleton Preview ─── */
-const SkeletonPreview = memo(({ stage, fileCount }: { stage: BuildStage; fileCount: number }) => {
+/* ─── Dark Genesis Skeleton ─── */
+const SkeletonPreview = memo(({ stage }: { stage: BuildStage }) => {
   const stageIdx = STAGE_ORDER.indexOf(stage);
-  const showNav = stageIdx >= 2;
-  const showHero = stageIdx >= 3;
-  const showStats = stageIdx >= 4;
-  const showFeatures = stageIdx >= 5;
-  const showAbout = stageIdx >= 6;
-  const showTestimonials = stageIdx >= 7;
-  const showCta = stageIdx >= 8;
-  const showFooter = stageIdx >= 9;
+  const sections = [
+    { min: 1, h: 'h-12', content: 'nav' },
+    { min: 2, h: 'h-64', content: 'hero' },
+    { min: 3, h: 'h-20', content: 'stats' },
+    { min: 4, h: 'h-48', content: 'features' },
+    { min: 5, h: 'h-40', content: 'about' },
+    { min: 6, h: 'h-36', content: 'testimonials' },
+    { min: 7, h: 'h-28', content: 'cta' },
+    { min: 8, h: 'h-24', content: 'footer' },
+  ];
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-xl border border-white/[0.06]" style={{ background: 'linear-gradient(180deg, hsl(220 20% 13%) 0%, hsl(225 22% 11%) 100%)' }}>
-      {/* Shimmer overlay */}
+    <div className="relative h-full w-full overflow-hidden rounded-xl border border-white/[0.06]"
+      style={{ background: 'linear-gradient(180deg, hsl(220 20% 13%) 0%, hsl(225 22% 11%) 100%)' }}>
+      {/* Shimmer */}
       <div className="pointer-events-none absolute inset-0 z-10">
-        <motion.div
-          animate={{ x: ['-100%', '200%'] }}
+        <motion.div animate={{ x: ['-100%', '200%'] }}
           transition={{ duration: 2.8, repeat: Infinity, ease: 'linear' }}
-          className="h-full w-1/3 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent skew-x-12"
-        />
+          className="h-full w-1/3 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent skew-x-12" />
       </div>
 
-      {/* Floating particles */}
-      <div className="pointer-events-none absolute inset-0 z-0">
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute h-1 w-1 rounded-full bg-primary/20"
-            style={{ left: `${15 + i * 15}%`, top: `${10 + i * 12}%` }}
-            animate={{ y: [0, -20, 0], opacity: [0.2, 0.5, 0.2] }}
-            transition={{ duration: 3 + i * 0.5, repeat: Infinity, delay: i * 0.4 }}
-          />
+      {/* Particles */}
+      {[...Array(8)].map((_, i) => (
+        <motion.div key={i} className="pointer-events-none absolute h-1 w-1 rounded-full bg-primary/20"
+          style={{ left: `${10 + i * 11}%`, top: `${8 + i * 10}%` }}
+          animate={{ y: [0, -15, 0], opacity: [0.15, 0.4, 0.15] }}
+          transition={{ duration: 2.5 + i * 0.4, repeat: Infinity, delay: i * 0.3 }} />
+      ))}
+
+      <div className="relative z-[1] h-full overflow-y-auto p-4 sm:p-6 space-y-4">
+        {sections.map((sec, i) => (
+          <AnimatePresence key={i}>
+            {stageIdx >= sec.min && (
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08 }}
+                className={`${sec.h} w-full rounded-xl border border-white/[0.05]`}
+                style={{ backgroundColor: 'hsl(220 20% 15% / 0.4)' }}>
+                {sec.content === 'nav' && (
+                  <div className="flex items-center justify-between h-full px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-5 w-5 rounded-md bg-primary/20" />
+                      <div className="h-2.5 w-20 rounded bg-white/[0.06]" />
+                    </div>
+                    <div className="hidden sm:flex gap-4">
+                      {[0,1,2,3].map(j => <div key={j} className="h-2 w-12 rounded bg-white/[0.04]" />)}
+                    </div>
+                    <div className="h-7 w-20 rounded-full bg-primary/10" />
+                  </div>
+                )}
+                {sec.content === 'hero' && (
+                  <div className="flex flex-col justify-center h-full px-6 space-y-3">
+                    <div className="h-3 w-28 rounded-full bg-primary/10" />
+                    <div className="h-7 w-[80%] rounded bg-white/[0.06]" />
+                    <div className="h-7 w-[55%] rounded bg-white/[0.06]" />
+                    <div className="h-3 w-[70%] rounded bg-white/[0.03]" />
+                    <div className="flex gap-3 pt-2">
+                      <div className="h-9 w-28 rounded-lg bg-primary/15" />
+                      <div className="h-9 w-24 rounded-lg border border-white/[0.08]" />
+                    </div>
+                  </div>
+                )}
+                {sec.content === 'stats' && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 h-full items-center px-4">
+                    {[0,1,2,3].map(j => (
+                      <div key={j} className="text-center space-y-1">
+                        <div className="mx-auto h-5 w-14 rounded bg-white/[0.06]" />
+                        <div className="mx-auto h-2 w-18 rounded bg-white/[0.03]" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {sec.content === 'features' && (
+                  <div className="p-4 space-y-3">
+                    <div className="mx-auto h-4 w-40 rounded bg-white/[0.06]" />
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {[0,1,2].map(j => (
+                        <div key={j} className="rounded-lg border border-white/[0.05] p-3 space-y-2"
+                          style={{ backgroundColor: 'hsl(220 20% 15% / 0.3)' }}>
+                          <div className="h-7 w-7 rounded-lg bg-primary/10" />
+                          <div className="h-3 w-20 rounded bg-white/[0.06]" />
+                          <div className="h-2 w-full rounded bg-white/[0.03]" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {(sec.content === 'about' || sec.content === 'testimonials' || sec.content === 'cta') && (
+                  <div className="flex flex-col items-center justify-center h-full px-6 space-y-2">
+                    <div className="h-4 w-36 rounded bg-white/[0.06]" />
+                    <div className="h-2.5 w-56 rounded bg-white/[0.03]" />
+                    <div className="h-2.5 w-44 rounded bg-white/[0.03]" />
+                  </div>
+                )}
+                {sec.content === 'footer' && (
+                  <div className="flex items-center justify-between h-full px-4 border-t border-white/[0.04]">
+                    <div className="h-2.5 w-32 rounded bg-white/[0.04]" />
+                    <div className="flex gap-2">
+                      {[0,1,2].map(j => <div key={j} className="h-4 w-4 rounded-full bg-white/[0.06]" />)}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         ))}
       </div>
 
-      <div className="relative z-[1] h-full overflow-y-auto">
-        {/* Nav */}
-        <AnimatePresence>
-          {showNav && (
-            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-              className="sticky top-0 z-20 flex items-center justify-between border-b border-white/[0.06] px-4 sm:px-6 py-3 backdrop-blur-xl"
-              style={{ backgroundColor: 'hsl(220 20% 13% / 0.9)' }}>
-              <div className="flex items-center gap-3">
-                <div className="h-5 w-5 rounded-md bg-gradient-to-br from-primary/40 to-primary/20" />
-                <div className="h-3 w-16 sm:w-20 rounded bg-white/[0.06]" />
-              </div>
-              <div className="hidden sm:flex items-center gap-5">
-                {[0,1,2,3].map(i => <div key={i} className="h-2.5 w-12 rounded bg-white/[0.04]" />)}
-                <div className="h-7 w-20 rounded-full bg-gradient-to-r from-primary/20 to-primary/10" />
-              </div>
-              <div className="sm:hidden h-5 w-5 rounded bg-white/[0.06]" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Hero */}
-        <AnimatePresence>
-          {showHero && (
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 px-4 sm:px-8 py-10 sm:py-16 lg:px-12">
-              <div className="flex-1 w-full space-y-4">
-                <div className="h-3 w-28 rounded-full bg-primary/10" />
-                <div className="space-y-2">
-                  <div className="h-7 sm:h-8 w-[85%] rounded bg-white/[0.06]" />
-                  <div className="h-7 sm:h-8 w-[60%] rounded bg-white/[0.06]" />
-                </div>
-                <div className="space-y-1.5 pt-1">
-                  <div className="h-3 w-[90%] rounded bg-white/[0.03]" />
-                  <div className="h-3 w-[75%] rounded bg-white/[0.03]" />
-                </div>
-                <div className="flex gap-3 pt-3">
-                  <div className="h-10 w-32 rounded-lg bg-gradient-to-r from-primary/20 to-primary/10" />
-                  <div className="h-10 w-28 rounded-lg border border-white/[0.08]" />
-                </div>
-              </div>
-              <div className="hidden lg:block h-56 w-80 rounded-2xl bg-gradient-to-br from-primary/5 via-white/[0.02] to-transparent border border-white/[0.06]">
-                <div className="flex h-full items-center justify-center">
-                  <Image className="h-12 w-12 text-white/[0.08]" />
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Stats bar */}
-        <AnimatePresence>
-          {showStats && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-              className="mx-4 sm:mx-8 mb-8 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 rounded-xl border border-white/[0.06] px-4 sm:px-6 py-5"
-              style={{ backgroundColor: 'hsl(220 20% 15% / 0.5)' }}>
-              {[0, 1, 2, 3].map(i => (
-                <div key={i} className="text-center space-y-1.5">
-                  <div className="mx-auto h-6 w-16 rounded bg-white/[0.06]" />
-                  <div className="mx-auto h-2.5 w-20 rounded bg-white/[0.03]" />
-                </div>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Features grid */}
-        <AnimatePresence>
-          {showFeatures && (
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className="px-4 sm:px-8 pb-12">
-              <div className="mb-6 text-center space-y-2">
-                <div className="mx-auto h-5 w-48 rounded bg-white/[0.06]" />
-                <div className="mx-auto h-3 w-64 rounded bg-white/[0.03]" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                {[0, 1, 2, 3, 4, 5].map(i => (
-                  <motion.div key={i} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.35 + i * 0.06 }}
-                    className="space-y-3 rounded-xl border border-white/[0.06] p-4 sm:p-5"
-                    style={{ backgroundColor: 'hsl(220 20% 15% / 0.3)' }}>
-                    <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary/15 to-primary/5" />
-                    <div className="h-3.5 w-24 rounded bg-white/[0.06]" />
-                    <div className="space-y-1">
-                      <div className="h-2.5 w-full rounded bg-white/[0.03]" />
-                      <div className="h-2.5 w-4/5 rounded bg-white/[0.03]" />
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* About */}
-        <AnimatePresence>
-          {showAbout && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 px-4 sm:px-8 py-10 sm:py-14"
-              style={{ backgroundColor: 'hsl(220 20% 12% / 0.5)' }}>
-              <div className="hidden lg:block h-44 w-72 rounded-xl bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-white/[0.06]" />
-              <div className="flex-1 w-full space-y-3">
-                <div className="h-5 w-36 rounded bg-white/[0.06]" />
-                <div className="space-y-1.5">
-                  <div className="h-3 w-full rounded bg-white/[0.03]" />
-                  <div className="h-3 w-[90%] rounded bg-white/[0.03]" />
-                  <div className="h-3 w-[70%] rounded bg-white/[0.03]" />
-                </div>
-                <div className="h-9 w-28 rounded-lg bg-primary/10" />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Testimonials */}
-        <AnimatePresence>
-          {showTestimonials && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-              className="px-4 sm:px-8 py-12">
-              <div className="mb-6 text-center">
-                <div className="mx-auto h-5 w-40 rounded bg-white/[0.06]" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="space-y-3 rounded-xl border border-white/[0.06] p-4 sm:p-5"
-                    style={{ backgroundColor: 'hsl(220 20% 15% / 0.3)' }}>
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/15 to-primary/5" />
-                      <div className="space-y-1">
-                        <div className="h-3 w-20 rounded bg-white/[0.06]" />
-                        <div className="h-2 w-16 rounded bg-white/[0.03]" />
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="h-2.5 w-full rounded bg-white/[0.03]" />
-                      <div className="h-2.5 w-[85%] rounded bg-white/[0.03]" />
-                    </div>
-                    <div className="flex gap-0.5">
-                      {[0,1,2,3,4].map(s => <div key={s} className="h-3 w-3 rounded bg-primary/15" />)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* CTA */}
-        <AnimatePresence>
-          {showCta && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
-              className="mx-4 sm:mx-8 mb-10 flex flex-col items-center rounded-2xl border border-white/[0.06] px-6 sm:px-8 py-10 sm:py-12 text-center"
-              style={{ background: 'linear-gradient(135deg, hsl(220 40% 18% / 0.5), hsl(260 30% 15% / 0.3))' }}>
-              <div className="mb-3 h-6 w-56 rounded bg-white/[0.06]" />
-              <div className="mb-4 h-3 w-40 rounded bg-white/[0.03]" />
-              <div className="h-10 w-36 rounded-lg bg-gradient-to-r from-primary/25 to-primary/15" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Footer */}
-        <AnimatePresence>
-          {showFooter && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
-              className="border-t border-white/[0.06] px-4 sm:px-8 py-8"
-              style={{ backgroundColor: 'hsl(220 20% 10% / 0.5)' }}>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mb-6">
-                {[0,1,2,3].map(i => (
-                  <div key={i} className="space-y-2">
-                    <div className="h-3 w-16 rounded bg-white/[0.08]" />
-                    <div className="h-2 w-20 rounded bg-white/[0.04]" />
-                    <div className="h-2 w-16 rounded bg-white/[0.04]" />
-                    <div className="h-2 w-18 rounded bg-white/[0.04]" />
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center justify-between border-t border-white/[0.06] pt-4">
-                <div className="h-2.5 w-36 rounded bg-white/[0.04]" />
-                <div className="flex gap-2">
-                  {[0,1,2].map(i => <div key={i} className="h-5 w-5 rounded-full bg-white/[0.06]" />)}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Bottom overlay with current stage */}
-      <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2">
-        <motion.div key={stage} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2.5 rounded-full border border-white/[0.08] px-4 py-2 shadow-xl backdrop-blur-xl"
+      {/* Bottom badge */}
+      <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2">
+        <motion.div key={stage} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 rounded-full border border-white/[0.08] px-3 py-1.5 shadow-xl backdrop-blur-xl"
           style={{ backgroundColor: 'hsl(220 20% 13% / 0.9)' }}>
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-          <span className="text-[10px] sm:text-xs font-medium text-foreground/70">{STAGE_META[stage].label}</span>
-          {fileCount > 0 && (
-            <Badge variant="outline" className="text-[9px] px-1.5 py-0">{fileCount} arquivos</Badge>
-          )}
+          <Loader2 className="h-3 w-3 animate-spin text-primary" />
+          <span className="text-[10px] font-medium text-foreground/60">{STAGE_META[stage].label}</span>
         </motion.div>
       </div>
     </div>
@@ -416,17 +287,17 @@ const SkeletonPreview = memo(({ stage, fileCount }: { stage: BuildStage; fileCou
 });
 SkeletonPreview.displayName = 'SkeletonPreview';
 
-/* ─── Live Code Editor with multi-file ─── */
-const LiveCodeEditor = memo(({ files, activeFile, onSelectFile, rawCode, isStreaming }: {
+/* ─── Code Editor ─── */
+const LiveCodeEditor = memo(({ files, activeFile, onSelectFile, isStreaming }: {
   files: ProjectFile[];
   activeFile: string;
-  onSelectFile: (path: string) => void;
-  rawCode: string;
+  onSelectFile: (p: string) => void;
   isStreaming: boolean;
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const currentFile = files.find(f => f.path === activeFile);
-  const code = currentFile?.content || rawCode || '';
+  const realFiles = files.filter(f => f.path !== 'preview.html');
+  const currentFile = realFiles.find(f => f.path === activeFile) || realFiles[0];
+  const code = currentFile?.content || '';
   const lines = code.split('\n');
 
   useEffect(() => {
@@ -437,31 +308,33 @@ const LiveCodeEditor = memo(({ files, activeFile, onSelectFile, rawCode, isStrea
 
   const getLineClass = (line: string) => {
     const t = line.trim();
-    if (t.startsWith('<?php') || t.startsWith('?>')) return 'text-red-400/70';
-    if (t.startsWith('//') || t.startsWith('/*') || t.startsWith('*') || t.startsWith('#')) return 'text-muted-foreground/30';
-    if (t.startsWith('<!--')) return 'text-muted-foreground/25';
-    if (t.startsWith('<') && t.includes('class=')) return 'text-primary/60';
-    if (t.startsWith('<')) return 'text-sky-400/70';
-    if (t.startsWith('$') || t.includes('function ') || t.includes('class ') || t.startsWith('require') || t.startsWith('include')) return 'text-purple-400/70';
-    if (t.startsWith('const ') || t.startsWith('let ') || t.startsWith('var ') || t.startsWith('import ')) return 'text-yellow-400/60';
-    if (t.startsWith('.') || t.startsWith('@media') || t.includes('{') || t.includes('}')) return 'text-cyan-400/50';
-    return 'text-foreground/40';
+    if (t.startsWith('<?php') || t.startsWith('?>')) return 'text-red-400';
+    if (t.startsWith('//') || t.startsWith('/*') || t.startsWith('*') || t.startsWith('#')) return 'text-muted-foreground/40';
+    if (t.startsWith('<!--')) return 'text-muted-foreground/35';
+    if (t.startsWith('<') && t.includes('class=')) return 'text-primary/70';
+    if (t.startsWith('<')) return 'text-sky-400/80';
+    if (t.startsWith('$') || t.includes('function ') || t.includes('class ') || t.startsWith('require') || t.startsWith('include')) return 'text-purple-400/80';
+    if (t.startsWith('const ') || t.startsWith('let ') || t.startsWith('var ') || t.startsWith('import ')) return 'text-yellow-400/70';
+    if (t.startsWith('.') || t.startsWith('@media') || t.includes('{') || t.includes('}')) return 'text-cyan-400/60';
+    if (t.startsWith('--') || t.includes(':root')) return 'text-emerald-400/60';
+    return 'text-foreground/50';
   };
 
-  const fileExt = activeFile.split('.').pop() || 'html';
-  const langMap: Record<string, string> = { php: 'PHP', html: 'HTML5', css: 'CSS3', js: 'JavaScript', sql: 'SQL', htaccess: 'Apache' };
+  const fileExt = (currentFile?.path || '').split('.').pop() || '';
+  const langMap: Record<string, string> = { php: 'PHP', html: 'HTML', css: 'CSS', js: 'JavaScript', sql: 'SQL', htaccess: 'Apache' };
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-white/[0.06] bg-card">
       {/* File tabs */}
-      {files.length > 0 && (
-        <div className="flex items-center gap-0.5 border-b border-white/[0.06] bg-secondary/20 px-2 py-1 overflow-x-auto scrollbar-none">
-          {files.filter(f => f.path !== 'preview.html').slice(0, 10).map(f => {
+      {realFiles.length > 0 && (
+        <div className="flex items-center border-b border-white/[0.06] bg-secondary/20 px-1.5 py-1 overflow-x-auto scrollbar-none gap-0.5">
+          {realFiles.map(f => {
             const { icon: FIcon, color } = categorizeFile(f.path);
+            const isActive = f.path === (currentFile?.path || '');
             return (
               <button key={f.path} onClick={() => onSelectFile(f.path)}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[10px] whitespace-nowrap transition-all ${
-                  activeFile === f.path ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground/40 hover:text-foreground/60 hover:bg-secondary/30'
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[10px] whitespace-nowrap transition-all shrink-0 ${
+                  isActive ? 'bg-primary/10 text-primary font-medium border border-primary/15' : 'text-muted-foreground/40 hover:text-foreground/60 hover:bg-secondary/30'
                 }`}>
                 <FIcon className={`h-3 w-3 ${color}`} />
                 {f.path.split('/').pop()}
@@ -474,13 +347,13 @@ const LiveCodeEditor = memo(({ files, activeFile, onSelectFile, rawCode, isStrea
       {/* Editor chrome */}
       <div className="flex items-center gap-3 border-b border-white/[0.06] bg-secondary/30 px-4 py-1.5">
         <div className="flex gap-1.5">
-          <div className="h-2.5 w-2.5 rounded-full bg-destructive/40" />
+          <div className="h-2.5 w-2.5 rounded-full bg-red-500/40" />
           <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/40" />
           <div className="h-2.5 w-2.5 rounded-full bg-green-500/40" />
         </div>
         <div className="flex items-center gap-2 rounded-md bg-background/50 px-3 py-0.5">
           <FileCode className="h-3 w-3 text-primary/40" />
-          <span className="font-mono text-[10px] text-muted-foreground/50">{activeFile || 'preview.html'}</span>
+          <span className="font-mono text-[10px] text-muted-foreground/50">{currentFile?.path || 'Aguardando...'}</span>
         </div>
         {isStreaming && (
           <div className="ml-auto flex items-center gap-1.5">
@@ -490,29 +363,34 @@ const LiveCodeEditor = memo(({ files, activeFile, onSelectFile, rawCode, isStrea
         )}
       </div>
 
-      {/* Code lines */}
-      <div ref={scrollRef} className="flex-1 overflow-auto px-1 py-3 font-mono text-[11px] leading-[20px]">
-        {!code ? (
+      {/* Code */}
+      <div ref={scrollRef} className="flex-1 overflow-auto py-3 font-mono text-[11px] leading-[20px]">
+        {!code && realFiles.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center text-muted-foreground/20 text-xs font-sans gap-2">
+            <Code2 className="h-8 w-8 text-muted-foreground/10" />
+            <p>O código aparecerá aqui durante a geração</p>
+          </div>
+        ) : !code ? (
           <div className="flex h-full items-center justify-center text-muted-foreground/20 text-xs font-sans">
-            Selecione um arquivo ou aguarde a geração
+            Selecione um arquivo nas abas acima
           </div>
         ) : (
           lines.map((line, i) => (
-            <div key={i} className="flex hover:bg-secondary/20 px-2">
-              <span className="mr-4 inline-block w-8 select-none text-right text-muted-foreground/15 text-[10px]">{i + 1}</span>
+            <div key={i} className="flex hover:bg-secondary/20 px-3">
+              <span className="mr-4 inline-block w-8 select-none text-right text-muted-foreground/20 text-[10px]">{i + 1}</span>
               <span className={getLineClass(line)}>{line || '\u00A0'}</span>
             </div>
           ))
         )}
-        {isStreaming && (
-          <motion.div animate={{ opacity: [0.2, 0.8, 0.2] }} transition={{ duration: 0.5, repeat: Infinity }} className="flex px-2">
-            <span className="mr-4 inline-block w-8 select-none text-right text-muted-foreground/15 text-[10px]">{lines.length + 1}</span>
+        {isStreaming && code && (
+          <motion.div animate={{ opacity: [0.2, 0.8, 0.2] }} transition={{ duration: 0.5, repeat: Infinity }} className="flex px-3">
+            <span className="mr-4 inline-block w-8 select-none text-right text-muted-foreground/20 text-[10px]">{lines.length + 1}</span>
             <span className="inline-block h-[14px] w-[7px] rounded-[1px] bg-primary/60" />
           </motion.div>
         )}
       </div>
 
-      {/* Status bar */}
+      {/* Status */}
       <div className="flex items-center justify-between border-t border-white/[0.06] bg-secondary/20 px-4 py-1">
         <span className="text-[10px] text-muted-foreground/30">{langMap[fileExt] || fileExt.toUpperCase()}</span>
         <span className="text-[10px] text-muted-foreground/25">{lines.length} linhas • {(code.length / 1024).toFixed(1)}KB</span>
@@ -526,38 +404,38 @@ LiveCodeEditor.displayName = 'LiveCodeEditor';
 const BuildPipeline = memo(({ stage }: { stage: BuildStage }) => {
   const currentIdx = STAGE_ORDER.indexOf(stage);
   const groups = [
-    { label: 'Análise', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Análise') },
-    { label: 'Estrutura', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Estrutura') },
-    { label: 'Frontend', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Frontend') },
-    { label: 'Backend', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Backend') },
-    { label: 'Config', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Config') },
-    { label: 'Refinamento', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Refinamento') },
+    { label: 'ANÁLISE', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Análise') },
+    { label: 'ESTRUTURA', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Estrutura') },
+    { label: 'FRONTEND', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Frontend') },
+    { label: 'BACKEND', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Backend') },
+    { label: 'CONFIG', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Config') },
+    { label: 'REFINAMENTO', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Refinamento') },
   ];
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2">
       {groups.map(g => (
         <div key={g.label}>
-          <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/25">{g.label}</p>
-          <div className="space-y-0.5">
+          <p className="mb-0.5 text-[8px] font-bold uppercase tracking-[0.15em] text-muted-foreground/25">{g.label}</p>
+          <div className="space-y-px">
             {g.stages.map(s => {
               const idx = STAGE_ORDER.indexOf(s);
               const done = idx < currentIdx || stage === 'pronto';
               const active = idx === currentIdx && stage !== 'pronto' && stage !== 'erro';
               return (
-                <div key={s} className={`flex items-center gap-2 py-0.5 transition-opacity ${idx > currentIdx && stage !== 'pronto' ? 'opacity-30' : ''}`}>
+                <div key={s} className={`flex items-center gap-2 py-0.5 transition-opacity ${idx > currentIdx && stage !== 'pronto' ? 'opacity-20' : ''}`}>
                   {done ? (
-                    <div className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/15">
-                      <Check className="h-2.5 w-2.5 text-primary" />
+                    <div className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary/15">
+                      <Check className="h-2 w-2 text-primary" />
                     </div>
                   ) : active ? (
-                    <div className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/20">
-                      <Loader2 className="h-2.5 w-2.5 animate-spin text-primary" />
+                    <div className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary/20">
+                      <Loader2 className="h-2 w-2 animate-spin text-primary" />
                     </div>
                   ) : (
-                    <div className="h-4 w-4 rounded-full border border-white/[0.08]" />
+                    <div className="h-3.5 w-3.5 rounded-full border border-white/[0.08]" />
                   )}
-                  <span className={`text-[10px] leading-tight ${done ? 'text-primary/60' : active ? 'text-foreground/70 font-medium' : 'text-muted-foreground/25'}`}>
+                  <span className={`text-[10px] leading-tight ${done ? 'text-primary/50' : active ? 'text-foreground/70 font-medium' : 'text-muted-foreground/20'}`}>
                     {STAGE_META[s].label}
                   </span>
                 </div>
@@ -572,13 +450,29 @@ const BuildPipeline = memo(({ stage }: { stage: BuildStage }) => {
 BuildPipeline.displayName = 'BuildPipeline';
 
 /* ─── Structure View ─── */
-const StructureView = memo(({ files, isGenerating, stage }: { files: ProjectFile[]; isGenerating: boolean; stage: BuildStage }) => {
+const StructureView = memo(({ files, isGenerating, onViewCode }: {
+  files: ProjectFile[];
+  isGenerating: boolean;
+  onViewCode: (path: string) => void;
+}) => {
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const realFiles = files.filter(f => f.path !== 'preview.html');
+
+  // Auto-expand all folders
+  useEffect(() => {
+    const folders = new Set<string>();
+    realFiles.forEach(f => {
+      const parts = f.path.split('/');
+      if (parts.length > 1) folders.add(parts.slice(0, -1).join('/'));
+    });
+    setExpandedFolders(folders);
+  }, [files.length]);
 
   const buildTree = () => {
     const tree: Record<string, string[]> = {};
     const rootFiles: string[] = [];
-    files.filter(f => f.path !== 'preview.html').forEach(f => {
+    realFiles.forEach(f => {
       const parts = f.path.split('/');
       if (parts.length === 1) rootFiles.push(parts[0]);
       else {
@@ -595,73 +489,95 @@ const StructureView = memo(({ files, isGenerating, stage }: { files: ProjectFile
 
   const folderIcons: Record<string, typeof FolderOpen> = {
     includes: Layers, config: Settings, assets: Image,
-    'assets/css': FileText, 'assets/js': FileCode, 'assets/img': Image,
+    'assets/css': FileText, 'assets/js': Braces, 'assets/img': Image,
     admin: Server, controllers: Zap, models: Database,
     database: Database, helpers: Coffee, views: Eye, pages: FileText,
   };
 
+  const toggleFolder = (folder: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(folder)) next.delete(folder);
+      else next.add(folder);
+      return next;
+    });
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row h-full gap-3">
+    <div className="flex flex-col lg:flex-row h-full gap-3">
       {/* File Tree */}
-      <div className="w-full sm:w-56 flex-shrink-0 overflow-y-auto rounded-xl border border-white/[0.06] bg-card p-3 max-h-[40vh] sm:max-h-none">
+      <div className="w-full lg:w-60 flex-shrink-0 overflow-y-auto rounded-xl border border-white/[0.06] bg-card p-3">
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/30">Projeto</p>
-          <Badge variant="outline" className="text-[9px] px-1.5 py-0">{files.filter(f => f.path !== 'preview.html').length} arquivos</Badge>
+          <div className="flex items-center gap-1.5">
+            <FolderTree className="h-3 w-3 text-primary/40" />
+            <p className="text-[10px] font-semibold text-foreground/50">Projeto</p>
+          </div>
+          <Badge variant="outline" className="text-[9px] px-1.5 py-0">{realFiles.length}</Badge>
         </div>
 
-        {files.length === 0 ? (
+        {realFiles.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             {isGenerating ? (
               <>
                 <Loader2 className="mb-2 h-5 w-5 animate-spin text-primary/30" />
-                <p className="text-[11px] text-muted-foreground/30">Criando estrutura...</p>
+                <p className="text-[11px] text-muted-foreground/30">Criando arquivos...</p>
               </>
             ) : (
               <>
                 <FolderOpen className="mb-2 h-6 w-6 text-muted-foreground/15" />
-                <p className="text-[11px] text-muted-foreground/20">Aguardando geração</p>
+                <p className="text-[11px] text-muted-foreground/20">Gere um projeto para ver a estrutura</p>
               </>
             )}
           </div>
         ) : (
           <div className="space-y-0.5">
+            {/* Root files */}
             {rootFiles.map((name, i) => {
               const { icon: FIcon, color } = categorizeFile(name);
               return (
-                <motion.button key={name} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.03 }}
+                <motion.button key={name} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.02 }}
                   onClick={() => setSelectedFile(name)}
                   className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] transition-all ${
-                    selectedFile === name ? 'bg-primary/10 text-primary' : 'text-foreground/50 hover:bg-secondary/30'
+                    selectedFile === name ? 'bg-primary/10 text-primary font-medium' : 'text-foreground/50 hover:bg-secondary/30'
                   }`}>
-                  <FIcon className={`h-3.5 w-3.5 ${color}`} />
+                  <FIcon className={`h-3.5 w-3.5 shrink-0 ${color}`} />
                   <span className="truncate">{name}</span>
                 </motion.button>
               );
             })}
 
+            {/* Folders */}
             {Object.entries(tree).sort().map(([folder, folderFiles], fi) => {
               const FolderIcon = folderIcons[folder] || FolderOpen;
+              const isExpanded = expandedFolders.has(folder);
               return (
-                <motion.div key={folder} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: (rootFiles.length + fi) * 0.03 }}>
-                  <div className="flex items-center gap-2 px-2 py-1.5 text-[11px] font-medium text-foreground/60">
+                <motion.div key={folder} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: (rootFiles.length + fi) * 0.02 }}>
+                  <button onClick={() => toggleFolder(folder)}
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] font-medium text-foreground/60 hover:bg-secondary/20 transition-all">
+                    <ChevronRight className={`h-3 w-3 text-muted-foreground/30 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                     <FolderIcon className="h-3.5 w-3.5 text-primary/30" />
                     <span>{folder}/</span>
-                  </div>
-                  {folderFiles.map(name => {
-                    const fullPath = `${folder}/${name}`;
-                    const { icon: FIcon, color } = categorizeFile(name);
-                    return (
-                      <button key={fullPath} onClick={() => setSelectedFile(fullPath)}
-                        className={`flex w-full items-center gap-2 rounded-lg py-1.5 pl-7 pr-2 text-[11px] transition-all ${
-                          selectedFile === fullPath ? 'bg-primary/10 text-primary' : 'text-foreground/40 hover:bg-secondary/30'
-                        }`}>
-                        <FIcon className={`h-3 w-3 ${color}`} />
-                        <span className="truncate">{name}</span>
-                      </button>
-                    );
-                  })}
+                    <span className="ml-auto text-[9px] text-muted-foreground/25">{folderFiles.length}</span>
+                  </button>
+                  <AnimatePresence>
+                    {isExpanded && folderFiles.map(name => {
+                      const fullPath = `${folder}/${name}`;
+                      const { icon: FIcon, color } = categorizeFile(name);
+                      return (
+                        <motion.button key={fullPath} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          onClick={() => setSelectedFile(fullPath)}
+                          className={`flex w-full items-center gap-2 rounded-lg py-1.5 pl-9 pr-2 text-[11px] transition-all ${
+                            selectedFile === fullPath ? 'bg-primary/10 text-primary font-medium' : 'text-foreground/40 hover:bg-secondary/30'
+                          }`}>
+                          <FIcon className={`h-3 w-3 shrink-0 ${color}`} />
+                          <span className="truncate">{name}</span>
+                        </motion.button>
+                      );
+                    })}
+                  </AnimatePresence>
                 </motion.div>
               );
             })}
@@ -677,19 +593,23 @@ const StructureView = memo(({ files, isGenerating, stage }: { files: ProjectFile
               <FileCode className="h-3.5 w-3.5 text-primary/40" />
               <span className="text-xs font-medium text-foreground/60 truncate">{currentFile.path}</span>
               <Badge variant="outline" className="ml-auto text-[9px] px-1.5 shrink-0">{currentFile.category}</Badge>
+              <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1"
+                onClick={() => onViewCode(currentFile.path)}>
+                <Code2 className="h-3 w-3" /> Abrir no Editor
+              </Button>
             </div>
-            <div className="flex-1 overflow-auto p-4 font-mono text-[11px] leading-[20px]">
+            <div className="flex-1 overflow-auto p-1 font-mono text-[11px] leading-[20px]">
               {currentFile.content.split('\n').map((line, i) => (
-                <div key={i} className="flex hover:bg-secondary/15 px-1">
-                  <span className="mr-3 inline-block w-6 select-none text-right text-muted-foreground/15 text-[10px]">{i + 1}</span>
-                  <span className="text-foreground/45">{line || '\u00A0'}</span>
+                <div key={i} className="flex hover:bg-secondary/15 px-3">
+                  <span className="mr-3 inline-block w-6 select-none text-right text-muted-foreground/20 text-[10px]">{i + 1}</span>
+                  <span className="text-foreground/50">{line || '\u00A0'}</span>
                 </div>
               ))}
             </div>
           </div>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center text-muted-foreground/15">
-            <LayoutGrid className="mb-3 h-10 w-10" />
+          <div className="flex h-full flex-col items-center justify-center text-muted-foreground/15 gap-2">
+            <LayoutGrid className="h-8 w-8" />
             <p className="text-xs">Selecione um arquivo para visualizar</p>
           </div>
         )}
@@ -699,9 +619,7 @@ const StructureView = memo(({ files, isGenerating, stage }: { files: ProjectFile
 });
 StructureView.displayName = 'StructureView';
 
-/* ═══════════════════════════════════════════ */
-/*  Chat Log Item – Lovable-style             */
-/* ═══════════════════════════════════════════ */
+/* ─── Chat Log Entry ─── */
 interface ChatLogEntry {
   id: string;
   type: 'user' | 'status' | 'files' | 'thinking';
@@ -717,7 +635,9 @@ const ChatLogItem = memo(({ entry }: { entry: ChatLogEntry }) => {
       <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex justify-end">
         <div className="max-w-[90%] rounded-xl bg-primary/10 border border-primary/15 px-3 py-2 text-[12px] text-foreground/80">
           <p className="whitespace-pre-wrap break-words">{entry.content}</p>
-          <p className="mt-1 text-[9px] text-muted-foreground/25">{entry.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+          <p className="mt-1 text-[9px] text-muted-foreground/25">
+            {entry.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+          </p>
         </div>
       </motion.div>
     );
@@ -725,77 +645,84 @@ const ChatLogItem = memo(({ entry }: { entry: ChatLogEntry }) => {
 
   if (entry.type === 'thinking') {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 px-3 py-2">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 px-2 py-1.5">
         <div className="flex gap-0.5">
           {[0, 1, 2].map(i => (
             <motion.div key={i} animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.7, 0.3] }}
               transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.12 }} className="h-1 w-1 rounded-full bg-primary" />
           ))}
         </div>
-        <span className="text-[10px] text-muted-foreground/40">{entry.content}</span>
+        <span className="text-[11px] text-muted-foreground/40 italic">{entry.content || 'Pensando...'}</span>
       </motion.div>
     );
   }
 
   if (entry.type === 'files') {
     return (
-      <motion.div initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
-        className="rounded-lg border border-primary/10 bg-primary/5 px-3 py-2">
-        <p className="text-[10px] font-medium text-primary/60 mb-1">📁 Arquivos criados:</p>
+      <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+        className="rounded-lg border border-primary/10 bg-primary/[0.03] px-3 py-2">
+        <p className="text-[10px] font-medium text-primary/60 mb-1 flex items-center gap-1.5">
+          <FolderOpen className="h-3 w-3" /> Arquivos criados:
+        </p>
         <div className="flex flex-wrap gap-1">
-          {(entry.files || []).map(f => (
-            <span key={f} className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[9px] text-primary/50">
-              <FileCode className="h-2.5 w-2.5" />
-              {f.split('/').pop()}
-            </span>
-          ))}
+          {(entry.files || []).map(f => {
+            const { color } = categorizeFile(f);
+            return (
+              <span key={f} className={`inline-flex items-center gap-1 rounded-md bg-secondary/30 px-2 py-0.5 text-[9px] ${color}`}>
+                {f}
+              </span>
+            );
+          })}
         </div>
       </motion.div>
     );
   }
 
-  // status type
+  // status
   return (
-    <motion.div initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}
-      className="flex items-start gap-2.5 rounded-lg px-3 py-2"
-      style={{ backgroundColor: 'hsl(220 20% 15% / 0.3)' }}>
-      {entry.stage && STAGE_ORDER.indexOf(entry.stage) >= 0 && (
-        <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15">
-          {entry.stage === 'pronto' ? (
-            <Check className="h-2.5 w-2.5 text-primary" />
-          ) : (
-            <Loader2 className="h-2.5 w-2.5 animate-spin text-primary" />
-          )}
+    <motion.div initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} className="flex items-start gap-2 py-1 px-1">
+      {entry.stage === 'pronto' ? (
+        <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-green-500/15">
+          <Check className="h-2.5 w-2.5 text-green-500" />
+        </div>
+      ) : entry.stage === 'erro' ? (
+        <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-destructive/15">
+          <X className="h-2.5 w-2.5 text-destructive" />
+        </div>
+      ) : (
+        <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10">
+          <Loader2 className="h-2.5 w-2.5 animate-spin text-primary/60" />
         </div>
       )}
-      <span className="text-[11px] leading-relaxed text-foreground/60">{entry.content}</span>
+      <span className="text-[11px] text-foreground/50 leading-tight">{entry.content}</span>
     </motion.div>
   );
 });
 ChatLogItem.displayName = 'ChatLogItem';
 
-/* ══════════════════════════════════════════════════════════════ */
-/*                        MAIN PAGE                              */
-/* ══════════════════════════════════════════════════════════════ */
-export default function SiteBuilderPage() {
+/* ═══════════════════════════════════════════════ */
+/*              MAIN COMPONENT                     */
+/* ═══════════════════════════════════════════════ */
+export default function SiteBuilder() {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<Project[]>(loadProjects);
+  const [projects, setProjects] = useState<Project[]>(() => loadProjects());
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('desktop');
-  const [centerMode, setCenterMode] = useState<CenterMode>('preview');
-  const [customWidth, setCustomWidth] = useState(1440);
-  const [showHistory, setShowHistory] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [phase, setPhase] = useState<'chat' | 'building'>('chat');
-  const [buildStage, setBuildStage] = useState<BuildStage>('idle');
   const [liveHtml, setLiveHtml] = useState('');
   const [rawOutput, setRawOutput] = useState('');
   const [liveFiles, setLiveFiles] = useState<ProjectFile[]>([]);
-  const [chatLogEntries, setChatLogEntries] = useState<ChatLogEntry[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>('desktop');
+  const [customWidth, setCustomWidth] = useState(1440);
+  const [centerMode, setCenterMode] = useState<CenterMode>('preview');
   const [activeCodeFile, setActiveCodeFile] = useState('');
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [buildStage, setBuildStage] = useState<BuildStage>('idle');
+  const [phase, setPhase] = useState<'chat' | 'building'>('chat');
+  const [copied, setCopied] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [chatLogEntries, setChatLogEntries] = useState<ChatLogEntry[]>([]);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -806,8 +733,7 @@ export default function SiteBuilderPage() {
 
   const createProject = useCallback((name?: string) => {
     const project: Project = {
-      id: generateId(),
-      name: name || `Projeto ${projects.length + 1}`,
+      id: generateId(), name: name || `Projeto ${projects.length + 1}`,
       messages: [], files: [], generatedCode: '', rawOutput: '', snapshots: [],
       createdAt: new Date(), updatedAt: new Date(),
     };
@@ -831,7 +757,7 @@ export default function SiteBuilderPage() {
     setChatLogEntries(prev => [...prev, { ...entry, id: generateId(), timestamp: new Date() }]);
   }, []);
 
-  /* ─── Send Message ─── */
+  /* ─── Send ─── */
   const handleSend = async () => {
     if (!input.trim() || isGenerating) return;
     let projectId = activeProjectId;
@@ -854,9 +780,8 @@ export default function SiteBuilderPage() {
     setActiveCodeFile('');
     setBuildStage('entendendo_prompt');
 
-    // Add user message to chat
     addLogEntry({ type: 'user', content: prompt });
-    addLogEntry({ type: 'status', content: '🧠 Entendendo seu pedido...', stage: 'entendendo_prompt' });
+    addLogEntry({ type: 'status', content: 'Entendendo seu pedido...', stage: 'entendendo_prompt' });
 
     try {
       const resp = await fetch(CHAT_URL, {
@@ -868,7 +793,6 @@ export default function SiteBuilderPage() {
         },
         body: JSON.stringify({
           messages: allMessages.map(m => ({ role: m.role, content: m.content })),
-          projectId,
         }),
       });
 
@@ -877,7 +801,7 @@ export default function SiteBuilderPage() {
         throw new Error(err.error || `Erro ${resp.status}`);
       }
 
-      addLogEntry({ type: 'status', content: '📐 Definindo a arquitetura do projeto...', stage: 'definindo_arquitetura' });
+      addLogEntry({ type: 'status', content: 'Definindo a arquitetura do projeto...', stage: 'definindo_arquitetura' });
 
       const reader = resp.body!.getReader();
       const decoder = new TextDecoder();
@@ -890,6 +814,7 @@ export default function SiteBuilderPage() {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
+
         let newlineIndex: number;
         while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
           let line = buffer.slice(0, newlineIndex);
@@ -905,20 +830,18 @@ export default function SiteBuilderPage() {
               fullContent += content;
               setRawOutput(fullContent);
 
-              // Parse files progressively
               const currentFiles = parseFiles(fullContent);
               if (currentFiles.length > 0) {
                 setLiveFiles(currentFiles);
+                // Update preview progressively
                 const previewHtml = getPreviewHtml(currentFiles);
-                if (previewHtml && previewHtml.length > 200) {
-                  setLiveHtml(previewHtml);
-                }
+                if (previewHtml) setLiveHtml(previewHtml);
+
                 if (!activeCodeFile) {
                   const firstReal = currentFiles.find(f => f.path !== 'preview.html');
                   if (firstReal) setActiveCodeFile(firstReal.path);
                 }
 
-                // Log new files created
                 const nonPreviewFiles = currentFiles.filter(f => f.path !== 'preview.html');
                 if (nonPreviewFiles.length > lastFileCount) {
                   const newFiles = nonPreviewFiles.slice(lastFileCount).map(f => f.path);
@@ -927,45 +850,55 @@ export default function SiteBuilderPage() {
                 }
               }
 
-              // Infer stage and add logs
-              const newStage = inferStage(fullContent);
+              const newStage = inferStage(fullContent, currentFiles.filter(f => f.path !== 'preview.html').length);
               if (newStage !== lastStage && !loggedStages.has(newStage)) {
                 setBuildStage(newStage);
-                addLogEntry({ type: 'status', content: `${STAGE_META[newStage].icon} ${STAGE_META[newStage].label}`, stage: newStage });
+                addLogEntry({ type: 'status', content: STAGE_META[newStage].label, stage: newStage });
                 loggedStages.add(newStage);
                 lastStage = newStage;
               }
 
               updateProject(projectId!, { rawOutput: fullContent });
             }
-          } catch { /* partial */ }
+          } catch { /* partial JSON */ }
         }
       }
 
-      // Final processing
+      // Flush remaining buffer
+      if (buffer.trim()) {
+        for (let raw of buffer.split('\n')) {
+          if (!raw || !raw.startsWith('data: ')) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) fullContent += content;
+          } catch { /* ignore */ }
+        }
+      }
+
       const finalFiles = parseFiles(fullContent);
       const finalPreview = getPreviewHtml(finalFiles);
       setBuildStage('pronto');
-      addLogEntry({ type: 'status', content: '✅ Build concluído! Seu projeto está pronto.', stage: 'pronto' });
-      addLogEntry({ type: 'status', content: `📁 ${finalFiles.filter(f => f.path !== 'preview.html').length} arquivos gerados no total` });
       setLiveHtml(finalPreview);
       setLiveFiles(finalFiles);
       setRawOutput(fullContent);
 
-      const prevSnapshots = currentProject?.snapshots || [];
+      addLogEntry({ type: 'status', content: 'Build concluído! Seu projeto está pronto.', stage: 'pronto' });
+      addLogEntry({ type: 'status', content: `${finalFiles.filter(f => f.path !== 'preview.html').length} arquivos gerados` });
+
       updateProject(projectId!, {
         messages: [...allMessages, { id: generateId(), role: 'assistant' as const, content: fullContent, timestamp: new Date() }],
-        files: finalFiles,
-        generatedCode: finalPreview,
-        rawOutput: fullContent,
+        files: finalFiles, generatedCode: finalPreview, rawOutput: fullContent,
         name: currentProject?.name || prompt.slice(0, 40),
-        snapshots: [...prevSnapshots, finalPreview].slice(-10),
+        snapshots: [...(currentProject?.snapshots || []), finalPreview].slice(-10),
       });
     } catch (err: any) {
       setBuildStage('erro');
-      addLogEntry({ type: 'status', content: `❌ Erro: ${err.message}` });
+      addLogEntry({ type: 'status', content: `Erro: ${err.message}`, stage: 'erro' });
       updateProject(projectId!, {
-        messages: [...allMessages, { id: generateId(), role: 'assistant', content: `❌ Erro: ${err.message}`, timestamp: new Date() }],
+        messages: [...allMessages, { id: generateId(), role: 'assistant', content: `Erro: ${err.message}`, timestamp: new Date() }],
       });
     } finally {
       setIsGenerating(false);
@@ -980,14 +913,13 @@ export default function SiteBuilderPage() {
   const downloadProject = () => {
     const files = liveFiles.length > 0 ? liveFiles : activeProject?.files || [];
     if (files.length === 0) return;
-    const combined = files.filter(f => f.path !== 'preview.html').map(f => `\n${'='.repeat(60)}\n// ${f.path}\n${'='.repeat(60)}\n\n${f.content}`).join('\n\n');
+    const combined = files.filter(f => f.path !== 'preview.html')
+      .map(f => `\n${'='.repeat(60)}\n// ${f.path}\n${'='.repeat(60)}\n\n${f.content}`).join('\n\n');
     const blob = new Blob([combined], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${(activeProject?.name || 'projeto').replace(/\s+/g, '-').toLowerCase()}-files.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `${(activeProject?.name || 'projeto').replace(/\s+/g, '-').toLowerCase()}.txt`;
+    a.click(); URL.revokeObjectURL(url);
   };
 
   const viewportPresets: Record<ViewMode, number> = { desktop: 1440, tablet: 768, mobile: 375 };
@@ -995,18 +927,21 @@ export default function SiteBuilderPage() {
   const previewCode = liveHtml || activeProject?.generatedCode || '';
   const displayFiles = liveFiles.length > 0 ? liveFiles : activeProject?.files || [];
 
+  const switchToCode = (path: string) => {
+    setActiveCodeFile(path);
+    setCenterMode('code');
+  };
+
   const suggestions = [
     { icon: Globe, text: 'Site para barbearia moderna com agendamento online' },
     { icon: Layers, text: 'Landing page para clínica de estética premium' },
     { icon: Zap, text: 'Sistema de pizzaria com cardápio digital e painel admin' },
   ];
 
-  /* ════════════════════════════════════════ */
-  /*          INITIAL CHAT PHASE             */
-  /* ════════════════════════════════════════ */
+  /* ═══ INITIAL CHAT PHASE ═══ */
   if (phase === 'chat' && (!activeProject || activeProject.messages.length === 0)) {
     return (
-      <div className="relative flex min-h-screen min-h-[100dvh] flex-col" style={{ background: 'linear-gradient(180deg, hsl(220 25% 10%) 0%, hsl(230 30% 12%) 50%, hsl(220 25% 10%) 100%)' }}>
+      <div className="relative flex min-h-[100dvh] flex-col" style={{ background: 'linear-gradient(180deg, hsl(220 25% 10%) 0%, hsl(230 30% 12%) 50%, hsl(220 25% 10%) 100%)' }}>
         <GenesisBackground />
 
         <header className="sticky top-0 z-40 border-b border-white/[0.06] backdrop-blur" style={{ backgroundColor: 'hsl(220 25% 10% / 0.8)' }}>
@@ -1015,7 +950,7 @@ export default function SiteBuilderPage() {
               <Button variant="ghost" size="icon" onClick={() => navigate('/login/dashboard')} className="h-8 w-8">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
-              <img src={genesisLogo} alt="Genesis" className="h-7 w-7 sm:h-8 sm:w-8" />
+              <img src={genesisLogo} alt="Genesis" className="h-7 w-7" />
               <h1 className="text-sm font-bold text-foreground">Site Builder</h1>
               <Badge variant="outline" className="text-[10px] gap-1 hidden sm:flex">
                 <FileCode className="h-3 w-3" /> PHP + HTML + CSS + JS
@@ -1036,35 +971,29 @@ export default function SiteBuilderPage() {
           {showHistory && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowHistory(false)}>
-              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-                onClick={e => e.stopPropagation()} className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-card p-4 sm:p-5 shadow-2xl">
+              <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                onClick={e => e.stopPropagation()} className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-card p-4 shadow-2xl">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-foreground">Seus Projetos</h3>
-                  <button onClick={() => setShowHistory(false)}><X className="h-4 w-4 text-muted-foreground hover:text-foreground" /></button>
+                  <button onClick={() => setShowHistory(false)}><X className="h-4 w-4 text-muted-foreground" /></button>
                 </div>
                 <div className="max-h-72 space-y-1 overflow-y-auto">
                   {projects.map(p => (
                     <div key={p.id} className="group flex items-center gap-3 rounded-xl px-3 py-3 text-xs cursor-pointer hover:bg-secondary/50"
                       onClick={() => {
-                        setActiveProjectId(p.id);
-                        setShowHistory(false);
-                        setPhase('building');
-                        setLiveHtml(p.generatedCode);
-                        setRawOutput(p.rawOutput);
-                        setLiveFiles(p.files || []);
-                        setBuildStage(p.generatedCode ? 'pronto' : 'idle');
+                        setActiveProjectId(p.id); setShowHistory(false); setPhase('building');
+                        setLiveHtml(p.generatedCode); setRawOutput(p.rawOutput);
+                        setLiveFiles(p.files || []); setBuildStage(p.generatedCode ? 'pronto' : 'idle');
                       }}>
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                         <MessageSquare className="h-3.5 w-3.5 text-primary/50" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="truncate font-medium text-foreground/70">{p.name}</p>
-                        <p className="text-[10px] text-muted-foreground/50">
-                          {(p.files || []).length} arquivos • {p.updatedAt.toLocaleDateString('pt-BR')}
-                        </p>
+                        <p className="text-[10px] text-muted-foreground/50">{(p.files || []).length} arquivos</p>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); deleteProject(p.id); }}
-                        className="shrink-0 rounded-lg p-1.5 text-muted-foreground/20 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive">
+                      <button onClick={e => { e.stopPropagation(); deleteProject(p.id); }}
+                        className="shrink-0 rounded-lg p-1.5 text-muted-foreground/20 opacity-0 group-hover:opacity-100 hover:text-destructive">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
@@ -1075,52 +1004,44 @@ export default function SiteBuilderPage() {
           )}
         </AnimatePresence>
 
-        {/* Center Content */}
         <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-3 sm:px-4 py-8">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-2xl text-center">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-2xl text-center">
             <div className="mb-6 flex justify-center">
               <div className="relative">
                 <div className="absolute -inset-6 rounded-full bg-primary/5 blur-xl" />
                 <img src={genesisLogo} alt="Genesis" className="relative h-14 w-14 sm:h-16 sm:w-16" />
               </div>
             </div>
-            <h1 className="mb-2 text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
+            <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">
               Genesis <span className="text-primary">Site Builder</span>
             </h1>
             <p className="mb-2 text-xs sm:text-sm text-muted-foreground px-2">
               Descreva seu projeto e a IA criará um sistema completo em PHP, HTML, CSS e JavaScript
             </p>
-            <p className="mb-8 sm:mb-10 text-[10px] sm:text-xs text-muted-foreground/50">
-              Frontend profissional + Backend em PHP + Estrutura modular + Código limpo
+            <p className="mb-8 text-[10px] text-muted-foreground/50">
+              Frontend profissional + Backend PHP + Estrutura modular + Código limpo
             </p>
 
             <div className="mx-auto w-full max-w-xl px-2">
-              <div className="rounded-2xl border border-white/[0.08] bg-card/80 p-1 shadow-2xl backdrop-blur-xl transition-all focus-within:border-primary/30 focus-within:shadow-primary/10">
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
+              <div className="rounded-2xl border border-white/[0.08] bg-card/80 p-1 shadow-2xl backdrop-blur-xl transition-all focus-within:border-primary/30">
+                <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                   placeholder="Descreva o site ou sistema que deseja criar..."
-                  rows={3}
-                  className="w-full resize-none bg-transparent px-4 sm:px-5 py-3 sm:py-4 text-sm text-foreground placeholder-muted-foreground/40 outline-none"
-                  autoFocus
-                />
-                <div className="flex items-center justify-between px-3 sm:px-4 pb-3">
+                  rows={3} className="w-full resize-none bg-transparent px-4 py-3 text-sm text-foreground placeholder-muted-foreground/40 outline-none" autoFocus />
+                <div className="flex items-center justify-between px-3 pb-3">
                   <span className="text-[10px] text-muted-foreground/30 hidden sm:block">Shift+Enter nova linha</span>
                   <Button onClick={handleSend} disabled={!input.trim() || isGenerating} size="sm" className="gap-2 ml-auto">
-                    {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                    Criar Projeto
+                    <Sparkles className="h-3.5 w-3.5" /> Criar Projeto
                   </Button>
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row sm:flex-wrap justify-center gap-2 px-2">
+            <div className="mt-6 flex flex-col sm:flex-row sm:flex-wrap justify-center gap-2 px-2">
               {suggestions.map((s, i) => (
                 <motion.button key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.1 }}
                   onClick={() => setInput(s.text)}
-                  className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-card/30 px-3 sm:px-4 py-2.5 text-[11px] text-muted-foreground transition-all hover:border-primary/15 hover:bg-card/60 hover:text-foreground/60 text-left">
+                  className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-card/30 px-3 py-2.5 text-[11px] text-muted-foreground hover:border-primary/15 hover:bg-card/60 text-left transition-all">
                   <s.icon className="h-3.5 w-3.5 shrink-0 text-primary/30" />
                   {s.text}
                 </motion.button>
@@ -1132,20 +1053,13 @@ export default function SiteBuilderPage() {
     );
   }
 
-  /* ════════════════════════════════════════ */
-  /*        BUILDING PHASE — WORKSPACE       */
-  /* ════════════════════════════════════════ */
-
-  /* Sidebar content (shared between desktop resizable and mobile drawer) */
+  /* ═══ WORKSPACE PHASE ═══ */
   const sidebarContent = (
     <div className="flex h-full flex-col">
-      {/* Chat Logs - Lovable style */}
+      {/* Chat Logs */}
       <div className="flex-1 overflow-y-auto p-3">
         <div className="space-y-1.5">
-          {chatLogEntries.map(entry => (
-            <ChatLogItem key={entry.id} entry={entry} />
-          ))}
-
+          {chatLogEntries.map(entry => <ChatLogItem key={entry.id} entry={entry} />)}
           {isGenerating && chatLogEntries.length > 0 && chatLogEntries[chatLogEntries.length - 1]?.type !== 'thinking' && (
             <ChatLogItem entry={{ id: 'thinking', type: 'thinking', content: STAGE_META[buildStage].label, timestamp: new Date() }} />
           )}
@@ -1155,12 +1069,12 @@ export default function SiteBuilderPage() {
 
       {/* Pipeline */}
       {(isGenerating || buildStage !== 'idle') && (
-        <div className="border-t border-white/[0.06] bg-card/30 p-3 max-h-48 sm:max-h-60 overflow-y-auto">
+        <div className="border-t border-white/[0.06] bg-card/30 p-3 max-h-52 overflow-y-auto">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/30">Pipeline</p>
+            <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-muted-foreground/25">Pipeline</p>
             <span className="text-[10px] text-primary/50">{STAGE_META[buildStage].pct}%</span>
           </div>
-          <div className="mb-3 h-1 w-full overflow-hidden rounded-full bg-secondary">
+          <div className="mb-2.5 h-1 w-full overflow-hidden rounded-full bg-secondary">
             <motion.div className="h-full rounded-full bg-primary/60" animate={{ width: `${STAGE_META[buildStage].pct}%` }} transition={{ duration: 0.5 }} />
           </div>
           <BuildPipeline stage={buildStage} />
@@ -1169,13 +1083,12 @@ export default function SiteBuilderPage() {
 
       {/* Input */}
       <div className="border-t border-white/[0.06] bg-card/30 p-3">
-        <div className="flex items-end gap-2 rounded-xl border border-white/[0.08] bg-secondary/20 px-3 py-2 transition-all focus-within:border-primary/25">
+        <div className="flex items-end gap-2 rounded-xl border border-white/[0.08] bg-secondary/20 px-3 py-2 focus-within:border-primary/25 transition-all">
           <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
             placeholder={isGenerating ? 'Aguarde o build...' : 'Descreva alterações ou novo projeto...'}
             rows={2} disabled={isGenerating}
-            className="flex-1 resize-none bg-transparent text-xs text-foreground/70 placeholder-muted-foreground/30 outline-none disabled:opacity-40"
-          />
+            className="flex-1 resize-none bg-transparent text-xs text-foreground/70 placeholder-muted-foreground/30 outline-none disabled:opacity-40" />
           <Button size="icon" className="h-7 w-7 shrink-0" onClick={handleSend} disabled={!input.trim() || isGenerating}>
             <Send className="h-3.5 w-3.5" />
           </Button>
@@ -1185,31 +1098,31 @@ export default function SiteBuilderPage() {
   );
 
   return (
-    <div className="flex h-screen h-[100dvh] flex-col" style={{ background: 'linear-gradient(180deg, hsl(220 25% 10%) 0%, hsl(230 30% 12%) 50%, hsl(220 25% 10%) 100%)' }}>
+    <div className="flex h-[100dvh] flex-col" style={{ background: 'linear-gradient(180deg, hsl(220 25% 10%) 0%, hsl(230 30% 12%) 50%, hsl(220 25% 10%) 100%)' }}>
       <GenesisBackground />
 
       {/* Header */}
-      <header className="relative z-30 flex items-center justify-between border-b border-white/[0.06] backdrop-blur" style={{ backgroundColor: 'hsl(220 25% 10% / 0.8)' }}>
-        <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5">
-          <Button variant="ghost" size="icon" className="h-8 w-8"
+      <header className="relative z-30 flex items-center justify-between border-b border-white/[0.06] backdrop-blur shrink-0"
+        style={{ backgroundColor: 'hsl(220 25% 10% / 0.8)' }}>
+        <div className="flex items-center gap-2 px-3 py-2">
+          <Button variant="ghost" size="icon" className="h-7 w-7"
             onClick={() => { setPhase('chat'); setActiveProjectId(null); setBuildStage('idle'); setChatLogEntries([]); setLiveHtml(''); setRawOutput(''); setLiveFiles([]); }}>
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5" />
           </Button>
-          <img src={genesisLogo} alt="Genesis" className="h-6 w-6" />
-          <div className="hidden sm:block">
-            <h1 className="text-xs font-semibold text-foreground/80">{activeProject?.name || 'Novo Projeto'}</h1>
-            <p className="text-[10px] text-muted-foreground/40">PHP + HTML + CSS + JS</p>
+          <img src={genesisLogo} alt="Genesis" className="h-5 w-5" />
+          <div className="hidden sm:block min-w-0">
+            <h1 className="text-xs font-semibold text-foreground/80 truncate max-w-[160px]">{activeProject?.name || 'Novo Projeto'}</h1>
+            <p className="text-[9px] text-muted-foreground/40">PHP + HTML + CSS + JS</p>
           </div>
           {buildStage !== 'idle' && (
-            <Badge variant="outline" className="ml-1 sm:ml-2 text-[9px] sm:text-[10px] gap-1.5">
+            <Badge variant="outline" className="ml-1 text-[9px] gap-1 hidden md:flex">
               {isGenerating ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Check className="h-2.5 w-2.5" />}
-              <span className="hidden sm:inline">{STAGE_META[buildStage].label}</span>
-              <span className="sm:hidden">{STAGE_META[buildStage].pct}%</span>
+              {STAGE_META[buildStage].label}
             </Badge>
           )}
         </div>
 
-        {/* Center: Mode Tabs */}
+        {/* Center Tabs */}
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center rounded-lg border border-white/[0.06] bg-secondary/30 p-0.5">
           {([
             { mode: 'preview' as CenterMode, icon: Eye, label: 'Preview' },
@@ -1217,57 +1130,52 @@ export default function SiteBuilderPage() {
             { mode: 'structure' as CenterMode, icon: LayoutGrid, label: 'Estrutura' },
           ]).map(({ mode, icon: Icon, label }) => (
             <button key={mode} onClick={() => setCenterMode(mode)}
-              className={`flex items-center gap-1 sm:gap-1.5 rounded-md px-2 sm:px-3 py-1.5 text-[10px] sm:text-[11px] transition-all ${
+              className={`flex items-center gap-1 rounded-md px-2 sm:px-3 py-1.5 text-[10px] sm:text-[11px] transition-all ${
                 centerMode === mode ? 'bg-primary/15 text-primary font-medium' : 'text-muted-foreground/50 hover:text-foreground/60'
               }`}>
-              <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <Icon className="h-3 w-3" />
               <span className="hidden sm:inline">{label}</span>
             </button>
           ))}
         </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-1 px-2 sm:px-4 py-2.5">
+        {/* Right */}
+        <div className="flex items-center gap-1 px-2 py-2">
           {centerMode === 'preview' && (
-            <div className="mr-1 sm:mr-2 hidden lg:flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-secondary/30 px-2 py-1">
+            <div className="mr-1 hidden lg:flex items-center gap-1 rounded-lg border border-white/[0.06] bg-secondary/30 px-2 py-1">
               {([
-                { mode: 'desktop' as ViewMode, icon: Monitor, w: 1440 },
-                { mode: 'tablet' as ViewMode, icon: Tablet, w: 768 },
-                { mode: 'mobile' as ViewMode, icon: Smartphone, w: 375 },
+                { mode: 'desktop' as ViewMode, icon: Monitor },
+                { mode: 'tablet' as ViewMode, icon: Tablet },
+                { mode: 'mobile' as ViewMode, icon: Smartphone },
               ]).map(({ mode, icon: Icon }) => (
                 <button key={mode} onClick={() => handleViewMode(mode)}
-                  className={`rounded-md p-1.5 transition-all ${viewMode === mode ? 'bg-primary/15 text-primary' : 'text-muted-foreground/30 hover:text-muted-foreground/60'}`}>
+                  className={`rounded-md p-1 transition-all ${viewMode === mode ? 'bg-primary/15 text-primary' : 'text-muted-foreground/30 hover:text-muted-foreground/60'}`}>
                   <Icon className="h-3.5 w-3.5" />
                 </button>
               ))}
               <div className="mx-1 h-4 w-px bg-white/[0.06]" />
-              <input
-                type="range" min={320} max={1440} value={customWidth}
+              <input type="range" min={320} max={1440} value={customWidth}
                 onChange={e => {
-                  const w = Number(e.target.value);
-                  setCustomWidth(w);
+                  const w = Number(e.target.value); setCustomWidth(w);
                   if (w >= 1024) setViewMode('desktop');
                   else if (w >= 600) setViewMode('tablet');
                   else setViewMode('mobile');
                 }}
-                className="h-1 w-20 cursor-pointer appearance-none rounded-full bg-secondary accent-primary [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
-              />
-              <span className="min-w-[36px] text-center font-mono text-[10px] text-muted-foreground/40">{customWidth}px</span>
+                className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-secondary accent-primary [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary" />
+              <span className="min-w-[32px] text-center font-mono text-[9px] text-muted-foreground/40">{customWidth}px</span>
             </div>
           )}
 
-          {/* Mobile sidebar toggle */}
-          <Button variant="ghost" size="icon" className="h-8 w-8 sm:hidden" onClick={() => setShowSidebar(!showSidebar)}>
+          <Button variant="ghost" size="icon" className="h-7 w-7 sm:hidden" onClick={() => setShowSidebar(!showSidebar)}>
             <Menu className="h-4 w-4" />
           </Button>
-
-          <Button variant="ghost" size="icon" className="h-8 w-8 hidden sm:flex" onClick={copyCode} disabled={!rawOutput}>
+          <Button variant="ghost" size="icon" className="h-7 w-7 hidden sm:flex" onClick={copyCode} disabled={!rawOutput}>
             {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 hidden sm:flex" onClick={downloadProject} disabled={displayFiles.length === 0}>
+          <Button variant="ghost" size="icon" className="h-7 w-7 hidden sm:flex" onClick={downloadProject} disabled={displayFiles.length === 0}>
             <Download className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="outline" size="sm" className="ml-1 gap-1.5 text-[11px] hidden sm:flex" onClick={() => { setPhase('chat'); createProject(); }}>
+          <Button variant="outline" size="sm" className="ml-1 gap-1 text-[10px] hidden sm:flex" onClick={() => { setPhase('chat'); createProject(); }}>
             <Plus className="h-3 w-3" /> Novo
           </Button>
         </div>
@@ -1276,62 +1184,51 @@ export default function SiteBuilderPage() {
       {/* Mobile sidebar drawer */}
       <AnimatePresence>
         {showSidebar && (
-          <motion.div
-            initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-y-0 left-0 z-50 w-[85vw] max-w-[320px] sm:hidden border-r border-white/[0.06] bg-card/95 backdrop-blur-xl"
-          >
-            <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2.5">
-              <span className="text-xs font-semibold text-foreground/70">Chat & Pipeline</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowSidebar(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="h-[calc(100%-44px)]">
-              {sidebarContent}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      {/* Mobile backdrop */}
-      <AnimatePresence>
-        {showSidebar && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/50 sm:hidden" onClick={() => setShowSidebar(false)} />
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/50 sm:hidden" onClick={() => setShowSidebar(false)} />
+            <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed inset-y-0 left-0 z-50 w-[85vw] max-w-[320px] sm:hidden border-r border-white/[0.06] bg-card/95 backdrop-blur-xl">
+              <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2.5">
+                <span className="text-xs font-semibold text-foreground/70">Chat & Pipeline</span>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowSidebar(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="h-[calc(100%-44px)]">{sidebarContent}</div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
-      {/* Main Workspace - Desktop uses ResizablePanelGroup */}
+      {/* Main Workspace */}
       <div className="relative z-10 flex flex-1 overflow-hidden">
-        {/* Desktop: Resizable layout */}
+        {/* Desktop: Resizable */}
         <div className="hidden sm:flex flex-1 overflow-hidden">
           <ResizablePanelGroup direction="horizontal" className="h-full">
-            {/* Left: Chat + Pipeline */}
             <ResizablePanel defaultSize={25} minSize={18} maxSize={40}>
               <div className="h-full overflow-hidden bg-white/[0.02] border-r border-white/[0.06]">
                 {sidebarContent}
               </div>
             </ResizablePanel>
-
             <ResizableHandle withHandle className="w-px bg-white/[0.06] hover:bg-primary/30 transition-colors" />
-
-            {/* Center: Preview / Code / Structure */}
             <ResizablePanel defaultSize={75} minSize={50}>
               <div className="flex h-full flex-col overflow-hidden">
-                <div className="relative flex-1 overflow-auto p-3 lg:p-4">
+                <div className="relative flex-1 overflow-auto p-3">
                   <AnimatePresence mode="wait">
                     {centerMode === 'preview' && (
                       <motion.div key="preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative h-full">
                         {previewCode ? (
                           <div className="relative mx-auto h-full transition-all duration-200" style={{ maxWidth: `${customWidth}px` }}>
                             {isGenerating && (
-                              <div className="absolute left-0 right-0 top-0 z-10 flex items-center gap-2.5 rounded-t-xl border-b border-primary/10 px-4 py-2 backdrop-blur-md"
+                              <div className="absolute left-0 right-0 top-0 z-10 flex items-center gap-2 rounded-t-xl border-b border-primary/10 px-4 py-2 backdrop-blur-md"
                                 style={{ backgroundColor: 'hsl(220 20% 13% / 0.9)' }}>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                                <Loader2 className="h-3 w-3 animate-spin text-primary" />
                                 <span className="text-[11px] text-foreground/60">{STAGE_META[buildStage].label}</span>
                                 <div className="ml-auto flex items-center gap-2">
                                   <span className="text-[10px] text-muted-foreground/40">{displayFiles.filter(f => f.path !== 'preview.html').length} arquivos</span>
-                                  <div className="h-1 w-20 overflow-hidden rounded-full bg-secondary">
+                                  <div className="h-1 w-16 overflow-hidden rounded-full bg-secondary">
                                     <motion.div className="h-full rounded-full bg-primary/50" animate={{ width: `${STAGE_META[buildStage].pct}%` }} transition={{ duration: 0.5 }} />
                                   </div>
                                 </div>
@@ -1340,51 +1237,41 @@ export default function SiteBuilderPage() {
                             <iframe srcDoc={previewCode} className="h-full w-full rounded-xl border border-white/[0.06] bg-white shadow-lg" sandbox="allow-scripts allow-same-origin" title="Preview" />
                           </div>
                         ) : isGenerating ? (
-                          <SkeletonPreview stage={buildStage} fileCount={displayFiles.filter(f => f.path !== 'preview.html').length} />
+                          <SkeletonPreview stage={buildStage} />
                         ) : (
                           <div className="flex h-full flex-col items-center justify-center text-muted-foreground/15">
-                            <Eye className="mb-3 h-14 w-14" />
+                            <Eye className="mb-3 h-12 w-12" />
                             <p className="text-sm">O preview aparecerá aqui</p>
-                            <p className="mt-1 text-xs text-muted-foreground/10">Descreva o que deseja no chat ao lado</p>
+                            <p className="mt-1 text-xs text-muted-foreground/10">Descreva o que deseja no chat</p>
                           </div>
                         )}
                       </motion.div>
                     )}
-
                     {centerMode === 'code' && (
                       <motion.div key="code" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-                        <LiveCodeEditor
-                          files={displayFiles}
-                          activeFile={activeCodeFile || displayFiles.find(f => f.path !== 'preview.html')?.path || ''}
-                          onSelectFile={setActiveCodeFile}
-                          rawCode={rawOutput}
-                          isStreaming={isGenerating}
-                        />
+                        <LiveCodeEditor files={displayFiles} activeFile={activeCodeFile || displayFiles.find(f => f.path !== 'preview.html')?.path || ''}
+                          onSelectFile={setActiveCodeFile} isStreaming={isGenerating} />
                       </motion.div>
                     )}
-
                     {centerMode === 'structure' && (
                       <motion.div key="structure" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-                        <StructureView files={displayFiles} isGenerating={isGenerating} stage={buildStage} />
+                        <StructureView files={displayFiles} isGenerating={isGenerating} onViewCode={switchToCode} />
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
 
                 {/* Status Bar */}
-                <div className="relative z-10 flex items-center justify-between border-t border-white/[0.06] bg-card/30 backdrop-blur-sm px-4 py-1.5">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1.5 text-[10px]">
-                      <span className={`h-1.5 w-1.5 rounded-full ${buildStage === 'pronto' ? 'bg-green-500' : buildStage === 'erro' ? 'bg-destructive' : isGenerating ? 'bg-primary animate-pulse' : 'bg-muted-foreground/20'}`} />
-                      <span className="text-muted-foreground/40">
-                        {buildStage === 'pronto' ? 'Build concluído' : buildStage === 'erro' ? 'Erro' : isGenerating ? STAGE_META[buildStage].label : 'Pronto'}
-                      </span>
+                <div className="relative z-10 flex items-center justify-between border-t border-white/[0.06] bg-card/30 backdrop-blur-sm px-4 py-1.5 shrink-0">
+                  <span className="flex items-center gap-1.5 text-[10px]">
+                    <span className={`h-1.5 w-1.5 rounded-full ${buildStage === 'pronto' ? 'bg-green-500' : buildStage === 'erro' ? 'bg-destructive' : isGenerating ? 'bg-primary animate-pulse' : 'bg-muted-foreground/20'}`} />
+                    <span className="text-muted-foreground/40">
+                      {buildStage === 'pronto' ? 'Build concluído' : buildStage === 'erro' ? 'Erro' : isGenerating ? STAGE_META[buildStage].label : 'Pronto'}
                     </span>
-                  </div>
-                  <div className="flex items-center gap-4 text-[10px] text-muted-foreground/25">
+                  </span>
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground/25">
                     <span className="hidden sm:inline">PHP + HTML + CSS + JS</span>
                     {displayFiles.length > 0 && <span>{displayFiles.filter(f => f.path !== 'preview.html').length} arquivos</span>}
-                    {previewCode && <span>{(previewCode.length / 1024).toFixed(1)}KB</span>}
                   </div>
                 </div>
               </div>
@@ -1392,7 +1279,7 @@ export default function SiteBuilderPage() {
           </ResizablePanelGroup>
         </div>
 
-        {/* Mobile: Full width preview, sidebar is a drawer */}
+        {/* Mobile: Full width */}
         <div className="flex sm:hidden flex-1 flex-col overflow-hidden">
           <div className="relative flex-1 overflow-auto p-2">
             <AnimatePresence mode="wait">
@@ -1401,7 +1288,7 @@ export default function SiteBuilderPage() {
                   {previewCode ? (
                     <div className="relative h-full">
                       {isGenerating && (
-                        <div className="absolute left-0 right-0 top-0 z-10 flex items-center gap-2 rounded-t-xl border-b border-primary/10 px-3 py-2 backdrop-blur-md"
+                        <div className="absolute left-0 right-0 top-0 z-10 flex items-center gap-2 rounded-t-xl border-b border-primary/10 px-3 py-1.5 backdrop-blur-md"
                           style={{ backgroundColor: 'hsl(220 20% 13% / 0.9)' }}>
                           <Loader2 className="h-3 w-3 animate-spin text-primary" />
                           <span className="text-[10px] text-foreground/60 truncate flex-1">{STAGE_META[buildStage].label}</span>
@@ -1411,48 +1298,37 @@ export default function SiteBuilderPage() {
                       <iframe srcDoc={previewCode} className="h-full w-full rounded-xl border border-white/[0.06] bg-white" sandbox="allow-scripts allow-same-origin" title="Preview" />
                     </div>
                   ) : isGenerating ? (
-                    <SkeletonPreview stage={buildStage} fileCount={displayFiles.filter(f => f.path !== 'preview.html').length} />
+                    <SkeletonPreview stage={buildStage} />
                   ) : (
-                    <div className="flex h-full flex-col items-center justify-center text-muted-foreground/15 px-4 text-center">
-                      <Eye className="mb-3 h-10 w-10" />
+                    <div className="flex h-full flex-col items-center justify-center text-muted-foreground/15 text-center">
+                      <Eye className="mb-2 h-8 w-8" />
                       <p className="text-xs">O preview aparecerá aqui</p>
-                      <p className="mt-1 text-[10px] text-muted-foreground/10">Use o menu para abrir o chat</p>
                     </div>
                   )}
                 </motion.div>
               )}
-
               {centerMode === 'code' && (
                 <motion.div key="code" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-                  <LiveCodeEditor
-                    files={displayFiles}
-                    activeFile={activeCodeFile || displayFiles.find(f => f.path !== 'preview.html')?.path || ''}
-                    onSelectFile={setActiveCodeFile}
-                    rawCode={rawOutput}
-                    isStreaming={isGenerating}
-                  />
+                  <LiveCodeEditor files={displayFiles} activeFile={activeCodeFile || displayFiles.find(f => f.path !== 'preview.html')?.path || ''}
+                    onSelectFile={setActiveCodeFile} isStreaming={isGenerating} />
                 </motion.div>
               )}
-
               {centerMode === 'structure' && (
                 <motion.div key="structure" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-                  <StructureView files={displayFiles} isGenerating={isGenerating} stage={buildStage} />
+                  <StructureView files={displayFiles} isGenerating={isGenerating} onViewCode={switchToCode} />
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* Mobile status bar */}
-          <div className="flex items-center justify-between border-t border-white/[0.06] bg-card/30 px-3 py-1.5">
+          <div className="flex items-center justify-between border-t border-white/[0.06] bg-card/30 px-3 py-1.5 shrink-0">
             <span className="flex items-center gap-1.5 text-[10px]">
               <span className={`h-1.5 w-1.5 rounded-full ${buildStage === 'pronto' ? 'bg-green-500' : buildStage === 'erro' ? 'bg-destructive' : isGenerating ? 'bg-primary animate-pulse' : 'bg-muted-foreground/20'}`} />
               <span className="text-muted-foreground/40 truncate">
                 {buildStage === 'pronto' ? 'Concluído' : buildStage === 'erro' ? 'Erro' : isGenerating ? STAGE_META[buildStage].label : 'Pronto'}
               </span>
             </span>
-            <span className="text-[9px] text-muted-foreground/25">
-              {displayFiles.filter(f => f.path !== 'preview.html').length} arquivos
-            </span>
+            <span className="text-[9px] text-muted-foreground/25">{displayFiles.filter(f => f.path !== 'preview.html').length} arquivos</span>
           </div>
         </div>
       </div>
