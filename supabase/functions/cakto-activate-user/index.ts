@@ -107,7 +107,7 @@ serve(async (req) => {
     const isMentorado = userType === 'mentorado';
     
     if (isMentorado) {
-      // Mentorados Santiago get 3-day trial
+      // Mentorados Santiago get 2-day trial
       durationMonths = 0; // Will use days instead
       planName = 'Mentorado Santiago (Trial)';
       planSlug = 'starter';
@@ -179,9 +179,9 @@ serve(async (req) => {
     // 4. Upsert genesis_subscriptions using genesis_users.id
     let expiresAt: Date;
     if (isMentorado) {
-      // 3-day trial
+      // 2-day trial
       expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 3);
+      expiresAt.setDate(expiresAt.getDate() + 2);
     } else {
       expiresAt = calculateAccessExpiration(new Date(), durationMonths);
     }
@@ -231,7 +231,7 @@ serve(async (req) => {
         genesisUserId,
         plan: planName,
         isTrial: isMentorado,
-        trialDays: isMentorado ? 3 : undefined,
+        trialDays: isMentorado ? 2 : undefined,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

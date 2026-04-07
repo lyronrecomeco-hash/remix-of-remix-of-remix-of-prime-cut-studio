@@ -1026,6 +1026,59 @@ serve(async (req) => {
       }
     }
 
+    // ============= DEACTIVATE SUBSCRIPTION ON REFUND/CHARGEBACK =============
+    if ((newStatus === 'refunded' || eventType === 'payment_chargeback') && payment.customer_id) {
+      console.log('[Refund Handler] Processing refund/chargeback for payment:', payment.id);
+      
+      try {
+        const { data: customer } = await supabase
+          .from('checkout_customers')
+          .select('email')
+          .eq('id', payment.customer_id)
+          .single();
+
+        if (customer?.email) {
+          const { data: genesisUser } = await supabase
+            .from('genesis_users')
+            .select('id')
+            .eq('email', customer.email.toLowerCase())
+            .maybeSingle();
+
+          if (genesisUser) {
+            // Deactivate subscription
+            await supabase
+              .from('genesis_subscriptions')
+              .update({
+                status: 'cancelled',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('user_id', genesisUser.id);
+
+            // Deactivate user
+            await supabase
+              .from('genesis_users')
+              .update({ is_active: false })
+              .eq('id', genesisUser.id);
+
+            console.log('[Refund Handler] ✅ Subscription cancelled and user deactivated for:', customer.email);
+            
+            // Log event
+            await supabase.from('checkout_payment_events').insert({
+              payment_id: payment.id,
+              event_type: 'subscription_cancelled_refund',
+              event_data: {
+                user_id: genesisUser.id,
+                reason: eventType === 'payment_chargeback' ? 'chargeback' : 'refund',
+              },
+              source: 'webhook',
+            });
+          }
+        }
+      } catch (refundError) {
+        console.error('[Refund Handler] Error:', refundError);
+      }
+    }
+
     // Log webhook event
     await supabase.from('checkout_payment_events').insert({
       payment_id: payment.id,
