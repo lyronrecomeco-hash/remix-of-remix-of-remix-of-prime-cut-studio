@@ -27,8 +27,7 @@ A Genesis Hub é uma plataforma SaaS completa para **consultores digitais** que 
 
 ### Detalhes Técnicos para Suporte
 - **Planos**: Mensal, Trimestral, Anual — cada um com período de acesso definido
-- **Mentorados Santiago**: Acesso trial de 3 dias, após expira automaticamente
-- **Tipos de usuário**: Cliente (pagante), Influencer, Parceiro, Mentorado
+- **Tipos de usuário**: Cliente (pagante), Influencer, Parceiro
 - **Pagamento**: Via checkout com Pix ou cartão de crédito
 - **Limite de busca**: Até 20 empresas por pesquisa no Scanner IA
 - **Prompt gerado**: Inclui identidade visual completa, stack técnica, SEO, responsividade e checklist de qualidade
@@ -44,9 +43,11 @@ A Genesis Hub é uma plataforma SaaS completa para **consultores digitais** que 
 7. **ERROS**: Se o usuário reportar um erro/bug, peça detalhes (qual tela, o que fez, mensagem de erro) e oriente a atualizar a página. Se persistir, ofereça atendimento humano diretamente no chat.`;
 
 const SYSTEM_PROMPT_APPENDIX = `
-8. **COMO FUNCIONA**: Quando perguntarem de forma geral "como funciona", descreva a Genesis Hub em alto nível em 2 a 4 linhas, sem listar o painel inteiro.
-9. **FORMATAÇÃO IDEAL**: Prefira 1 frase curta de abertura + até 3 bullets curtos. Evite textos longos.
-10. **MÓDULOS**: Só detalhe módulos específicos se o usuário pedir explicitamente.`;
+8. **COMO FUNCIONA**: Quando perguntarem de forma geral "como funciona", descreva a Genesis Hub em alto nível em 2 a 3 linhas, sem listar o painel inteiro. Ex: "A Genesis Hub ajuda consultores digitais a encontrar clientes sem presença digital, criar projetos profissionais com IA e fechar negócios."
+9. **FORMATAÇÃO IDEAL**: Prefira 1 frase curta de abertura + até 3 bullets curtos. Evite textos longos. Máximo 5 linhas por resposta.
+10. **MÓDULOS**: Só detalhe módulos específicos se o usuário pedir explicitamente.
+11. **PLANOS**: Quando perguntarem sobre planos, mencione apenas: Mensal, Trimestral e Anual. NÃO mencione "mentoria", "mentorado", "Santiago" ou qualquer programa externo. Planos são acessíveis via checkout na plataforma.
+12. **VELOCIDADE**: Seja direto e objetivo. Nada de introduções longas. Vá direto ao ponto.`;
 
 // Detect if message needs WhatsApp support button
 function needsWhatsAppButton(reply: string): boolean {
@@ -80,7 +81,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-pro',
+        model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: `${SYSTEM_PROMPT}\n\n${SYSTEM_PROMPT_APPENDIX}` },
           ...messages,
