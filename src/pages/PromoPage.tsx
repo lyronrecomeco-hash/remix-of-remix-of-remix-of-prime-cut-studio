@@ -450,7 +450,7 @@ export default function PromoPage() {
           <span className="font-semibold text-foreground">Genesis Hub</span>
         </div>
         <p className="text-sm text-muted-foreground">
-          © 2025 Genesis Hub. Todos os direitos reservados.
+          © 2026 Genesis Hub. Todos os direitos reservados.
         </p>
       </footer>
     </div>

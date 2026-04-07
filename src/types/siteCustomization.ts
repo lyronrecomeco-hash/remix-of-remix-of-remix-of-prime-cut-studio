@@ -154,6 +154,6 @@ export const DEFAULT_CUSTOMIZATION: SiteCustomization = {
   },
   footer: {
     brandName: 'Genesis Hub',
-    copyright: '© 2025 GENESIS HUB. Transformando ideias em realidade.',
+    copyright: '© 2026 GENESIS HUB. Transformando ideias em realidade.',
   },
 };
