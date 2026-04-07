@@ -31,11 +31,11 @@ const CaktoReturn = () => {
     return val;
   };
 
-  const emailParam = cleanParam(searchParams.get('email')) || cleanParam(searchParams.get('customer_email'));
-  const nameParam = cleanParam(searchParams.get('name')) || cleanParam(searchParams.get('first_name')) || cleanParam(searchParams.get('customer_name'));
-  const phoneParam = cleanParam(searchParams.get('phone')) || cleanParam(searchParams.get('customer_phone'));
-  const planIdParam = cleanParam(searchParams.get('plan_id')) || cleanParam(searchParams.get('planId'));
-  const userTypeParam = cleanParam(searchParams.get('user_type'));
+  const emailParam = cleanParam(searchParams.get('email')) || cleanParam(searchParams.get('customer_email')) || cleanParam(searchParams.get('customerEmail')) || cleanParam(searchParams.get('e'));
+  const nameParam = cleanParam(searchParams.get('name')) || cleanParam(searchParams.get('first_name')) || cleanParam(searchParams.get('customer_name')) || cleanParam(searchParams.get('customerName'));
+  const phoneParam = cleanParam(searchParams.get('phone')) || cleanParam(searchParams.get('customer_phone')) || cleanParam(searchParams.get('customerCellphone')) || cleanParam(searchParams.get('cellphone'));
+  const planIdParam = cleanParam(searchParams.get('plan_id')) || cleanParam(searchParams.get('planId')) || cleanParam(searchParams.get('offer_id'));
+  const userTypeParam = cleanParam(searchParams.get('user_type')) || cleanParam(searchParams.get('type'));
 
   useEffect(() => {
     if (emailParam) setEmail(emailParam);
