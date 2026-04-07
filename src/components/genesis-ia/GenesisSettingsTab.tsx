@@ -30,6 +30,7 @@ import { toast } from 'sonner';
 
 interface GenesisSettingsTabProps {
   userId: string;
+  authUserId: string;
 }
 
 interface GenesisSettings {
@@ -67,7 +68,7 @@ const categories = [
   { id: 'bot' as CategoryId, icon: Bot, label: 'Bot Suporte', color: 'bg-blue-500/20 text-blue-400' },
 ];
 
-export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
+export const GenesisSettingsTab = ({ userId, authUserId }: GenesisSettingsTabProps) => {
   const [settings, setSettings] = useState<GenesisSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -99,16 +100,30 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
 
   const loadSettings = async () => {
     try {
-      const { data } = await supabase
-        .from('admin_settings')
-        .select('settings')
-        .eq('user_id', userId)
-        .eq('setting_type', 'genesis_config')
-        .maybeSingle();
+      const [configResponse, botResponse] = await Promise.all([
+        supabase
+          .from('admin_settings')
+          .select('settings')
+          .eq('user_id', authUserId)
+          .eq('setting_type', 'genesis_config')
+          .maybeSingle(),
+        supabase
+          .from('admin_settings')
+          .select('settings')
+          .eq('user_id', authUserId)
+          .eq('setting_type', 'telegram_support_bot')
+          .maybeSingle(),
+      ]);
 
-      if (data?.settings) {
-        setSettings({ ...DEFAULT_SETTINGS, ...(data.settings as Partial<GenesisSettings>) });
-      }
+      const configSettings = (configResponse.data?.settings as Partial<GenesisSettings> | null) ?? null;
+      const botSettings = (botResponse.data?.settings as { enabled?: boolean; telegram_chat_id?: string } | null) ?? null;
+
+      setSettings({
+        ...DEFAULT_SETTINGS,
+        ...(configSettings ?? {}),
+        botEnabled: botSettings?.enabled ?? configSettings?.botEnabled ?? false,
+        telegramChatId: botSettings?.telegram_chat_id ?? configSettings?.telegramChatId ?? '',
+      });
     } catch (error) {
       console.error('Error loading settings:', error);
     } finally {
@@ -150,7 +165,7 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
       const { data: existing } = await supabase
         .from('admin_settings')
         .select('id')
-        .eq('user_id', userId)
+        .eq('user_id', authUserId)
         .eq('setting_type', 'genesis_config')
         .maybeSingle();
 
@@ -167,7 +182,7 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
         const { error } = await supabase
           .from('admin_settings')
           .insert([{
-            user_id: userId,
+            user_id: authUserId,
             setting_type: 'genesis_config',
             settings: JSON.parse(JSON.stringify(settings)),
           }]);
@@ -185,6 +200,42 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
 
   const updateSetting = <K extends keyof GenesisSettings>(key: K, value: GenesisSettings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const saveBotSettings = async (enabled: boolean, chatId: string) => {
+    const payload = {
+      user_id: authUserId,
+      setting_type: 'telegram_support_bot',
+      settings: {
+        enabled,
+        telegram_chat_id: chatId.trim(),
+      },
+    };
+
+    const { data: existing, error: existingError } = await supabase
+      .from('admin_settings')
+      .select('id')
+      .eq('user_id', authUserId)
+      .eq('setting_type', 'telegram_support_bot')
+      .maybeSingle();
+
+    if (existingError) throw existingError;
+
+    if (existing?.id) {
+      const { error } = await supabase
+        .from('admin_settings')
+        .update({
+          settings: payload.settings,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id);
+
+      if (error) throw error;
+      return;
+    }
+
+    const { error } = await supabase.from('admin_settings').insert(payload);
+    if (error) throw error;
   };
 
   if (loading) {
@@ -396,14 +447,16 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
                 <Switch
                   checked={settings.botEnabled ?? false}
                   onCheckedChange={async (v) => {
-                    const newSettings = { ...settings, botEnabled: v };
-                    setSettings(newSettings as any);
-                    await supabase.from('admin_settings').upsert({
-                      user_id: userId,
-                      setting_type: 'telegram_support_bot',
-                      settings: { enabled: v, telegram_chat_id: (settings as any).telegramChatId || '' },
-                    }, { onConflict: 'setting_type' });
-                    toast.success(v ? 'Bot ativado' : 'Bot desativado');
+                    try {
+                      const nextSettings: GenesisSettings = { ...settings, botEnabled: v };
+                      setSettings(nextSettings);
+                      await saveBotSettings(v, nextSettings.telegramChatId || '');
+                      toast.success(v ? 'Bot ativado' : 'Bot desativado');
+                    } catch (error) {
+                      console.error('Error saving bot status:', error);
+                      setSettings(prev => ({ ...prev, botEnabled: !v }));
+                      toast.error('Erro ao salvar configuração do bot');
+                    }
                   }}
                 />
               </div>
@@ -413,21 +466,24 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
                   <input
                     type="text"
                     placeholder="Ex: 123456789"
-                    defaultValue={(settings as any).telegramChatId || ''}
-                    onChange={(e) => setSettings({ ...settings, telegramChatId: e.target.value } as any)}
+                    value={settings.telegramChatId || ''}
+                    onChange={(e) => setSettings({ ...settings, telegramChatId: e.target.value })}
                     className="flex-1 h-9 px-3 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-primary/50"
                   />
                   <Button
                     size="sm"
                     onClick={async () => {
-                      const chatId = (settings as any).telegramChatId;
+                      const chatId = settings.telegramChatId;
                       if (!chatId) { toast.error('Insira o Chat ID'); return; }
-                      await supabase.from('admin_settings').upsert({
-                        user_id: userId,
-                        setting_type: 'telegram_support_bot',
-                        settings: { enabled: true, telegram_chat_id: chatId },
-                      }, { onConflict: 'setting_type' });
-                      toast.success('Chat ID salvo!');
+
+                      try {
+                        await saveBotSettings(settings.botEnabled ?? true, chatId);
+                        setSettings(prev => ({ ...prev, botEnabled: true }));
+                        toast.success('Chat ID salvo!');
+                      } catch (error) {
+                        console.error('Error saving bot chat id:', error);
+                        toast.error('Erro ao salvar Chat ID');
+                      }
                     }}
                     className="h-9"
                   >
