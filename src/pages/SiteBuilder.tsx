@@ -6,7 +6,8 @@ import {
   Loader2, Monitor, Tablet, Smartphone,
   MessageSquare, Clock, Plus, Check, Globe, Layers,
   Zap, X, LayoutGrid, Server, Database, FileCode,
-  FolderOpen, ChevronRight, Sparkles, Play
+  FolderOpen, ChevronRight, Sparkles, ChevronDown,
+  FileText, Settings, Image, Coffee, File
 } from 'lucide-react';
 import genesisLogo from '@/assets/genesis-logo.png';
 import GenesisBackground from '@/components/genesis-ia/GenesisBackground';
@@ -21,12 +22,19 @@ interface ChatMessage {
   timestamp: Date;
 }
 
+interface ProjectFile {
+  path: string;
+  content: string;
+  category: 'frontend' | 'backend' | 'config' | 'assets' | 'database' | 'preview';
+}
+
 interface Project {
   id: string;
   name: string;
   messages: ChatMessage[];
+  files: ProjectFile[];
   generatedCode: string;
-  streamingCode: string;
+  rawOutput: string;
   createdAt: Date;
   updatedAt: Date;
   snapshots?: string[];
@@ -38,13 +46,15 @@ type BuildStage =
   | 'idle'
   | 'entendendo_prompt'
   | 'definindo_arquitetura'
-  | 'planejando_layout'
-  | 'criando_secoes'
-  | 'gerando_conteudo'
-  | 'construindo_componentes'
-  | 'estruturando_backend'
-  | 'criando_rotas'
-  | 'configurando_banco'
+  | 'criando_estrutura'
+  | 'gerando_preview'
+  | 'escrevendo_frontend'
+  | 'criando_estilos'
+  | 'criando_javascript'
+  | 'escrevendo_backend'
+  | 'criando_includes'
+  | 'criando_paginas'
+  | 'criando_config'
   | 'ajustando_responsividade'
   | 'refinando_experiencia'
   | 'finalizando'
@@ -56,12 +66,40 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/genesis-site
 const STORAGE_KEY = 'genesis_site_builder_projects';
 const generateId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
-function extractHtml(text: string): string {
-  const codeBlockMatch = text.match(/```html?\s*\n?([\s\S]*?)```/);
-  if (codeBlockMatch) return codeBlockMatch[1].trim();
-  const docMatch = text.match(/(<!DOCTYPE[\s\S]*<\/html>)/i);
-  if (docMatch) return docMatch[1].trim();
-  return '';
+function parseFiles(rawText: string): ProjectFile[] {
+  const files: ProjectFile[] = [];
+  const parts = rawText.split(/===FILE:([^=]+)===/);
+  for (let i = 1; i < parts.length; i += 2) {
+    const path = parts[i].trim();
+    const content = (parts[i + 1] || '').trim();
+    if (!path || !content) continue;
+    let category: ProjectFile['category'] = 'frontend';
+    if (path === 'preview.html') category = 'preview';
+    else if (path.endsWith('.php') && (path.includes('controller') || path.includes('model') || path.includes('config') || path.includes('helper'))) category = 'backend';
+    else if (path.includes('includes/')) category = 'backend';
+    else if (path.includes('admin/')) category = 'backend';
+    else if (path.includes('database/')) category = 'database';
+    else if (path.includes('config/')) category = 'config';
+    else if (path.endsWith('.css') || path.endsWith('.js') || path.includes('assets/')) category = 'assets';
+    else if (path.endsWith('.php')) category = 'frontend';
+    files.push({ path, content, category });
+  }
+  return files;
+}
+
+function getPreviewHtml(files: ProjectFile[]): string {
+  const preview = files.find(f => f.path === 'preview.html');
+  return preview?.content || '';
+}
+
+function categorizeFile(path: string): { icon: typeof File; color: string } {
+  if (path.endsWith('.php')) return { icon: FileCode, color: 'text-purple-400' };
+  if (path.endsWith('.css')) return { icon: FileText, color: 'text-blue-400' };
+  if (path.endsWith('.js')) return { icon: FileCode, color: 'text-yellow-400' };
+  if (path.endsWith('.sql')) return { icon: Database, color: 'text-emerald-400' };
+  if (path.endsWith('.html')) return { icon: Globe, color: 'text-orange-400' };
+  if (path === '.htaccess') return { icon: Settings, color: 'text-red-400' };
+  return { icon: File, color: 'text-muted-foreground/50' };
 }
 
 function loadProjects(): Project[] {
@@ -70,7 +108,8 @@ function loadProjects(): Project[] {
     if (!raw) return [];
     return JSON.parse(raw).map((p: any) => ({
       ...p,
-      streamingCode: p.streamingCode || '',
+      files: p.files || [],
+      rawOutput: p.rawOutput || '',
       createdAt: new Date(p.createdAt),
       updatedAt: new Date(p.updatedAt),
       messages: p.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })),
@@ -83,169 +122,275 @@ function saveProjects(projects: Project[]) {
 }
 
 /* ─── Stage metadata ─── */
-const STAGE_META: Record<BuildStage, { label: string; icon: string; pct: number; category: 'understand' | 'frontend' | 'backend' | 'finalize' }> = {
-  idle:                     { label: '',                              icon: '',   pct: 0,   category: 'understand' },
-  entendendo_prompt:        { label: 'Entendendo seu pedido',         icon: '🧠', pct: 5,   category: 'understand' },
-  definindo_arquitetura:    { label: 'Definindo a arquitetura',       icon: '📐', pct: 12,  category: 'understand' },
-  planejando_layout:        { label: 'Planejando o layout',           icon: '🎨', pct: 22,  category: 'frontend' },
-  criando_secoes:           { label: 'Criando as seções',             icon: '🧩', pct: 32,  category: 'frontend' },
-  gerando_conteudo:         { label: 'Gerando conteúdo',              icon: '✍️', pct: 42,  category: 'frontend' },
-  construindo_componentes:  { label: 'Construindo componentes',       icon: '⚡', pct: 52,  category: 'frontend' },
-  estruturando_backend:     { label: 'Estruturando backend',          icon: '🔧', pct: 62,  category: 'backend' },
-  criando_rotas:            { label: 'Criando rotas e APIs',          icon: '🔗', pct: 72,  category: 'backend' },
-  configurando_banco:       { label: 'Configurando banco de dados',   icon: '💾', pct: 80,  category: 'backend' },
-  ajustando_responsividade: { label: 'Ajustando responsividade',      icon: '📱', pct: 88,  category: 'finalize' },
-  refinando_experiencia:    { label: 'Refinando a experiência',       icon: '✨', pct: 93,  category: 'finalize' },
-  finalizando:              { label: 'Finalizando o build',           icon: '🚀', pct: 98,  category: 'finalize' },
-  pronto:                   { label: 'Build concluído!',              icon: '✅', pct: 100, category: 'finalize' },
-  erro:                     { label: 'Erro na geração',               icon: '❌', pct: 0,   category: 'finalize' },
+const STAGE_META: Record<BuildStage, { label: string; icon: string; pct: number; group: string }> = {
+  idle:                     { label: '',                              icon: '',   pct: 0,   group: '' },
+  entendendo_prompt:        { label: 'Entendendo seu pedido',         icon: '🧠', pct: 5,   group: 'Análise' },
+  definindo_arquitetura:    { label: 'Definindo a arquitetura',       icon: '📐', pct: 10,  group: 'Análise' },
+  criando_estrutura:        { label: 'Criando estrutura do projeto',  icon: '🏗️', pct: 16,  group: 'Estrutura' },
+  gerando_preview:          { label: 'Gerando preview visual',        icon: '🎨', pct: 24,  group: 'Frontend' },
+  escrevendo_frontend:      { label: 'Escrevendo páginas PHP',        icon: '📄', pct: 32,  group: 'Frontend' },
+  criando_estilos:          { label: 'Criando estilos CSS',           icon: '🎨', pct: 42,  group: 'Frontend' },
+  criando_javascript:       { label: 'Criando JavaScript',            icon: '⚡', pct: 50,  group: 'Frontend' },
+  escrevendo_backend:       { label: 'Estruturando backend PHP',      icon: '🔧', pct: 58,  group: 'Backend' },
+  criando_includes:         { label: 'Criando includes e templates',  icon: '🧩', pct: 66,  group: 'Backend' },
+  criando_paginas:          { label: 'Criando páginas adicionais',    icon: '📑', pct: 74,  group: 'Backend' },
+  criando_config:           { label: 'Configurando ambiente',         icon: '⚙️', pct: 80,  group: 'Config' },
+  ajustando_responsividade: { label: 'Ajustando responsividade',      icon: '📱', pct: 86,  group: 'Refinamento' },
+  refinando_experiencia:    { label: 'Refinando a experiência',       icon: '✨', pct: 92,  group: 'Refinamento' },
+  finalizando:              { label: 'Finalizando o build',           icon: '🚀', pct: 98,  group: 'Refinamento' },
+  pronto:                   { label: 'Build concluído!',              icon: '✅', pct: 100, group: 'Concluído' },
+  erro:                     { label: 'Erro na geração',               icon: '❌', pct: 0,   group: '' },
 };
 
 const STAGE_ORDER: BuildStage[] = [
-  'entendendo_prompt', 'definindo_arquitetura', 'planejando_layout',
-  'criando_secoes', 'gerando_conteudo', 'construindo_componentes',
-  'estruturando_backend', 'criando_rotas', 'configurando_banco',
+  'entendendo_prompt', 'definindo_arquitetura', 'criando_estrutura',
+  'gerando_preview', 'escrevendo_frontend', 'criando_estilos',
+  'criando_javascript', 'escrevendo_backend', 'criando_includes',
+  'criando_paginas', 'criando_config',
   'ajustando_responsividade', 'refinando_experiencia', 'finalizando', 'pronto',
 ];
 
-function inferStage(charCount: number): BuildStage {
-  if (charCount < 80) return 'entendendo_prompt';
-  if (charCount < 300) return 'definindo_arquitetura';
-  if (charCount < 800) return 'planejando_layout';
-  if (charCount < 2000) return 'criando_secoes';
-  if (charCount < 3500) return 'gerando_conteudo';
-  if (charCount < 5000) return 'construindo_componentes';
-  if (charCount < 7000) return 'estruturando_backend';
-  if (charCount < 9000) return 'criando_rotas';
-  if (charCount < 10500) return 'configurando_banco';
-  if (charCount < 12000) return 'ajustando_responsividade';
-  if (charCount < 14000) return 'refinando_experiencia';
-  return 'finalizando';
+function inferStage(text: string): BuildStage {
+  const len = text.length;
+  // Also check content for smarter inference
+  const hasPreview = text.includes('===FILE:preview.html===');
+  const hasPhp = /===FILE:.*\.php===/i.test(text);
+  const hasCss = /===FILE:.*\.css===/i.test(text);
+  const hasJs = /===FILE:.*\.js===/i.test(text);
+  const hasIncludes = text.includes('includes/');
+  const hasConfig = text.includes('config/');
+  const hasResponsive = text.includes('responsive') || text.includes('@media');
+
+  if (len < 100) return 'entendendo_prompt';
+  if (len < 400) return 'definindo_arquitetura';
+  if (!hasPreview && len < 800) return 'criando_estrutura';
+  if (hasPreview && !hasPhp) return 'gerando_preview';
+  if (hasPhp && !hasCss) return 'escrevendo_frontend';
+  if (hasCss && !hasJs) return 'criando_estilos';
+  if (hasJs && !hasIncludes) return 'criando_javascript';
+  if (hasIncludes && !hasConfig) return 'criando_includes';
+  if (hasConfig && !hasResponsive) return 'criando_config';
+  if (hasResponsive && len < text.length * 0.95) return 'ajustando_responsividade';
+  if (len > 15000) return 'refinando_experiencia';
+  return 'escrevendo_backend';
 }
 
-/* ─── Skeleton Preview (shown during generation before real content) ─── */
-const SkeletonPreview = memo(({ stage }: { stage: BuildStage }) => {
-  const currentIdx = STAGE_ORDER.indexOf(stage);
-  const showNav = currentIdx >= 2;
-  const showHero = currentIdx >= 3;
-  const showFeatures = currentIdx >= 4;
-  const showCta = currentIdx >= 5;
-  const showFooter = currentIdx >= 6;
+/* ─── Premium Skeleton Preview ─── */
+const SkeletonPreview = memo(({ stage, fileCount }: { stage: BuildStage; fileCount: number }) => {
+  const stageIdx = STAGE_ORDER.indexOf(stage);
+  const showNav = stageIdx >= 2;
+  const showHero = stageIdx >= 3;
+  const showStats = stageIdx >= 4;
+  const showFeatures = stageIdx >= 5;
+  const showAbout = stageIdx >= 6;
+  const showTestimonials = stageIdx >= 7;
+  const showCta = stageIdx >= 8;
+  const showFooter = stageIdx >= 9;
 
   return (
-    <div className="h-full w-full overflow-hidden rounded-xl border border-border bg-[hsl(0_0%_97%)]">
-      {/* Skeleton Nav */}
-      <AnimatePresence>
-        {showNav && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3"
-          >
-            <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
-            <div className="flex gap-4">
-              <div className="h-3 w-14 animate-pulse rounded bg-gray-100" />
-              <div className="h-3 w-14 animate-pulse rounded bg-gray-100" />
-              <div className="h-3 w-14 animate-pulse rounded bg-gray-100" />
-              <div className="h-7 w-20 animate-pulse rounded-full bg-blue-100" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Skeleton Hero */}
-      <AnimatePresence>
-        {showHero && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="flex flex-col items-center px-8 py-16 text-center"
-          >
-            <div className="mb-3 h-8 w-80 animate-pulse rounded bg-gray-200" />
-            <div className="mb-2 h-5 w-64 animate-pulse rounded bg-gray-100" />
-            <div className="mb-6 h-5 w-48 animate-pulse rounded bg-gray-100" />
-            <div className="flex gap-3">
-              <div className="h-10 w-32 animate-pulse rounded-lg bg-blue-200" />
-              <div className="h-10 w-32 animate-pulse rounded-lg bg-gray-200" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Skeleton Features */}
-      <AnimatePresence>
-        {showFeatures && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="grid grid-cols-3 gap-4 px-8 pb-12"
-          >
-            {[0, 1, 2].map(i => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.35 + i * 0.1 }}
-                className="rounded-xl border border-gray-100 bg-white p-5"
-              >
-                <div className="mb-3 h-8 w-8 animate-pulse rounded-lg bg-blue-50" />
-                <div className="mb-2 h-4 w-24 animate-pulse rounded bg-gray-200" />
-                <div className="mb-1 h-3 w-full animate-pulse rounded bg-gray-100" />
-                <div className="h-3 w-3/4 animate-pulse rounded bg-gray-100" />
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Skeleton CTA */}
-      <AnimatePresence>
-        {showCta && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mx-8 mb-8 flex flex-col items-center rounded-2xl bg-blue-50 px-6 py-10"
-          >
-            <div className="mb-3 h-6 w-56 animate-pulse rounded bg-blue-200" />
-            <div className="mb-4 h-4 w-40 animate-pulse rounded bg-blue-100" />
-            <div className="h-10 w-36 animate-pulse rounded-lg bg-blue-300" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Skeleton Footer */}
-      <AnimatePresence>
-        {showFooter && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="border-t border-gray-200 bg-gray-50 px-8 py-6"
-          >
-            <div className="flex justify-between">
-              <div className="h-3 w-32 animate-pulse rounded bg-gray-200" />
-              <div className="flex gap-3">
-                <div className="h-3 w-16 animate-pulse rounded bg-gray-200" />
-                <div className="h-3 w-16 animate-pulse rounded bg-gray-200" />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Stage label overlay */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+    <div className="relative h-full w-full overflow-hidden rounded-xl border border-border bg-[#fafbfc]">
+      {/* Shimmer overlay */}
+      <div className="pointer-events-none absolute inset-0 z-10">
         <motion.div
-          key={stage}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 rounded-full border border-border bg-card/95 px-4 py-2 shadow-lg backdrop-blur-md"
-        >
+          animate={{ x: ['-100%', '200%'] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
+          className="h-full w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
+        />
+      </div>
+
+      <div className="h-full overflow-y-auto">
+        {/* Nav */}
+        <AnimatePresence>
+          {showNav && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-100 bg-white/95 px-6 py-3 backdrop-blur">
+              <div className="flex items-center gap-3">
+                <div className="h-5 w-5 rounded-md bg-gradient-to-br from-blue-400 to-indigo-500" />
+                <div className="h-3 w-20 rounded bg-gray-200" />
+              </div>
+              <div className="flex items-center gap-5">
+                <div className="h-2.5 w-12 rounded bg-gray-100" />
+                <div className="h-2.5 w-12 rounded bg-gray-100" />
+                <div className="h-2.5 w-12 rounded bg-gray-100" />
+                <div className="h-2.5 w-12 rounded bg-gray-100" />
+                <div className="h-7 w-20 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 opacity-40" />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Hero */}
+        <AnimatePresence>
+          {showHero && (
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+              className="flex items-center gap-8 px-8 py-16 lg:px-12">
+              <div className="flex-1 space-y-4">
+                <div className="h-3 w-28 rounded-full bg-blue-100" />
+                <div className="space-y-2">
+                  <div className="h-8 w-[85%] rounded bg-gray-200" />
+                  <div className="h-8 w-[60%] rounded bg-gray-200" />
+                </div>
+                <div className="space-y-1.5 pt-1">
+                  <div className="h-3 w-[90%] rounded bg-gray-100" />
+                  <div className="h-3 w-[75%] rounded bg-gray-100" />
+                </div>
+                <div className="flex gap-3 pt-3">
+                  <div className="h-10 w-32 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-500 opacity-50" />
+                  <div className="h-10 w-28 rounded-lg border-2 border-gray-200" />
+                </div>
+              </div>
+              <div className="hidden h-56 w-80 rounded-2xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 lg:block">
+                <div className="flex h-full items-center justify-center">
+                  <Image className="h-12 w-12 text-blue-200" />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Stats bar */}
+        <AnimatePresence>
+          {showStats && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+              className="mx-8 mb-8 grid grid-cols-4 gap-4 rounded-xl border border-gray-100 bg-gray-50/50 px-6 py-5">
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} className="text-center space-y-1.5">
+                  <div className="mx-auto h-6 w-16 rounded bg-gray-200" />
+                  <div className="mx-auto h-2.5 w-20 rounded bg-gray-100" />
+                </div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Features grid */}
+        <AnimatePresence>
+          {showFeatures && (
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+              className="px-8 pb-12">
+              <div className="mb-6 text-center space-y-2">
+                <div className="mx-auto h-5 w-48 rounded bg-gray-200" />
+                <div className="mx-auto h-3 w-64 rounded bg-gray-100" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                {[0, 1, 2, 3, 4, 5].map(i => (
+                  <motion.div key={i} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.35 + i * 0.06 }}
+                    className="space-y-3 rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+                    <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-100" />
+                    <div className="h-3.5 w-24 rounded bg-gray-200" />
+                    <div className="space-y-1">
+                      <div className="h-2.5 w-full rounded bg-gray-100" />
+                      <div className="h-2.5 w-4/5 rounded bg-gray-100" />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* About section */}
+        <AnimatePresence>
+          {showAbout && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+              className="flex items-center gap-8 bg-gray-50/80 px-8 py-14">
+              <div className="hidden h-44 w-72 rounded-xl bg-gradient-to-br from-gray-200 to-gray-100 lg:block" />
+              <div className="flex-1 space-y-3">
+                <div className="h-5 w-36 rounded bg-gray-200" />
+                <div className="space-y-1.5">
+                  <div className="h-3 w-full rounded bg-gray-100" />
+                  <div className="h-3 w-[90%] rounded bg-gray-100" />
+                  <div className="h-3 w-[70%] rounded bg-gray-100" />
+                </div>
+                <div className="h-9 w-28 rounded-lg bg-blue-100" />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Testimonials */}
+        <AnimatePresence>
+          {showTestimonials && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+              className="px-8 py-12">
+              <div className="mb-6 text-center">
+                <div className="mx-auto h-5 w-40 rounded bg-gray-200" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="space-y-3 rounded-xl border border-gray-100 bg-white p-5">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-100 to-indigo-200" />
+                      <div className="space-y-1">
+                        <div className="h-3 w-20 rounded bg-gray-200" />
+                        <div className="h-2 w-16 rounded bg-gray-100" />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="h-2.5 w-full rounded bg-gray-100" />
+                      <div className="h-2.5 w-[85%] rounded bg-gray-100" />
+                    </div>
+                    <div className="flex gap-0.5">
+                      {[0, 1, 2, 3, 4].map(s => (
+                        <div key={s} className="h-3 w-3 rounded bg-yellow-200" />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* CTA */}
+        <AnimatePresence>
+          {showCta && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+              className="mx-8 mb-10 flex flex-col items-center rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-12 text-center">
+              <div className="mb-3 h-6 w-56 rounded bg-blue-200/60" />
+              <div className="mb-4 h-3 w-40 rounded bg-blue-100/60" />
+              <div className="h-10 w-36 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-500 opacity-50" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Footer */}
+        <AnimatePresence>
+          {showFooter && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
+              className="border-t border-gray-100 bg-gray-900/5 px-8 py-8">
+              <div className="grid grid-cols-4 gap-6 mb-6">
+                {[0, 1, 2, 3].map(i => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-3 w-16 rounded bg-gray-300" />
+                    <div className="h-2 w-20 rounded bg-gray-200" />
+                    <div className="h-2 w-16 rounded bg-gray-200" />
+                    <div className="h-2 w-18 rounded bg-gray-200" />
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+                <div className="h-2.5 w-36 rounded bg-gray-200" />
+                <div className="flex gap-2">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="h-5 w-5 rounded-full bg-gray-200" />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Bottom overlay with current stage */}
+      <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2">
+        <motion.div key={stage} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2.5 rounded-full border border-border bg-card/95 px-4 py-2 shadow-xl backdrop-blur-md">
           <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
           <span className="text-xs font-medium text-foreground/70">{STAGE_META[stage].label}</span>
+          {fileCount > 0 && (
+            <Badge variant="outline" className="text-[9px] px-1.5 py-0">{fileCount} arquivos</Badge>
+          )}
         </motion.div>
       </div>
     </div>
@@ -253,9 +398,17 @@ const SkeletonPreview = memo(({ stage }: { stage: BuildStage }) => {
 });
 SkeletonPreview.displayName = 'SkeletonPreview';
 
-/* ─── Live Code Editor (streams code as it arrives) ─── */
-const LiveCodeEditor = memo(({ code, isStreaming }: { code: string; isStreaming: boolean }) => {
+/* ─── Live Code Editor with multi-file ─── */
+const LiveCodeEditor = memo(({ files, activeFile, onSelectFile, rawCode, isStreaming }: {
+  files: ProjectFile[];
+  activeFile: string;
+  onSelectFile: (path: string) => void;
+  rawCode: string;
+  isStreaming: boolean;
+}) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const currentFile = files.find(f => f.path === activeFile);
+  const code = currentFile?.content || rawCode || '';
   const lines = code.split('\n');
 
   useEffect(() => {
@@ -265,19 +418,43 @@ const LiveCodeEditor = memo(({ code, isStreaming }: { code: string; isStreaming:
   }, [code, isStreaming]);
 
   const getLineClass = (line: string) => {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('<!--')) return 'text-muted-foreground/30';
-    if (trimmed.startsWith('<') && trimmed.includes('class=')) return 'text-primary/60';
-    if (trimmed.startsWith('<')) return 'text-sky-400/70';
-    if (trimmed.startsWith('//') || trimmed.startsWith('/*')) return 'text-muted-foreground/25';
-    if (trimmed.startsWith('const ') || trimmed.startsWith('function ') || trimmed.startsWith('import ')) return 'text-purple-400/60';
+    const t = line.trim();
+    if (t.startsWith('<?php') || t.startsWith('?>')) return 'text-red-400/70';
+    if (t.startsWith('//') || t.startsWith('/*') || t.startsWith('*') || t.startsWith('#')) return 'text-muted-foreground/30';
+    if (t.startsWith('<!--')) return 'text-muted-foreground/25';
+    if (t.startsWith('<') && t.includes('class=')) return 'text-primary/60';
+    if (t.startsWith('<')) return 'text-sky-400/70';
+    if (t.startsWith('$') || t.includes('function ') || t.includes('class ') || t.startsWith('require') || t.startsWith('include')) return 'text-purple-400/70';
+    if (t.startsWith('const ') || t.startsWith('let ') || t.startsWith('var ') || t.startsWith('import ')) return 'text-yellow-400/60';
+    if (t.startsWith('.') || t.startsWith('@media') || t.includes('{') || t.includes('}')) return 'text-cyan-400/50';
     return 'text-foreground/40';
   };
 
+  const fileExt = activeFile.split('.').pop() || 'html';
+  const langMap: Record<string, string> = { php: 'PHP', html: 'HTML5', css: 'CSS3', js: 'JavaScript', sql: 'SQL', htaccess: 'Apache' };
+
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card">
-      {/* Editor Chrome */}
-      <div className="flex items-center gap-3 border-b border-border bg-secondary/30 px-4 py-2">
+      {/* File tabs */}
+      {files.length > 0 && (
+        <div className="flex items-center gap-0.5 border-b border-border bg-secondary/20 px-2 py-1 overflow-x-auto scrollbar-none">
+          {files.filter(f => f.path !== 'preview.html').slice(0, 10).map(f => {
+            const { icon: FIcon, color } = categorizeFile(f.path);
+            return (
+              <button key={f.path} onClick={() => onSelectFile(f.path)}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[10px] whitespace-nowrap transition-all ${
+                  activeFile === f.path ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground/40 hover:text-foreground/60 hover:bg-secondary/30'
+                }`}>
+                <FIcon className={`h-3 w-3 ${color}`} />
+                {f.path.split('/').pop()}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Editor chrome */}
+      <div className="flex items-center gap-3 border-b border-border bg-secondary/30 px-4 py-1.5">
         <div className="flex gap-1.5">
           <div className="h-2.5 w-2.5 rounded-full bg-destructive/40" />
           <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/40" />
@@ -285,7 +462,7 @@ const LiveCodeEditor = memo(({ code, isStreaming }: { code: string; isStreaming:
         </div>
         <div className="flex items-center gap-2 rounded-md bg-background/50 px-3 py-0.5">
           <FileCode className="h-3 w-3 text-primary/40" />
-          <span className="font-mono text-[10px] text-muted-foreground/50">index.html</span>
+          <span className="font-mono text-[10px] text-muted-foreground/50">{activeFile || 'preview.html'}</span>
         </div>
         {isStreaming && (
           <div className="ml-auto flex items-center gap-1.5">
@@ -295,11 +472,11 @@ const LiveCodeEditor = memo(({ code, isStreaming }: { code: string; isStreaming:
         )}
       </div>
 
-      {/* Code Lines */}
+      {/* Code lines */}
       <div ref={scrollRef} className="flex-1 overflow-auto px-1 py-3 font-mono text-[11px] leading-[20px]">
-        {lines.length === 0 || !code ? (
+        {!code ? (
           <div className="flex h-full items-center justify-center text-muted-foreground/20 text-xs font-sans">
-            O código aparecerá aqui durante a geração
+            Selecione um arquivo ou aguarde a geração
           </div>
         ) : (
           lines.map((line, i) => (
@@ -317,12 +494,9 @@ const LiveCodeEditor = memo(({ code, isStreaming }: { code: string; isStreaming:
         )}
       </div>
 
-      {/* Status Bar */}
+      {/* Status bar */}
       <div className="flex items-center justify-between border-t border-border bg-secondary/20 px-4 py-1">
-        <div className="flex items-center gap-3 text-[10px] text-muted-foreground/30">
-          <span>HTML5</span>
-          <span>Tailwind CSS</span>
-        </div>
+        <span className="text-[10px] text-muted-foreground/30">{langMap[fileExt] || fileExt.toUpperCase()}</span>
         <span className="text-[10px] text-muted-foreground/25">{lines.length} linhas • {(code.length / 1024).toFixed(1)}KB</span>
       </div>
     </div>
@@ -333,25 +507,27 @@ LiveCodeEditor.displayName = 'LiveCodeEditor';
 /* ─── Build Pipeline ─── */
 const BuildPipeline = memo(({ stage }: { stage: BuildStage }) => {
   const currentIdx = STAGE_ORDER.indexOf(stage);
-  const categories = [
-    { key: 'understand', label: 'Análise', stages: STAGE_ORDER.filter(s => STAGE_META[s].category === 'understand') },
-    { key: 'frontend', label: 'Frontend', stages: STAGE_ORDER.filter(s => STAGE_META[s].category === 'frontend') },
-    { key: 'backend', label: 'Backend', stages: STAGE_ORDER.filter(s => STAGE_META[s].category === 'backend') },
-    { key: 'finalize', label: 'Finalização', stages: STAGE_ORDER.filter(s => STAGE_META[s].category === 'finalize') },
+  const groups = [
+    { label: 'Análise', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Análise') },
+    { label: 'Estrutura', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Estrutura') },
+    { label: 'Frontend', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Frontend') },
+    { label: 'Backend', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Backend') },
+    { label: 'Config', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Config') },
+    { label: 'Refinamento', stages: STAGE_ORDER.filter(s => STAGE_META[s].group === 'Refinamento') },
   ];
 
   return (
-    <div className="space-y-3">
-      {categories.map(cat => (
-        <div key={cat.key}>
-          <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-muted-foreground/30">{cat.label}</p>
+    <div className="space-y-2.5">
+      {groups.map(g => (
+        <div key={g.label}>
+          <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/25">{g.label}</p>
           <div className="space-y-0.5">
-            {cat.stages.map(s => {
+            {g.stages.map(s => {
               const idx = STAGE_ORDER.indexOf(s);
               const done = idx < currentIdx || stage === 'pronto';
               const active = idx === currentIdx && stage !== 'pronto' && stage !== 'erro';
               return (
-                <motion.div key={s} initial={false} animate={{ opacity: idx > currentIdx && stage !== 'pronto' ? 0.35 : 1 }} className="flex items-center gap-2 py-0.5">
+                <div key={s} className={`flex items-center gap-2 py-0.5 transition-opacity ${idx > currentIdx && stage !== 'pronto' ? 'opacity-30' : ''}`}>
                   {done ? (
                     <div className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/15">
                       <Check className="h-2.5 w-2.5 text-primary" />
@@ -361,12 +537,12 @@ const BuildPipeline = memo(({ stage }: { stage: BuildStage }) => {
                       <Loader2 className="h-2.5 w-2.5 animate-spin text-primary" />
                     </div>
                   ) : (
-                    <div className="h-4 w-4 rounded-full border border-border/50" />
+                    <div className="h-4 w-4 rounded-full border border-border/40" />
                   )}
-                  <span className={`text-[10px] leading-tight ${done ? 'text-primary/60' : active ? 'text-foreground/70 font-medium' : 'text-muted-foreground/30'}`}>
+                  <span className={`text-[10px] leading-tight ${done ? 'text-primary/60' : active ? 'text-foreground/70 font-medium' : 'text-muted-foreground/25'}`}>
                     {STAGE_META[s].label}
                   </span>
-                </motion.div>
+                </div>
               );
             })}
           </div>
@@ -377,62 +553,139 @@ const BuildPipeline = memo(({ stage }: { stage: BuildStage }) => {
 });
 BuildPipeline.displayName = 'BuildPipeline';
 
-/* ─── Structure View ─── */
-const StructureView = memo(({ code }: { code: string }) => {
-  const sections: { label: string; icon: typeof Globe }[] = [];
-  const sectionRegex = /<!--\s*[═─]*\s*(.+?)\s*[═─]*\s*-->/gi;
-  let match: RegExpExecArray | null;
-  while ((match = sectionRegex.exec(code)) !== null) {
-    sections.push({ label: match[1].trim(), icon: LayoutGrid });
-  }
-  if (sections.length === 0) {
-    ['header', 'nav', 'main', 'section', 'footer'].forEach(t => {
-      const count = (code.match(new RegExp(`<${t}[\\s>]`, 'gi')) || []).length;
-      for (let i = 0; i < count; i++) sections.push({ label: `<${t}>`, icon: LayoutGrid });
-    });
-  }
+/* ─── Structure View with live file tree ─── */
+const StructureView = memo(({ files, isGenerating, stage }: { files: ProjectFile[]; isGenerating: boolean; stage: BuildStage }) => {
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
-  const fileTree = [
-    { name: 'src/', icon: FolderOpen, depth: 0 },
-    { name: 'index.html', icon: FileCode, depth: 1 },
-    { name: 'styles.css', icon: FileCode, depth: 1 },
-    { name: 'app.js', icon: FileCode, depth: 1 },
-    { name: 'components/', icon: FolderOpen, depth: 1 },
-    { name: 'api/', icon: Server, depth: 1 },
-    { name: 'database/', icon: Database, depth: 1 },
-  ];
+  // Build folder tree from files
+  const buildTree = () => {
+    const tree: Record<string, string[]> = {};
+    const rootFiles: string[] = [];
+    files.filter(f => f.path !== 'preview.html').forEach(f => {
+      const parts = f.path.split('/');
+      if (parts.length === 1) {
+        rootFiles.push(parts[0]);
+      } else {
+        const folder = parts.slice(0, -1).join('/');
+        if (!tree[folder]) tree[folder] = [];
+        tree[folder].push(parts[parts.length - 1]);
+      }
+    });
+    return { tree, rootFiles };
+  };
+
+  const { tree, rootFiles } = buildTree();
+  const currentFile = files.find(f => f.path === selectedFile);
+
+  const folderIcons: Record<string, typeof FolderOpen> = {
+    includes: Layers,
+    config: Settings,
+    assets: Image,
+    'assets/css': FileText,
+    'assets/js': FileCode,
+    'assets/img': Image,
+    admin: Server,
+    controllers: Zap,
+    models: Database,
+    database: Database,
+    helpers: Coffee,
+    views: Eye,
+    pages: FileText,
+  };
 
   return (
-    <div className="flex h-full gap-3 overflow-auto">
+    <div className="flex h-full gap-3">
       {/* File Tree */}
-      <div className="w-48 flex-shrink-0 rounded-xl border border-border bg-card p-3">
-        <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.15em] text-muted-foreground/30">Arquivos</p>
-        <div className="space-y-0.5">
-          {fileTree.map((f, i) => (
-            <div key={i} className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] text-foreground/50 hover:bg-secondary/30" style={{ paddingLeft: 8 + f.depth * 12 }}>
-              <f.icon className="h-3 w-3 text-primary/30" />
-              <span>{f.name}</span>
-            </div>
-          ))}
+      <div className="w-56 flex-shrink-0 overflow-y-auto rounded-xl border border-border bg-card p-3">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/30">Projeto</p>
+          <Badge variant="outline" className="text-[9px] px-1.5 py-0">{files.filter(f => f.path !== 'preview.html').length} arquivos</Badge>
         </div>
+
+        {files.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            {isGenerating ? (
+              <>
+                <Loader2 className="mb-2 h-5 w-5 animate-spin text-primary/30" />
+                <p className="text-[11px] text-muted-foreground/30">Criando estrutura...</p>
+              </>
+            ) : (
+              <>
+                <FolderOpen className="mb-2 h-6 w-6 text-muted-foreground/15" />
+                <p className="text-[11px] text-muted-foreground/20">Aguardando geração</p>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-0.5">
+            {/* Root files */}
+            {rootFiles.map((name, i) => {
+              const { icon: FIcon, color } = categorizeFile(name);
+              return (
+                <motion.button key={name} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  onClick={() => setSelectedFile(name)}
+                  className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] transition-all ${
+                    selectedFile === name ? 'bg-primary/10 text-primary' : 'text-foreground/50 hover:bg-secondary/30'
+                  }`}>
+                  <FIcon className={`h-3.5 w-3.5 ${color}`} />
+                  <span className="truncate">{name}</span>
+                </motion.button>
+              );
+            })}
+
+            {/* Folders */}
+            {Object.entries(tree).sort().map(([folder, folderFiles], fi) => {
+              const FolderIcon = folderIcons[folder] || FolderOpen;
+              return (
+                <motion.div key={folder} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: (rootFiles.length + fi) * 0.03 }}>
+                  <div className="flex items-center gap-2 px-2 py-1.5 text-[11px] font-medium text-foreground/60">
+                    <FolderIcon className="h-3.5 w-3.5 text-primary/30" />
+                    <span>{folder}/</span>
+                  </div>
+                  {folderFiles.map(name => {
+                    const fullPath = `${folder}/${name}`;
+                    const { icon: FIcon, color } = categorizeFile(name);
+                    return (
+                      <button key={fullPath} onClick={() => setSelectedFile(fullPath)}
+                        className={`flex w-full items-center gap-2 rounded-lg py-1.5 pl-7 pr-2 text-[11px] transition-all ${
+                          selectedFile === fullPath ? 'bg-primary/10 text-primary' : 'text-foreground/40 hover:bg-secondary/30'
+                        }`}>
+                        <FIcon className={`h-3 w-3 ${color}`} />
+                        <span className="truncate">{name}</span>
+                      </button>
+                    );
+                  })}
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Sections */}
-      <div className="flex-1 rounded-xl border border-border bg-card p-4">
-        <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.15em] text-muted-foreground/30">Seções Detectadas</p>
-        {sections.length === 0 ? (
-          <div className="flex h-32 items-center justify-center text-xs text-muted-foreground/20">Aguardando geração</div>
+      {/* File preview */}
+      <div className="flex-1 overflow-hidden rounded-xl border border-border bg-card">
+        {currentFile ? (
+          <div className="flex h-full flex-col">
+            <div className="flex items-center gap-2 border-b border-border bg-secondary/20 px-4 py-2">
+              <FileCode className="h-3.5 w-3.5 text-primary/40" />
+              <span className="text-xs font-medium text-foreground/60">{currentFile.path}</span>
+              <Badge variant="outline" className="ml-auto text-[9px] px-1.5">{currentFile.category}</Badge>
+            </div>
+            <div className="flex-1 overflow-auto p-4 font-mono text-[11px] leading-[20px]">
+              {currentFile.content.split('\n').map((line, i) => (
+                <div key={i} className="flex hover:bg-secondary/15 px-1">
+                  <span className="mr-3 inline-block w-6 select-none text-right text-muted-foreground/15 text-[10px]">{i + 1}</span>
+                  <span className="text-foreground/45">{line || '\u00A0'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
-          <div className="space-y-1.5">
-            {sections.map((s, i) => (
-              <motion.div key={i} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-                className="flex items-center gap-2.5 rounded-lg border border-border/40 bg-secondary/20 px-3 py-2"
-              >
-                <LayoutGrid className="h-3.5 w-3.5 text-primary/30" />
-                <span className="text-[11px] text-foreground/50">{s.label}</span>
-                <ChevronRight className="ml-auto h-3 w-3 text-muted-foreground/15" />
-              </motion.div>
-            ))}
+          <div className="flex h-full flex-col items-center justify-center text-muted-foreground/15">
+            <LayoutGrid className="mb-3 h-10 w-10" />
+            <p className="text-xs">Selecione um arquivo para visualizar</p>
           </div>
         )}
       </div>
@@ -457,8 +710,10 @@ export default function SiteBuilderPage() {
   const [phase, setPhase] = useState<'chat' | 'building'>('chat');
   const [buildStage, setBuildStage] = useState<BuildStage>('idle');
   const [liveHtml, setLiveHtml] = useState('');
-  const [streamingCode, setStreamingCode] = useState('');
+  const [rawOutput, setRawOutput] = useState('');
+  const [liveFiles, setLiveFiles] = useState<ProjectFile[]>([]);
   const [chatLogs, setChatLogs] = useState<string[]>([]);
+  const [activeCodeFile, setActiveCodeFile] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -471,7 +726,7 @@ export default function SiteBuilderPage() {
     const project: Project = {
       id: generateId(),
       name: name || `Projeto ${projects.length + 1}`,
-      messages: [], generatedCode: '', streamingCode: '', snapshots: [],
+      messages: [], files: [], generatedCode: '', rawOutput: '', snapshots: [],
       createdAt: new Date(), updatedAt: new Date(),
     };
     setProjects(prev => [project, ...prev]);
@@ -511,8 +766,10 @@ export default function SiteBuilderPage() {
     setPhase('building');
     setCenterMode('preview');
     setLiveHtml('');
-    setStreamingCode('');
+    setRawOutput('');
+    setLiveFiles([]);
     setChatLogs([]);
+    setActiveCodeFile('');
     setBuildStage('entendendo_prompt');
     addLog('🧠 Entendendo seu pedido...');
 
@@ -525,12 +782,13 @@ export default function SiteBuilderPage() {
         },
         body: JSON.stringify({ messages: allMessages.map(m => ({ role: m.role, content: m.content })), projectId }),
       });
+
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: 'Erro desconhecido' }));
         throw new Error(err.error || `Erro ${resp.status}`);
       }
 
-      addLog('📐 Definindo a arquitetura...');
+      addLog('📐 Definindo a arquitetura do projeto...');
 
       const reader = resp.body!.getReader();
       const decoder = new TextDecoder();
@@ -555,9 +813,26 @@ export default function SiteBuilderPage() {
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               fullContent += content;
-              setStreamingCode(fullContent);
+              setRawOutput(fullContent);
 
-              const newStage = inferStage(fullContent.length);
+              // Parse files progressively
+              const currentFiles = parseFiles(fullContent);
+              if (currentFiles.length > 0) {
+                setLiveFiles(currentFiles);
+                // Update preview from preview.html
+                const previewHtml = getPreviewHtml(currentFiles);
+                if (previewHtml && previewHtml.length > 200) {
+                  setLiveHtml(previewHtml);
+                }
+                // Set first non-preview file as active code file if none set
+                if (!activeCodeFile) {
+                  const firstReal = currentFiles.find(f => f.path !== 'preview.html');
+                  if (firstReal) setActiveCodeFile(firstReal.path);
+                }
+              }
+
+              // Infer stage and add logs
+              const newStage = inferStage(fullContent);
               if (newStage !== lastStage && !loggedStages.has(newStage)) {
                 setBuildStage(newStage);
                 addLog(`${STAGE_META[newStage].icon} ${STAGE_META[newStage].label}`);
@@ -565,30 +840,30 @@ export default function SiteBuilderPage() {
                 lastStage = newStage;
               }
 
-              const partialHtml = extractHtml(fullContent);
-              if (partialHtml && partialHtml.length > 300) {
-                setLiveHtml(partialHtml);
-              }
-
-              updateProject(projectId!, { generatedCode: extractHtml(fullContent) || '', streamingCode: fullContent });
+              updateProject(projectId!, { rawOutput: fullContent });
             }
           } catch { /* partial */ }
         }
       }
 
-      const finalHtml = extractHtml(fullContent);
+      // Final processing
+      const finalFiles = parseFiles(fullContent);
+      const finalPreview = getPreviewHtml(finalFiles);
       setBuildStage('pronto');
-      addLog('✅ Build concluído! Seu site está pronto.');
-      setLiveHtml(finalHtml);
-      setStreamingCode(fullContent);
+      addLog('✅ Build concluído! Seu projeto está pronto.');
+      addLog(`📁 ${finalFiles.filter(f => f.path !== 'preview.html').length} arquivos gerados`);
+      setLiveHtml(finalPreview);
+      setLiveFiles(finalFiles);
+      setRawOutput(fullContent);
 
       const prevSnapshots = currentProject?.snapshots || [];
       updateProject(projectId!, {
         messages: [...allMessages, { id: generateId(), role: 'assistant' as const, content: fullContent, timestamp: new Date() }],
-        generatedCode: finalHtml || '',
-        streamingCode: fullContent,
+        files: finalFiles,
+        generatedCode: finalPreview,
+        rawOutput: fullContent,
         name: currentProject?.name || prompt.slice(0, 40),
-        snapshots: [...prevSnapshots, finalHtml].slice(-10),
+        snapshots: [...prevSnapshots, finalPreview].slice(-10),
       });
     } catch (err: any) {
       setBuildStage('erro');
@@ -602,23 +877,27 @@ export default function SiteBuilderPage() {
   };
 
   const copyCode = () => {
-    const code = activeProject?.generatedCode || liveHtml;
+    const code = rawOutput || activeProject?.rawOutput;
     if (code) { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); }
   };
 
-  const downloadHtml = () => {
-    const code = activeProject?.generatedCode;
-    if (!code) return;
-    const blob = new Blob([code], { type: 'text/html' });
+  const downloadProject = () => {
+    const files = liveFiles.length > 0 ? liveFiles : activeProject?.files || [];
+    if (files.length === 0) return;
+    // Download all files as a combined text (user can also copy individual files)
+    const combined = files.filter(f => f.path !== 'preview.html').map(f => `\n${'='.repeat(60)}\n// ${f.path}\n${'='.repeat(60)}\n\n${f.content}`).join('\n\n');
+    const blob = new Blob([combined], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url;
-    a.download = `${(activeProject?.name || 'site').replace(/\s+/g, '-').toLowerCase()}.html`;
-    a.click(); URL.revokeObjectURL(url);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(activeProject?.name || 'projeto').replace(/\s+/g, '-').toLowerCase()}-files.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const viewportWidths: Record<ViewMode, string> = { desktop: '100%', tablet: '768px', mobile: '375px' };
   const previewCode = liveHtml || activeProject?.generatedCode || '';
-  const codeToShow = streamingCode || activeProject?.streamingCode || previewCode;
+  const displayFiles = liveFiles.length > 0 ? liveFiles : activeProject?.files || [];
 
   const suggestions = [
     { icon: Globe, text: 'Site para barbearia moderna com agendamento online' },
@@ -634,7 +913,6 @@ export default function SiteBuilderPage() {
       <div className="relative flex min-h-screen flex-col" style={{ background: 'linear-gradient(180deg, hsl(220 25% 10%) 0%, hsl(230 30% 12%) 50%, hsl(220 25% 10%) 100%)' }}>
         <GenesisBackground />
 
-        {/* Header - matching dashboard */}
         <header className="sticky top-0 z-40 border-b border-border backdrop-blur" style={{ backgroundColor: 'hsl(220 25% 10% / 0.8)' }}>
           <div className="px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -643,6 +921,9 @@ export default function SiteBuilderPage() {
               </Button>
               <img src={genesisLogo} alt="Genesis" className="h-8 w-8" />
               <h1 className="text-sm font-bold text-foreground">Site Builder</h1>
+              <Badge variant="outline" className="text-[10px] gap-1">
+                <FileCode className="h-3 w-3" /> PHP + HTML + CSS + JS
+              </Badge>
             </div>
             {projects.length > 0 && (
               <Button variant="outline" size="sm" onClick={() => setShowHistory(true)} className="gap-2 text-xs">
@@ -661,18 +942,28 @@ export default function SiteBuilderPage() {
                 onClick={e => e.stopPropagation()} className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-2xl">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-foreground">Seus Projetos</h3>
-                  <button onClick={() => setShowHistory(false)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+                  <button onClick={() => setShowHistory(false)}><X className="h-4 w-4 text-muted-foreground hover:text-foreground" /></button>
                 </div>
                 <div className="max-h-72 space-y-1 overflow-y-auto">
                   {projects.map(p => (
                     <div key={p.id} className="group flex items-center gap-3 rounded-xl px-3 py-3 text-xs cursor-pointer hover:bg-secondary/50"
-                      onClick={() => { setActiveProjectId(p.id); setShowHistory(false); setPhase('building'); setLiveHtml(p.generatedCode); setStreamingCode(p.streamingCode || p.generatedCode); setBuildStage(p.generatedCode ? 'pronto' : 'idle'); }}>
+                      onClick={() => {
+                        setActiveProjectId(p.id);
+                        setShowHistory(false);
+                        setPhase('building');
+                        setLiveHtml(p.generatedCode);
+                        setRawOutput(p.rawOutput);
+                        setLiveFiles(p.files || []);
+                        setBuildStage(p.generatedCode ? 'pronto' : 'idle');
+                      }}>
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                         <MessageSquare className="h-3.5 w-3.5 text-primary/50" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="truncate font-medium text-foreground/70">{p.name}</p>
-                        <p className="text-[10px] text-muted-foreground/50">{p.messages.length} msgs • {p.updatedAt.toLocaleDateString('pt-BR')}</p>
+                        <p className="text-[10px] text-muted-foreground/50">
+                          {(p.files || []).length} arquivos • {p.updatedAt.toLocaleDateString('pt-BR')}
+                        </p>
                       </div>
                       <button onClick={(e) => { e.stopPropagation(); deleteProject(p.id); }}
                         className="shrink-0 rounded-lg p-1.5 text-muted-foreground/20 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive">
@@ -698,8 +989,11 @@ export default function SiteBuilderPage() {
             <h1 className="mb-2 text-3xl font-bold text-foreground md:text-4xl">
               Genesis <span className="text-primary">Site Builder</span>
             </h1>
-            <p className="mb-10 text-sm text-muted-foreground">
-              Descreva o que deseja e a IA construirá frontend + backend em tempo real
+            <p className="mb-2 text-sm text-muted-foreground">
+              Descreva seu projeto e a IA criará um sistema completo em PHP, HTML, CSS e JavaScript
+            </p>
+            <p className="mb-10 text-xs text-muted-foreground/50">
+              Frontend profissional + Backend em PHP + Estrutura modular + Código limpo
             </p>
 
             <div className="mx-auto w-full max-w-xl">
@@ -718,7 +1012,7 @@ export default function SiteBuilderPage() {
                   <span className="text-[10px] text-muted-foreground/30">Shift+Enter nova linha</span>
                   <Button onClick={handleSend} disabled={!input.trim() || isGenerating} size="sm" className="gap-2">
                     {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                    Criar
+                    Criar Projeto
                   </Button>
                 </div>
               </div>
@@ -747,17 +1041,17 @@ export default function SiteBuilderPage() {
     <div className="flex h-screen flex-col" style={{ background: 'linear-gradient(180deg, hsl(220 25% 10%) 0%, hsl(230 30% 12%) 50%, hsl(220 25% 10%) 100%)' }}>
       <GenesisBackground />
 
-      {/* ─── Header ─── */}
+      {/* Header */}
       <header className="relative z-30 flex items-center justify-between border-b border-border backdrop-blur" style={{ backgroundColor: 'hsl(220 25% 10% / 0.8)' }}>
         <div className="flex items-center gap-3 px-4 py-2.5">
           <Button variant="ghost" size="icon" className="h-8 w-8"
-            onClick={() => { setPhase('chat'); setActiveProjectId(null); setBuildStage('idle'); setChatLogs([]); setLiveHtml(''); setStreamingCode(''); }}>
+            onClick={() => { setPhase('chat'); setActiveProjectId(null); setBuildStage('idle'); setChatLogs([]); setLiveHtml(''); setRawOutput(''); setLiveFiles([]); }}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <img src={genesisLogo} alt="Genesis" className="h-6 w-6" />
           <div>
             <h1 className="text-xs font-semibold text-foreground/80">{activeProject?.name || 'Novo Projeto'}</h1>
-            <p className="text-[10px] text-muted-foreground/40">Site Builder</p>
+            <p className="text-[10px] text-muted-foreground/40">PHP + HTML + CSS + JS</p>
           </div>
           {buildStage !== 'idle' && (
             <Badge variant="outline" className="ml-2 text-[10px] gap-1.5">
@@ -800,10 +1094,10 @@ export default function SiteBuilderPage() {
               ))}
             </div>
           )}
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyCode} disabled={!previewCode}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyCode} disabled={!rawOutput}>
             {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={downloadHtml} disabled={!activeProject?.generatedCode}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={downloadProject} disabled={displayFiles.length === 0}>
             <Download className="h-3.5 w-3.5" />
           </Button>
           <Button variant="outline" size="sm" className="ml-1 gap-1.5 text-[11px]" onClick={() => { setPhase('chat'); createProject(); }}>
@@ -812,18 +1106,17 @@ export default function SiteBuilderPage() {
         </div>
       </header>
 
-      {/* ─── Main Workspace ─── */}
+      {/* Main Workspace */}
       <div className="relative z-10 flex flex-1 overflow-hidden">
 
-        {/* ── Left: Chat + Pipeline ── */}
+        {/* Left: Chat + Pipeline */}
         <div className="flex w-72 flex-shrink-0 flex-col border-r border-border bg-card/20 backdrop-blur-sm lg:w-80">
           {/* Chat Logs */}
           <div className="flex-1 overflow-y-auto p-3">
             <div className="space-y-1.5">
               {/* User messages */}
               {activeProject?.messages.filter(m => m.role === 'user').map(msg => (
-                <motion.div key={msg.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-                  className="flex justify-end">
+                <motion.div key={msg.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex justify-end">
                   <div className="max-w-[90%] rounded-xl bg-primary/10 border border-primary/15 px-3 py-2 text-[12px] text-foreground/80">
                     <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                     <p className="mt-1 text-[9px] text-muted-foreground/25">{msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
@@ -833,11 +1126,27 @@ export default function SiteBuilderPage() {
 
               {/* Humanized logs */}
               {chatLogs.map((log, i) => (
-                <motion.div key={`log-${i}`} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-2 rounded-lg bg-secondary/20 px-3 py-2">
-                  <span className="text-[11px] text-foreground/60">{log}</span>
+                <motion.div key={`log-${i}`} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}
+                  className="flex items-start gap-2 rounded-lg bg-secondary/15 px-3 py-2">
+                  <span className="text-[11px] leading-relaxed text-foreground/60">{log}</span>
                 </motion.div>
               ))}
+
+              {/* File creation notifications */}
+              {isGenerating && liveFiles.filter(f => f.path !== 'preview.html').length > 0 && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="rounded-lg border border-primary/10 bg-primary/5 px-3 py-2">
+                  <p className="text-[10px] font-medium text-primary/60 mb-1">📁 Arquivos criados:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {liveFiles.filter(f => f.path !== 'preview.html').slice(-6).map(f => (
+                      <span key={f.path} className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[9px] text-primary/50">
+                        <FileCode className="h-2.5 w-2.5" />
+                        {f.path.split('/').pop()}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
               {isGenerating && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 px-3 py-2">
@@ -856,12 +1165,11 @@ export default function SiteBuilderPage() {
 
           {/* Pipeline */}
           {(isGenerating || buildStage !== 'idle') && (
-            <div className="border-t border-border bg-card/30 p-3 max-h-64 overflow-y-auto">
+            <div className="border-t border-border bg-card/30 p-3 max-h-60 overflow-y-auto">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-muted-foreground/30">Pipeline</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/30">Pipeline</p>
                 <span className="text-[10px] text-primary/50">{STAGE_META[buildStage].pct}%</span>
               </div>
-              {/* Progress bar */}
               <div className="mb-3 h-1 w-full overflow-hidden rounded-full bg-secondary">
                 <motion.div className="h-full rounded-full bg-primary/60" animate={{ width: `${STAGE_META[buildStage].pct}%` }} transition={{ duration: 0.5 }} />
               </div>
@@ -874,7 +1182,7 @@ export default function SiteBuilderPage() {
             <div className="flex items-end gap-2 rounded-xl border border-border bg-secondary/20 px-3 py-2 transition-all focus-within:border-primary/25">
               <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                placeholder={isGenerating ? 'Aguarde o build...' : 'Descreva alterações...'}
+                placeholder={isGenerating ? 'Aguarde o build...' : 'Descreva alterações ou novo projeto...'}
                 rows={2} disabled={isGenerating}
                 className="flex-1 resize-none bg-transparent text-xs text-foreground/70 placeholder-muted-foreground/30 outline-none disabled:opacity-40"
               />
@@ -885,7 +1193,7 @@ export default function SiteBuilderPage() {
           </div>
         </div>
 
-        {/* ── Center: Preview / Code / Structure ── */}
+        {/* Center: Preview / Code / Structure */}
         <div className="flex flex-1 flex-col overflow-hidden">
           <div className="relative flex-1 overflow-auto p-3 lg:p-4">
             <AnimatePresence mode="wait">
@@ -897,15 +1205,18 @@ export default function SiteBuilderPage() {
                         <div className="absolute left-0 right-0 top-0 z-10 flex items-center gap-2.5 rounded-t-xl border-b border-primary/10 bg-card/90 px-4 py-2 backdrop-blur-md">
                           <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                           <span className="text-[11px] text-foreground/60">{STAGE_META[buildStage].label}</span>
-                          <div className="ml-auto h-1 w-20 overflow-hidden rounded-full bg-secondary">
-                            <motion.div className="h-full rounded-full bg-primary/50" animate={{ width: `${STAGE_META[buildStage].pct}%` }} transition={{ duration: 0.5 }} />
+                          <div className="ml-auto flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground/40">{displayFiles.filter(f => f.path !== 'preview.html').length} arquivos</span>
+                            <div className="h-1 w-20 overflow-hidden rounded-full bg-secondary">
+                              <motion.div className="h-full rounded-full bg-primary/50" animate={{ width: `${STAGE_META[buildStage].pct}%` }} transition={{ duration: 0.5 }} />
+                            </div>
                           </div>
                         </div>
                       )}
                       <iframe srcDoc={previewCode} className="h-full w-full rounded-xl border border-border bg-white shadow-lg" sandbox="allow-scripts allow-same-origin" title="Preview" />
                     </div>
                   ) : isGenerating ? (
-                    <SkeletonPreview stage={buildStage} />
+                    <SkeletonPreview stage={buildStage} fileCount={displayFiles.filter(f => f.path !== 'preview.html').length} />
                   ) : (
                     <div className="flex h-full flex-col items-center justify-center text-muted-foreground/15">
                       <Eye className="mb-3 h-14 w-14" />
@@ -918,13 +1229,19 @@ export default function SiteBuilderPage() {
 
               {centerMode === 'code' && (
                 <motion.div key="code" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-                  <LiveCodeEditor code={codeToShow} isStreaming={isGenerating} />
+                  <LiveCodeEditor
+                    files={displayFiles}
+                    activeFile={activeCodeFile || displayFiles.find(f => f.path !== 'preview.html')?.path || ''}
+                    onSelectFile={setActiveCodeFile}
+                    rawCode={rawOutput}
+                    isStreaming={isGenerating}
+                  />
                 </motion.div>
               )}
 
               {centerMode === 'structure' && (
                 <motion.div key="structure" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-                  <StructureView code={previewCode} />
+                  <StructureView files={displayFiles} isGenerating={isGenerating} stage={buildStage} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -941,7 +1258,8 @@ export default function SiteBuilderPage() {
               </span>
             </div>
             <div className="flex items-center gap-4 text-[10px] text-muted-foreground/25">
-              <span>HTML5 + Tailwind CSS</span>
+              <span>PHP + HTML + CSS + JS</span>
+              {displayFiles.length > 0 && <span>{displayFiles.filter(f => f.path !== 'preview.html').length} arquivos</span>}
               {previewCode && <span>{(previewCode.length / 1024).toFixed(1)}KB</span>}
             </div>
           </div>
