@@ -9,7 +9,7 @@ const PoliticaDePrivacidade = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link to="/admin/login">
+          <Link to="/">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -286,7 +286,7 @@ const PoliticaDePrivacidade = () => {
             <p>© {new Date().getFullYear()} Genesis. Todos os direitos reservados.</p>
             <p className="mt-2">
               Ao utilizar nossa plataforma, você concorda com nossa{' '}
-              <Link to="/termos" className="text-primary hover:underline">
+               <Link to="/termos-de-uso" className="text-primary hover:underline">
                 Termos de Uso
               </Link>
               {' '}e esta Política de Privacidade.

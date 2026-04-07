@@ -9,7 +9,7 @@ const TermosDeUso = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link to="/admin/login">
+          <Link to="/">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -258,7 +258,7 @@ const TermosDeUso = () => {
             <p>© {new Date().getFullYear()} Genesis. Todos os direitos reservados.</p>
             <p className="mt-2">
               Ao utilizar nossa plataforma, você concorda com estes Termos de Uso e nossa{' '}
-              <Link to="/privacidade" className="text-primary hover:underline">
+               <Link to="/politica-de-privacidade" className="text-primary hover:underline">
                 Política de Privacidade
               </Link>
               .
