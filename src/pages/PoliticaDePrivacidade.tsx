@@ -9,7 +9,7 @@ const PoliticaDePrivacidade = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link to="/admin/login">
+          <Link to="/">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -62,8 +62,8 @@ const PoliticaDePrivacidade = () => {
               <p>O Controlador de dados pessoais é:</p>
               <div className="p-4 rounded-xl bg-secondary/50 mt-4">
                 <p><strong>Genesis Hub</strong></p>
-                <p>E-mail: privacidade@genesishub.cloud</p>
-                <p>Encarregado de Proteção de Dados (DPO): contato@genesishub.cloud</p>
+                <p>E-mail: genesishubcore@gmail.com</p>
+                <p>WhatsApp: (27) 92000-5215</p>
               </div>
             </div>
           </section>
@@ -195,7 +195,7 @@ const PoliticaDePrivacidade = () => {
                   <p className="text-sm">Revogar o consentimento a qualquer momento</p>
                 </div>
               </div>
-              <p className="mt-4">Para exercer seus direitos, entre em contato conosco através do e-mail privacidade@genesishub.cloud. Responderemos em até 15 dias úteis.</p>
+              <p className="mt-4">Para exercer seus direitos, entre em contato conosco através do e-mail genesishubcore@gmail.com. Responderemos em até 15 dias úteis.</p>
             </div>
           </section>
 
@@ -273,9 +273,9 @@ const PoliticaDePrivacidade = () => {
             <div className="space-y-3 text-muted-foreground">
               <p>Para questões relacionadas a esta Política de Privacidade ou proteção de dados:</p>
               <div className="p-4 rounded-xl bg-secondary/50 mt-4">
-                <p><strong>Encarregado de Proteção de Dados (DPO)</strong></p>
-                <p>E-mail: privacidade@genesishub.cloud</p>
-                <p>WhatsApp: (11) 99999-9999</p>
+                <p><strong>Genesis Hub — Canal de Privacidade</strong></p>
+                <p>E-mail: genesishubcore@gmail.com</p>
+                <p>WhatsApp: (27) 92000-5215</p>
               </div>
               <p className="mt-4">Você também pode entrar em contato com a Autoridade Nacional de Proteção de Dados (ANPD) em caso de dúvidas ou reclamações: <a href="https://www.gov.br/anpd" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.gov.br/anpd</a></p>
             </div>
@@ -286,7 +286,7 @@ const PoliticaDePrivacidade = () => {
             <p>© {new Date().getFullYear()} Genesis. Todos os direitos reservados.</p>
             <p className="mt-2">
               Ao utilizar nossa plataforma, você concorda com nossa{' '}
-              <Link to="/termos" className="text-primary hover:underline">
+               <Link to="/termos-de-uso" className="text-primary hover:underline">
                 Termos de Uso
               </Link>
               {' '}e esta Política de Privacidade.

@@ -9,7 +9,7 @@ const TermosDeUso = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link to="/admin/login">
+          <Link to="/">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -245,10 +245,10 @@ const TermosDeUso = () => {
             <h2 className="text-xl font-bold mb-4">14. Contato</h2>
             <div className="space-y-3 text-muted-foreground">
               <p>Para dúvidas, sugestões ou exercício de direitos, entre em contato:</p>
-              <div className="p-4 rounded-xl bg-secondary/50 mt-4">
-                <p><strong>Genesis - Sistema de Gestão para Barbearias</strong></p>
-                <p>E-mail: contato@genesishub.cloud</p>
-                <p>WhatsApp: (11) 99999-9999</p>
+                <div className="p-4 rounded-xl bg-secondary/50 mt-4">
+                <p><strong>Genesis Hub — Automação Inteligente</strong></p>
+                <p>E-mail: genesishubcore@gmail.com</p>
+                <p>WhatsApp: (27) 92000-5215</p>
               </div>
             </div>
           </section>
@@ -258,7 +258,7 @@ const TermosDeUso = () => {
             <p>© {new Date().getFullYear()} Genesis. Todos os direitos reservados.</p>
             <p className="mt-2">
               Ao utilizar nossa plataforma, você concorda com estes Termos de Uso e nossa{' '}
-              <Link to="/privacidade" className="text-primary hover:underline">
+               <Link to="/politica-de-privacidade" className="text-primary hover:underline">
                 Política de Privacidade
               </Link>
               .

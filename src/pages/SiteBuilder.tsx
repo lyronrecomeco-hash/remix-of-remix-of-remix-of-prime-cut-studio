@@ -793,21 +793,39 @@ export default function SiteBuilder() {
     addLogEntry({ type: 'status', content: 'Entendendo seu pedido...', stage: 'entendendo_prompt' });
 
     try {
-      const resp = await fetch(CHAT_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'apikey': SUPABASE_KEY,
-        },
-        body: JSON.stringify({
-          messages: allMessages.map(m => ({ role: m.role, content: m.content })),
-        }),
-      });
+      // Retry logic for 429 rate limits
+      const MAX_RETRIES = 3;
+      let resp: Response | null = null;
+      
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        if (attempt > 0) {
+          const waitSec = Math.pow(2, attempt) * 3; // 6s, 12s
+          addLogEntry({ type: 'status', content: `Aguardando ${waitSec}s antes de tentar novamente...` });
+          await new Promise(r => setTimeout(r, waitSec * 1000));
+        }
+        
+        resp = await fetch(CHAT_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'apikey': SUPABASE_KEY,
+          },
+          body: JSON.stringify({
+            messages: allMessages.map(m => ({ role: m.role, content: m.content })),
+          }),
+        });
+        
+        if (resp.status !== 429) break;
+        
+        if (attempt < MAX_RETRIES - 1) {
+          addLogEntry({ type: 'status', content: `Rate limit atingido, tentativa ${attempt + 2}/${MAX_RETRIES}...` });
+        }
+      }
 
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ error: 'Erro desconhecido' }));
-        throw new Error(err.error || `Erro ${resp.status}`);
+      if (!resp || !resp.ok) {
+        const err = await resp?.json().catch(() => ({ error: 'Erro desconhecido' }));
+        throw new Error(err?.error || `Erro ${resp?.status}`);
       }
 
       addLogEntry({ type: 'status', content: 'Definindo a arquitetura do projeto...', stage: 'definindo_arquitetura' });
