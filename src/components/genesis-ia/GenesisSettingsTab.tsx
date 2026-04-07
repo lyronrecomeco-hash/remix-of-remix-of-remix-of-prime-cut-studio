@@ -7,7 +7,8 @@ import {
   Shield,
   Globe,
   Palette,
-  Lock
+  Lock,
+  Bot
 } from 'lucide-react';
 import { GenesisPasswordModal } from './GenesisPasswordModal';
 import { SubscriptionBillingCardIA } from './billing';
@@ -53,7 +54,7 @@ const DEFAULT_SETTINGS: GenesisSettings = {
   compactMode: false,
 };
 
-type CategoryId = 'billing' | 'notifications' | 'radar' | 'security' | 'site';
+type CategoryId = 'billing' | 'notifications' | 'radar' | 'security' | 'site' | 'bot';
 
 const categories = [
   { id: 'billing' as CategoryId, icon: Settings, label: 'Fatura', color: 'bg-emerald-500/20 text-emerald-400' },
@@ -61,6 +62,7 @@ const categories = [
   { id: 'radar' as CategoryId, icon: Globe, label: 'Radar', color: 'bg-cyan-500/20 text-cyan-400' },
   { id: 'security' as CategoryId, icon: Shield, label: 'Segurança', color: 'bg-rose-500/20 text-rose-400' },
   { id: 'site' as CategoryId, icon: Palette, label: 'Site', color: 'bg-purple-500/20 text-purple-400' },
+  { id: 'bot' as CategoryId, icon: Bot, label: 'Bot Suporte', color: 'bg-blue-500/20 text-blue-400' },
 ];
 
 export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
