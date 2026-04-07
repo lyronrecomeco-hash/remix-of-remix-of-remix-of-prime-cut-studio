@@ -99,6 +99,20 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Navigation, Compass, Layers, Box
 };
 
+// Connected notifications tab that reads from the shared store
+const NotificationsTabConnected = () => {
+  const { notifications, markAllRead, clearAll, markRead, removeNotification } = useGenesisNotifications();
+  return (
+    <GenesisNotificationsTab
+      notifications={notifications}
+      onMarkAllRead={markAllRead}
+      onClearAll={clearAll}
+      onMarkRead={markRead}
+      onRemove={removeNotification}
+    />
+  );
+};
+
 const GenesisIADashboard = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("");
@@ -836,6 +850,7 @@ const GenesisIADashboard = () => {
   };
 
   return (
+    <GenesisNotificationProvider>
     <FullPageEditor>
       {(ctx) => {
         const { config, isEditMode } = ctx;
@@ -1106,6 +1121,7 @@ const GenesisIADashboard = () => {
         );
       }}
     </FullPageEditor>
+    </GenesisNotificationProvider>
   );
 };
 
