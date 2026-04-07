@@ -63,6 +63,7 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
   const [mobileLeftOpen, setMobileLeftOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
