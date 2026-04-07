@@ -53,7 +53,7 @@ export function PresenceTracker() {
     if (!user) return;
 
     try {
-      const currentPage = `${window.location.pathname}${window.location.search}`;
+      const currentPage = window.location.pathname;
       detailsRef.current.userAgent = navigator.userAgent.slice(0, 120);
       detailsRef.current.viewport = `${window.innerWidth}x${window.innerHeight}`;
 
