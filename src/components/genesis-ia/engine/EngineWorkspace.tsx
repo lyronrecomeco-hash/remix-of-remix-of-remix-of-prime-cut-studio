@@ -17,7 +17,8 @@ import {
 import '@xyflow/react/dist/style.css';
 import {
   Cpu, ArrowLeft, Camera, Loader2, PanelLeft, PanelLeftClose,
-  PanelRight, PanelRightClose, ChevronLeft, Rocket, LayoutGrid
+  PanelRight, PanelRightClose, ChevronLeft, Rocket, LayoutGrid,
+  HelpCircle, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
