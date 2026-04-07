@@ -35,11 +35,7 @@ const TEMPLATES: TemplateInfo[] = [
     gradient: 'from-amber-900 via-zinc-900 to-zinc-950',
     accent: 'amber',
     available: true,
-    preview: {
-      title: 'Barber Studio',
-      subtitle: 'Tradição e Estilo',
-      badge: '✂️ Experiência Premium'
-    }
+    preview: { title: 'Barber Studio', subtitle: 'Tradição e Estilo', badge: '✂️ Experiência Premium' }
   },
   {
     id: 'academia',
@@ -50,11 +46,7 @@ const TEMPLATES: TemplateInfo[] = [
     gradient: 'from-red-900 via-zinc-900 to-zinc-950',
     accent: 'red',
     available: true,
-    preview: {
-      title: 'Power Gym',
-      subtitle: 'Transforme seu corpo',
-      badge: '💪 Treine com os melhores'
-    }
+    preview: { title: 'Power Gym', subtitle: 'Transforme seu corpo', badge: '💪 Treine com os melhores' }
   },
   {
     id: 'clinica-estetica',
@@ -65,11 +57,73 @@ const TEMPLATES: TemplateInfo[] = [
     gradient: 'from-stone-800 via-stone-900 to-stone-950',
     accent: 'amber',
     available: true,
-    preview: {
-      title: 'Essence Estética',
-      subtitle: 'Realce sua beleza natural',
-      badge: '✨ Estética Avançada'
-    }
+    preview: { title: 'Essence Estética', subtitle: 'Realce sua beleza natural', badge: '✨ Estética Avançada' }
+  },
+  {
+    id: 'restaurante',
+    name: 'Restaurante',
+    description: 'Para restaurantes, bares e lanchonetes',
+    category: 'food',
+    route: '/restaurante',
+    gradient: 'from-orange-900 via-zinc-900 to-zinc-950',
+    accent: 'orange',
+    available: true,
+    preview: { title: 'Sabor & Arte', subtitle: 'Gastronomia de qualidade', badge: '🍽️ Menu Digital' }
+  },
+  {
+    id: 'petshop',
+    name: 'Pet Shop',
+    description: 'Para pet shops e clínicas veterinárias',
+    category: 'services',
+    route: '/petshop',
+    gradient: 'from-teal-900 via-zinc-900 to-zinc-950',
+    accent: 'teal',
+    available: true,
+    preview: { title: 'Happy Pet', subtitle: 'Cuidado com amor', badge: '🐾 Pet Care' }
+  },
+  {
+    id: 'dentista',
+    name: 'Consultório Odontológico',
+    description: 'Para dentistas e clínicas odontológicas',
+    category: 'health',
+    route: '/dentista',
+    gradient: 'from-cyan-900 via-zinc-900 to-zinc-950',
+    accent: 'cyan',
+    available: true,
+    preview: { title: 'Sorriso Perfeito', subtitle: 'Odontologia moderna', badge: '🦷 Seu Sorriso' }
+  },
+  {
+    id: 'advocacia',
+    name: 'Escritório de Advocacia',
+    description: 'Para advogados e escritórios jurídicos',
+    category: 'professional',
+    route: '/advocacia',
+    gradient: 'from-slate-800 via-slate-900 to-zinc-950',
+    accent: 'slate',
+    available: true,
+    preview: { title: 'Silva & Associados', subtitle: 'Justiça e compromisso', badge: '⚖️ Advocacia' }
+  },
+  {
+    id: 'nutricionista',
+    name: 'Nutricionista',
+    description: 'Para nutricionistas e consultórios',
+    category: 'health',
+    route: '/nutricionista',
+    gradient: 'from-green-900 via-zinc-900 to-zinc-950',
+    accent: 'green',
+    available: true,
+    preview: { title: 'Vida Saudável', subtitle: 'Nutrição personalizada', badge: '🥗 Saúde & Bem-estar' }
+  },
+  {
+    id: 'imobiliaria',
+    name: 'Imobiliária',
+    description: 'Para imobiliárias e corretores',
+    category: 'professional',
+    route: '/imobiliaria',
+    gradient: 'from-blue-900 via-zinc-900 to-zinc-950',
+    accent: 'blue',
+    available: true,
+    preview: { title: 'Lar Imóveis', subtitle: 'Seu novo lar', badge: '🏠 Imóveis' }
   },
 ];
 
