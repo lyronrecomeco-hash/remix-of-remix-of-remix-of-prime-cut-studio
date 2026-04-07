@@ -205,12 +205,14 @@ const CaktoReturn = () => {
           transition={{ delay: 0.4 }}
           className="bg-[#12121a] border border-white/5 rounded-2xl p-6 space-y-5"
         >
-          {/* Email (locked) */}
+          {/* Email */}
           <div className="space-y-2">
             <Label className="text-gray-300 text-sm">E-mail</Label>
             <Input
               value={email}
-              disabled
+              onChange={emailParam ? undefined : (e) => setEmail(e.target.value)}
+              disabled={!!emailParam}
+              placeholder="Seu e-mail de compra"
               className="bg-white/5 border-white/10 text-gray-300 h-11 rounded-xl"
             />
           </div>
