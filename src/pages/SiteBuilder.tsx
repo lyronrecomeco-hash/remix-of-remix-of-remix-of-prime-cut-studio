@@ -1083,17 +1083,33 @@ export default function SiteBuilderPage() {
         {/* Right Actions */}
         <div className="flex items-center gap-1 px-4 py-2.5">
           {centerMode === 'preview' && (
-            <div className="mr-2 hidden items-center gap-0.5 rounded-lg border border-border bg-secondary/30 p-0.5 md:flex">
+            <div className="mr-2 hidden items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-2 py-1 md:flex">
               {([
-                { mode: 'desktop' as ViewMode, icon: Monitor },
-                { mode: 'tablet' as ViewMode, icon: Tablet },
-                { mode: 'mobile' as ViewMode, icon: Smartphone },
-              ]).map(({ mode, icon: Icon }) => (
-                <button key={mode} onClick={() => setViewMode(mode)}
+                { mode: 'desktop' as ViewMode, icon: Monitor, w: 1440 },
+                { mode: 'tablet' as ViewMode, icon: Tablet, w: 768 },
+                { mode: 'mobile' as ViewMode, icon: Smartphone, w: 375 },
+              ]).map(({ mode, icon: Icon, w }) => (
+                <button key={mode} onClick={() => handleViewMode(mode)}
                   className={`rounded-md p-1.5 transition-all ${viewMode === mode ? 'bg-primary/15 text-primary' : 'text-muted-foreground/30 hover:text-muted-foreground/60'}`}>
                   <Icon className="h-3.5 w-3.5" />
                 </button>
               ))}
+              <div className="mx-1 h-4 w-px bg-border" />
+              <input
+                type="range"
+                min={320}
+                max={1440}
+                value={customWidth}
+                onChange={e => {
+                  const w = Number(e.target.value);
+                  setCustomWidth(w);
+                  if (w >= 1024) setViewMode('desktop');
+                  else if (w >= 600) setViewMode('tablet');
+                  else setViewMode('mobile');
+                }}
+                className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-secondary accent-primary [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
+              />
+              <span className="min-w-[40px] text-center font-mono text-[10px] text-muted-foreground/40">{customWidth}px</span>
             </div>
           )}
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyCode} disabled={!rawOutput}>
@@ -1202,7 +1218,7 @@ export default function SiteBuilderPage() {
               {centerMode === 'preview' && (
                 <motion.div key="preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative h-full">
                   {previewCode ? (
-                    <div className="relative mx-auto h-full" style={{ maxWidth: viewportWidths[viewMode] }}>
+                    <div className="relative mx-auto h-full transition-all duration-200" style={{ maxWidth: `${customWidth}px` }}>
                       {isGenerating && (
                         <div className="absolute left-0 right-0 top-0 z-10 flex items-center gap-2.5 rounded-t-xl border-b border-primary/10 bg-card/90 px-4 py-2 backdrop-blur-md">
                           <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
