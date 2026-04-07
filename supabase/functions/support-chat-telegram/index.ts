@@ -59,9 +59,10 @@ async function sendTelegramPhoto(chatId: number | string, fileBase64: string, fi
   return res.json();
 }
 
-async function setupWebhook(supabaseUrl: string) {
+async function setupWebhook(supabaseUrl: string, anonKey: string) {
   const botToken = getBotToken();
-  const webhookUrl = `${supabaseUrl}/functions/v1/support-chat-telegram`;
+  // Include anon key so Supabase gateway accepts Telegram's raw POST
+  const webhookUrl = `${supabaseUrl}/functions/v1/support-chat-telegram?apikey=${anonKey}`;
 
   const res = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
     method: 'POST',
