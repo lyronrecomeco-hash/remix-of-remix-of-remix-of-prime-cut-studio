@@ -41,6 +41,8 @@ interface GenesisSettings {
   radarCountries: string[];
   theme: 'dark' | 'light' | 'system';
   compactMode: boolean;
+  botEnabled?: boolean;
+  telegramChatId?: string;
 }
 
 const DEFAULT_SETTINGS: GenesisSettings = {
