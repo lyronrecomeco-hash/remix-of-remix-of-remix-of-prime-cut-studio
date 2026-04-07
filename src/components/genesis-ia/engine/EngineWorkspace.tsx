@@ -510,6 +510,87 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
           sessionId={session?.id}
         />
       )}
+      {/* Help Modal */}
+      <AnimatePresence>
+        {showHelpModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowHelpModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-lg mx-4 rounded-2xl border border-white/10 bg-card p-6 shadow-2xl max-h-[85vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Cpu className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-foreground">Genesis Engine</h2>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">Em fase de testes</span>
+                  </div>
+                </div>
+                <button onClick={() => setShowHelpModal(false)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10">
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-sm text-muted-foreground">
+                <div>
+                  <h3 className="font-semibold text-foreground mb-1">O que é o Engine?</h3>
+                  <p>O Genesis Engine é um motor de execução visual que transforma sua estratégia comercial em workflows automatizados. Cada bloco representa uma ação ou decisão no seu processo de vendas.</p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-foreground mb-1">Como usar</h3>
+                  <ol className="list-decimal list-inside space-y-1">
+                    <li>Adicione blocos pelo painel lateral esquerdo</li>
+                    <li>Conecte os blocos arrastando entre os pontos</li>
+                    <li>Configure cada bloco clicando nele</li>
+                    <li>Use a IA contextual (painel direito) para gerar estratégias</li>
+                    <li>Valide e execute o fluxo pelos controles no topo</li>
+                  </ol>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-foreground mb-1">Categorias de blocos</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-2 rounded-lg bg-white/5 border border-white/10">
+                      <span className="text-xs font-medium text-cyan-400">CONTEXTO</span>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Dados do prospect, diagnóstico</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/5 border border-white/10">
+                      <span className="text-xs font-medium text-amber-400">DECISÃO</span>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Condições e roteamento</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/5 border border-white/10">
+                      <span className="text-xs font-medium text-emerald-400">AÇÃO</span>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">WhatsApp, proposta, email</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/5 border border-white/10">
+                      <span className="text-xs font-medium text-rose-400">CONTROLE</span>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Espera, repetição, paralelo</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-xs text-amber-400">
+                    ⚠️ <strong>Fase de testes:</strong> Algumas funcionalidades podem estar em desenvolvimento. Relatórios de bugs e sugestões são bem-vindos pelo suporte.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
