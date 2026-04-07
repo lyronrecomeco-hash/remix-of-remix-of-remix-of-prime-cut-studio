@@ -230,6 +230,17 @@ export const EngineWorkspace = ({ affiliateId, proposal, onBack }: EngineWorkspa
         </div>
 
         <div className="flex items-center gap-1">
+          {/* Help Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowHelpModal(true)}
+            className="h-7 w-7 p-0 text-amber-400/70 hover:text-amber-400 hover:bg-amber-500/10"
+            title="Como funciona o Engine"
+          >
+            <HelpCircle className="w-4 h-4" />
+          </Button>
+          <div className="w-px h-4 bg-white/10 hidden sm:block" />
           {saving && (
             <span className="text-[10px] text-white/30 flex items-center gap-1 mr-1">
               <Loader2 className="w-3 h-3 animate-spin" /> Salvando
