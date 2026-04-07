@@ -59,11 +59,20 @@ const generateId = () => Date.now().toString(36) + Math.random().toString(36).sl
 
 function parseFiles(rawText: string): ProjectFile[] {
   const files: ProjectFile[] = [];
-  const parts = rawText.split(/===FILE:([^=]+)===/);
-  for (let i = 1; i < parts.length; i += 2) {
-    const path = parts[i].trim();
-    const content = (parts[i + 1] || '').trim();
-    if (!path || !content) continue;
+  // Match ===FILE:path=== blocks - handle streaming where last file may be incomplete
+  const regex = /===FILE:([^=\n]+)===/g;
+  const matches: { path: string; start: number }[] = [];
+  let match;
+  while ((match = regex.exec(rawText)) !== null) {
+    matches.push({ path: match[1].trim(), start: match.index + match[0].length });
+  }
+  for (let i = 0; i < matches.length; i++) {
+    const path = matches[i].path;
+    const start = matches[i].start;
+    const end = i + 1 < matches.length ? matches[i + 1].start - `===FILE:${matches[i + 1].path}===`.length : rawText.length;
+    const content = rawText.slice(start, end).trim();
+    if (!path) continue;
+    // Allow files with partial content during streaming
     let category: ProjectFile['category'] = 'frontend';
     if (path === 'preview.html') category = 'preview';
     else if (/controller|model|config|helper/i.test(path) && path.endsWith('.php')) category = 'backend';
@@ -79,9 +88,9 @@ function parseFiles(rawText: string): ProjectFile[] {
 function getPreviewHtml(files: ProjectFile[]): string {
   const preview = files.find(f => f.path === 'preview.html');
   if (!preview) return '';
-  // Only return if it has enough content to render
   const c = preview.content;
-  if (c.includes('</html>') || c.includes('</body>') || c.length > 500) return c;
+  // Show preview as soon as we have a meaningful HTML fragment (body tag or 200+ chars)
+  if (c.includes('</html>') || c.includes('</body>') || c.includes('<body') || c.length > 200) return c;
   return '';
 }
 
@@ -826,14 +835,16 @@ export default function SiteBuilder() {
           try {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
+              if (content) {
               fullContent += content;
               setRawOutput(fullContent);
 
+              // Parse files more frequently during streaming
               const currentFiles = parseFiles(fullContent);
+              setLiveFiles(currentFiles);
+              
               if (currentFiles.length > 0) {
-                setLiveFiles(currentFiles);
-                // Update preview progressively
+                // Update preview progressively - show as soon as possible
                 const previewHtml = getPreviewHtml(currentFiles);
                 if (previewHtml) setLiveHtml(previewHtml);
 
