@@ -245,10 +245,10 @@ const TermosDeUso = () => {
             <h2 className="text-xl font-bold mb-4">14. Contato</h2>
             <div className="space-y-3 text-muted-foreground">
               <p>Para dúvidas, sugestões ou exercício de direitos, entre em contato:</p>
-              <div className="p-4 rounded-xl bg-secondary/50 mt-4">
-                <p><strong>Genesis - Sistema de Gestão para Barbearias</strong></p>
-                <p>E-mail: contato@genesishub.cloud</p>
-                <p>WhatsApp: (11) 99999-9999</p>
+                <div className="p-4 rounded-xl bg-secondary/50 mt-4">
+                <p><strong>Genesis Hub — Automação Inteligente</strong></p>
+                <p>E-mail: genesishubcore@gmail.com</p>
+                <p>WhatsApp: (27) 92000-5215</p>
               </div>
             </div>
           </section>
