@@ -33,6 +33,9 @@ const CasapetPage = lazy(() => import("./pages/casapet"));
 const StarpetshopPage = lazy(() => import("./pages/starpetshop"));
 const PromoPage = lazy(() => import("./pages/PromoPage"));
 const SiteBuilder = lazy(() => import("./pages/SiteBuilder"));
+const TermosDeUso = lazy(() => import("./pages/TermosDeUso"));
+const PoliticaDePrivacidade = lazy(() => import("./pages/PoliticaDePrivacidade"));
+const PoliticaDeCookies = lazy(() => import("./pages/PoliticaDeCookies"));
 
 // QueryClient com retry logic e cache otimizado
 const queryClient = new QueryClient({
@@ -154,6 +157,11 @@ const AppContent = () => {
 
             {/* Site Builder */}
             <Route path="/creat-site" element={<SiteBuilder />} />
+
+            {/* Páginas Legais */}
+            <Route path="/termos-de-uso" element={<TermosDeUso />} />
+            <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
+            <Route path="/politica-de-cookies" element={<PoliticaDeCookies />} />
 
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
