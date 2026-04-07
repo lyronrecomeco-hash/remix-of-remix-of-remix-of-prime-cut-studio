@@ -179,9 +179,9 @@ serve(async (req) => {
     // 4. Upsert genesis_subscriptions using genesis_users.id
     let expiresAt: Date;
     if (isMentorado) {
-      // 3-day trial
+      // 2-day trial
       expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 3);
+      expiresAt.setDate(expiresAt.getDate() + 2);
     } else {
       expiresAt = calculateAccessExpiration(new Date(), durationMonths);
     }
