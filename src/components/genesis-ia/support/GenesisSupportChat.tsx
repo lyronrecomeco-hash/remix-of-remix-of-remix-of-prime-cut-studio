@@ -352,9 +352,9 @@ export function GenesisSupportChat() {
         className="fixed bottom-5 right-5 z-50 group"
         aria-label="Abrir chat de suporte"
       >
-        <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-sky-300/40 bg-sky-100 text-sky-600 shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-400/60 dark:border-sky-500/30 dark:bg-sky-900/40 dark:text-sky-300">
+        <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-sky-500/30 bg-sky-950/80 text-sky-400 shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-400/50 hover:bg-sky-900/80">
           <Bot className="h-6 w-6" />
-          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background bg-sky-500" />
+          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background bg-sky-400" />
         </div>
       </button>
     );
@@ -370,9 +370,9 @@ export function GenesisSupportChat() {
       className="fixed bottom-4 right-4 z-50 flex w-[calc(100vw-20px)] max-w-[430px] flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/95 shadow-card backdrop-blur-xl"
       style={{ maxHeight: 'min(800px, calc(100vh - 32px))' }}
     >
-      <div className="relative flex items-center justify-between gap-3 border-b border-border bg-sky-50 px-4 py-4 dark:bg-sky-950/30">
+      <div className="relative flex items-center justify-between gap-3 border-b border-sky-500/20 bg-sky-950/60 px-4 py-4">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-sky-200 bg-sky-100 text-sky-600 dark:border-sky-700 dark:bg-sky-900/50 dark:text-sky-300">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-sky-500/30 bg-sky-900/50 text-sky-400">
             <Icon className={`h-5 w-5 ${chatMode === 'connecting' ? 'animate-spin' : ''}`} />
           </div>
           <div className="min-w-0">
