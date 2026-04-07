@@ -545,7 +545,7 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
                         {online && presence?.current_page && (
                           <span className="flex items-center gap-1 text-emerald-400/70">
                             <MonitorSmartphone className="w-3 h-3" />
-                            {presence.current_page}
+                            {presence.current_page.split('?')[0].replace('/login/', '').split('/').filter(Boolean).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' › ') || 'Dashboard'}
                           </span>
                         )}
                       </div>
