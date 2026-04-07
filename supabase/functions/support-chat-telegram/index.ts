@@ -84,6 +84,7 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
 
   if (!supabaseUrl || !supabaseKey) {
     return new Response(JSON.stringify({ error: 'Server configuration error' }), {
@@ -106,7 +107,7 @@ serve(async (req) => {
      }
 
      if (action === 'setup_webhook') {
-       const result = await setupWebhook(supabaseUrl);
+       const result = await setupWebhook(supabaseUrl, anonKey);
        return new Response(JSON.stringify({ success: Boolean(result?.ok), result }), {
          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
        });
