@@ -96,7 +96,13 @@ function formatTime(time: string | null): string {
 
 function formatPage(page: string | null) {
   if (!page) return 'Desconhecida';
-  return PAGE_LABELS[page] || page;
+  // Strip query params and tokens from page path
+  const cleanPage = page.split('?')[0];
+  if (PAGE_LABELS[cleanPage]) return PAGE_LABELS[cleanPage];
+  // Convert path to readable label
+  const parts = cleanPage.replace('/login/', '').split('/').filter(Boolean);
+  if (parts.length === 0) return 'Dashboard';
+  return parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' › ');
 }
 
 export const UserPermissionsModal = ({ open, onOpenChange, user }: UserPermissionsModalProps) => {
