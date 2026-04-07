@@ -695,6 +695,50 @@ export const GenesisUsersTab = ({ userId }: GenesisUsersTabProps) => {
         onOpenChange={(open) => !open && setPermissionsUser(null)}
         user={permissionsUser}
       />
+
+      {/* Modal Aumentar Dias */}
+      <Dialog open={!!extendDaysUser} onOpenChange={(o) => !o && setExtendDaysUser(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Aumentar Dias de Acesso</DialogTitle>
+            <DialogDescription>
+              {extendDaysUser?.name} — {extendDaysUser?.email}
+              {extendDaysUser?.subscription_expires_at && (
+                <span className="block mt-1 text-xs">
+                  Expira: {new Date(extendDaysUser.subscription_expires_at).toLocaleDateString('pt-BR')}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Dias a adicionar</Label>
+              <Input
+                className="h-9"
+                type="number"
+                min="1"
+                value={extendDaysValue}
+                onChange={(e) => setExtendDaysValue(e.target.value)}
+                placeholder="7"
+              />
+            </div>
+            <div className="flex gap-2">
+              {[3, 7, 15, 30].map(d => (
+                <Button key={d} variant="outline" size="sm" onClick={() => setExtendDaysValue(String(d))} className={extendDaysValue === String(d) ? 'border-primary' : ''}>
+                  {d}d
+                </Button>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setExtendDaysUser(null)}>Cancelar</Button>
+            <Button size="sm" onClick={handleExtendDays} disabled={extendingDays}>
+              {extendingDays && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Adicionar +{extendDaysValue} dias
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
