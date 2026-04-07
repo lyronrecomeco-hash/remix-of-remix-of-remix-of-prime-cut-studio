@@ -231,7 +231,7 @@ serve(async (req) => {
         genesisUserId,
         plan: planName,
         isTrial: isMentorado,
-        trialDays: isMentorado ? 3 : undefined,
+        trialDays: isMentorado ? 2 : undefined,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
