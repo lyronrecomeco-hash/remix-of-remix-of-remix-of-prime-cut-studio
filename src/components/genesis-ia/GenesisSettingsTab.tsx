@@ -7,7 +7,8 @@ import {
   Shield,
   Globe,
   Palette,
-  Lock
+  Lock,
+  Bot
 } from 'lucide-react';
 import { GenesisPasswordModal } from './GenesisPasswordModal';
 import { SubscriptionBillingCardIA } from './billing';
@@ -53,7 +54,7 @@ const DEFAULT_SETTINGS: GenesisSettings = {
   compactMode: false,
 };
 
-type CategoryId = 'billing' | 'notifications' | 'radar' | 'security' | 'site';
+type CategoryId = 'billing' | 'notifications' | 'radar' | 'security' | 'site' | 'bot';
 
 const categories = [
   { id: 'billing' as CategoryId, icon: Settings, label: 'Fatura', color: 'bg-emerald-500/20 text-emerald-400' },
@@ -61,6 +62,7 @@ const categories = [
   { id: 'radar' as CategoryId, icon: Globe, label: 'Radar', color: 'bg-cyan-500/20 text-cyan-400' },
   { id: 'security' as CategoryId, icon: Shield, label: 'Segurança', color: 'bg-rose-500/20 text-rose-400' },
   { id: 'site' as CategoryId, icon: Palette, label: 'Site', color: 'bg-purple-500/20 text-purple-400' },
+  { id: 'bot' as CategoryId, icon: Bot, label: 'Bot Suporte', color: 'bg-blue-500/20 text-blue-400' },
 ];
 
 export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
@@ -374,6 +376,67 @@ export const GenesisSettingsTab = ({ userId }: GenesisSettingsTabProps) => {
 
       {activeCategory === 'site' && isAdmin && (
         <SiteCustomizationSection />
+      )}
+
+      {/* Bot Support Config - Only for super admin */}
+      {activeCategory === 'bot' && isAdmin && (
+        <Card className="bg-white/5 border-white/10" style={{ borderRadius: '14px' }}>
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <Bot className="w-4 h-4 text-blue-400" />
+              </div>
+              <h4 className="font-semibold text-white">Bot de Suporte (Telegram)</h4>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm text-white/70">Ativar bot de suporte</Label>
+                <Switch
+                  checked={settings.botEnabled ?? false}
+                  onCheckedChange={async (v) => {
+                    const newSettings = { ...settings, botEnabled: v };
+                    setSettings(newSettings as any);
+                    await supabase.from('admin_settings').upsert({
+                      user_id: userId,
+                      setting_type: 'telegram_support_bot',
+                      settings: { enabled: v, telegram_chat_id: (settings as any).telegramChatId || '' },
+                    }, { onConflict: 'user_id,setting_type' });
+                    toast.success(v ? 'Bot ativado' : 'Bot desativado');
+                  }}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-sm text-white/70">Telegram Chat ID</Label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Ex: 123456789"
+                    defaultValue={(settings as any).telegramChatId || ''}
+                    onChange={(e) => setSettings({ ...settings, telegramChatId: e.target.value } as any)}
+                    className="flex-1 h-9 px-3 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      const chatId = (settings as any).telegramChatId;
+                      if (!chatId) { toast.error('Insira o Chat ID'); return; }
+                      await supabase.from('admin_settings').upsert({
+                        user_id: userId,
+                        setting_type: 'telegram_support_bot',
+                        settings: { enabled: true, telegram_chat_id: chatId },
+                      }, { onConflict: 'user_id,setting_type' });
+                      toast.success('Chat ID salvo!');
+                    }}
+                    className="h-9"
+                  >
+                    <Save className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-[10px] text-white/40">Use @userinfobot no Telegram para descobrir seu Chat ID</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Password Change Modal */}

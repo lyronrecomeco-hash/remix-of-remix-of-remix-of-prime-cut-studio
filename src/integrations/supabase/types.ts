@@ -12313,6 +12313,45 @@ export type Database = {
           },
         ]
       }
+      prompt_learning_history: {
+        Row: {
+          created_at: string
+          feedback_score: number | null
+          id: string
+          language: string | null
+          niche: string | null
+          platform: string | null
+          prompt_hash: string | null
+          prompt_length: number | null
+          sections_used: string[] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_score?: number | null
+          id?: string
+          language?: string | null
+          niche?: string | null
+          platform?: string | null
+          prompt_hash?: string | null
+          prompt_length?: number | null
+          sections_used?: string[] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_score?: number | null
+          id?: string
+          language?: string | null
+          niche?: string | null
+          platform?: string | null
+          prompt_hash?: string | null
+          prompt_length?: number | null
+          sections_used?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       proposal_questionnaire_history: {
         Row: {
           ai_follow_up: string | null
@@ -13378,6 +13417,80 @@ export type Database = {
           name?: string
           price?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      support_chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          sender_type: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          sender_type: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          sender_type?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "support_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_chat_sessions: {
+        Row: {
+          admin_telegram_chat_id: number | null
+          admin_telegram_message_id: number | null
+          closed_at: string | null
+          created_at: string
+          first_message: string | null
+          id: string
+          status: string
+          updated_at: string
+          user_email: string | null
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          admin_telegram_chat_id?: number | null
+          admin_telegram_message_id?: number | null
+          closed_at?: string | null
+          created_at?: string
+          first_message?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          admin_telegram_chat_id?: number | null
+          admin_telegram_message_id?: number | null
+          closed_at?: string | null
+          created_at?: string
+          first_message?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string
+          user_name?: string | null
         }
         Relationships: []
       }
