@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   AlertCircle,
   Bot,
@@ -51,6 +51,31 @@ const msg = (
   extra?: Partial<Pick<Message, 'hasWhatsAppButton' | 'timestamp'>>,
 ): Message => ({ id: uid(), role, content, ...extra });
 
+const BUBBLE_MESSAGES = [
+  'Oi! Estou aqui se precisar de mim! 😊',
+  'Precisa de ajuda? É só chamar! 💬',
+  'Olá! Posso te ajudar com algo? ✨',
+  'Ei! Qualquer dúvida, estou por aqui! 🚀',
+];
+
+const playBubbleSound = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.08);
+    osc.frequency.exponentialRampToValueAtTime(980, ctx.currentTime + 0.15);
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } catch { /* no audio */ }
+};
+
 export function GenesisSupportChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -61,8 +86,26 @@ export function GenesisSupportChat() {
   const [showSupportOptions, setShowSupportOptions] = useState(false);
   const [liveSupportAvailable, setLiveSupportAvailable] = useState<boolean | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [bubbleText, setBubbleText] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bubbleIndexRef = useRef(0);
+
+  // Proactive bubble every 10 min (+ initial after 5s)
+  useEffect(() => {
+    const show = () => {
+      if (isOpen) return;
+      const text = BUBBLE_MESSAGES[bubbleIndexRef.current % BUBBLE_MESSAGES.length];
+      bubbleIndexRef.current++;
+      setBubbleText(text);
+      playBubbleSound();
+      setTimeout(() => setBubbleText(null), 6000);
+    };
+
+    const initialTimer = setTimeout(show, 5000);
+    const interval = setInterval(show, 10 * 60 * 1000);
+    return () => { clearTimeout(initialTimer); clearInterval(interval); };
+  }, [isOpen]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -346,17 +389,38 @@ export function GenesisSupportChat() {
   // --- CLOSED STATE: FAB BUTTON ---
   if (!isOpen) {
     return (
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-5 right-5 z-50 group"
-        aria-label="Abrir chat de suporte"
-      >
-        <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-sky-500/30 bg-sky-950/80 text-sky-400 shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-400/50 hover:bg-sky-900/80">
-          <Bot className="h-6 w-6" />
-          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background bg-sky-400" />
-        </div>
-      </button>
+      <div className="fixed bottom-5 right-5 z-50 flex items-end gap-3">
+        <AnimatePresence>
+          {bubbleText && (
+            <motion.div
+              initial={{ opacity: 0, x: 20, scale: 0.9 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 20, scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              onClick={() => { setBubbleText(null); setIsOpen(true); }}
+              className="cursor-pointer mb-1 max-w-[220px] rounded-2xl rounded-br-md border border-sky-500/30 bg-sky-950/90 px-4 py-3 shadow-lg backdrop-blur-sm"
+            >
+              <p className="text-[13px] leading-snug text-sky-100 font-medium">{bubbleText}</p>
+              <div className="mt-1 flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
+                <span className="text-[10px] text-sky-400/70">Genesis IA</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button
+          type="button"
+          onClick={() => { setBubbleText(null); setIsOpen(true); }}
+          className="group"
+          aria-label="Abrir chat de suporte"
+        >
+          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-sky-500/30 bg-sky-950/80 text-sky-400 shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-400/50 hover:bg-sky-900/80">
+            <Bot className="h-6 w-6" />
+            <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background bg-sky-400" />
+          </div>
+        </button>
+      </div>
     );
   }
 
