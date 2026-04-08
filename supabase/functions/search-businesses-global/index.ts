@@ -67,6 +67,13 @@ interface SearchCandidate {
   useLocation: boolean;
 }
 
+interface NicheLocalization {
+  canonicalKey: string | null;
+  localizedTerms: string[];
+  exactTerms: string[];
+  keywordTerms: string[];
+}
+
 interface LocalizedNicheDefinition {
   aliases: string[];
   english: string[];
@@ -340,6 +347,11 @@ const LOCALIZED_NICHE_TERMS: Record<string, LocalizedNicheDefinition> = {
   },
 };
 
+const NICHE_TOKEN_STOPWORDS = new Set([
+  'a', 'ao', 'aos', 'as', 'at', 'de', 'del', 'do', 'dos', 'da', 'das', 'e', 'el', 'em', 'en', 'for',
+  'in', 'la', 'las', 'local', 'los', 'me', 'near', 'o', 'os', 'para', 'por', 'the', 'uma', 'um', 'y',
+]);
+
 function normalizeText(value: string): string {
   return value
     .toLowerCase()
@@ -368,11 +380,11 @@ function resolveCanonicalNicheKey(niche: string): string | null {
   const normalizedNiche = normalizeText(niche);
 
   for (const [canonicalKey, definition] of Object.entries(LOCALIZED_NICHE_TERMS)) {
-    const terms = [
+      const terms = [
       canonicalKey,
       ...definition.aliases,
       ...definition.english,
-      ...Object.values(definition.localized).flat(),
+        ...Object.values(definition.localized).flatMap((localizedTerms) => localizedTerms ?? []),
     ];
 
     const hasMatch = terms.some((term) => {
@@ -388,16 +400,64 @@ function resolveCanonicalNicheKey(niche: string): string | null {
   return null;
 }
 
-function getLocalizedNicheTerms(niche: string, countryCode: string): string[] {
+function extractMeaningfulTokens(value: string): string[] {
+  return normalizeText(value)
+    .split(' ')
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 3 && !NICHE_TOKEN_STOPWORDS.has(token));
+}
+
+function buildKeywordTerms(values: string[]): string[] {
+  const rawKeywords = values.flatMap((value) => {
+    const tokens = extractMeaningfulTokens(value);
+
+    return tokens.flatMap((token) => {
+      const variants = [token];
+
+      if (token.length >= 5) variants.push(token.slice(0, 5));
+      if (token.length >= 7) variants.push(token.slice(0, 6));
+
+      return variants;
+    });
+  });
+
+  return dedupeStrings(rawKeywords).filter((token) => token.length >= 3);
+}
+
+function getNicheLocalization(niche: string, countryCode: string): NicheLocalization {
   const canonicalKey = resolveCanonicalNicheKey(niche);
+
   if (!canonicalKey) {
-    return dedupeStrings([niche]);
+    const localizedTerms = dedupeStrings([niche]);
+
+    return {
+      canonicalKey: null,
+      localizedTerms,
+      exactTerms: localizedTerms,
+      keywordTerms: buildKeywordTerms(localizedTerms),
+    };
   }
 
   const definition = LOCALIZED_NICHE_TERMS[canonicalKey];
   const countryTerms = definition.localized[countryCode] || [];
+  const localizedTerms = dedupeStrings([...countryTerms, niche, ...definition.english]);
+  const exactTerms = dedupeStrings([
+    ...localizedTerms,
+    ...definition.aliases,
+    ...definition.english,
+    ...Object.values(definition.localized).flatMap((localizedTerms) => localizedTerms ?? []),
+  ]);
 
-  return dedupeStrings([...countryTerms, niche, ...definition.english]);
+  return {
+    canonicalKey,
+    localizedTerms,
+    exactTerms,
+    keywordTerms: buildKeywordTerms(exactTerms),
+  };
+}
+
+function getLocalizedNicheTerms(niche: string, countryCode: string): string[] {
+  return getNicheLocalization(niche, countryCode).localizedTerms;
 }
 
 function buildSearchCandidates(
@@ -409,11 +469,11 @@ function buildSearchCandidates(
   defaultHl: string,
 ): SearchCandidate[] {
   const template = SEARCH_TEMPLATES[defaultHl] || SEARCH_TEMPLATES['en'];
-  const localizedTerms = getLocalizedNicheTerms(niche, countryCode);
-  const englishTerms = dedupeStrings([
-    ...localizedTerms.filter((term) => /[a-zA-Z]/.test(term)),
-    ...((resolveCanonicalNicheKey(niche) && LOCALIZED_NICHE_TERMS[resolveCanonicalNicheKey(niche)!]?.english) || []),
-  ]);
+  const nicheLocalization = getNicheLocalization(niche, countryCode);
+  const localizedTerms = nicheLocalization.localizedTerms;
+  const englishTerms = nicheLocalization.canonicalKey
+    ? dedupeStrings(LOCALIZED_NICHE_TERMS[nicheLocalization.canonicalKey].english)
+    : [];
 
   const candidates: SearchCandidate[] = [];
 
@@ -495,6 +555,73 @@ function dedupePlaces(places: any[]): any[] {
     seen.add(key);
     return true;
   });
+}
+
+function getPlaceSearchCorpus(place: any): { categoryText: string; titleText: string; fullText: string } {
+  const categoryText = normalizeText([
+    place.category || '',
+    place.type || '',
+  ].join(' '));
+
+  const titleText = normalizeText(place.title || place.name || '');
+
+  const fullText = normalizeText([
+    place.title || place.name || '',
+    place.category || '',
+    place.type || '',
+    place.description || '',
+    place.address || '',
+    place.website || '',
+  ].join(' '));
+
+  return { categoryText, titleText, fullText };
+}
+
+function getPlaceNicheScore(place: any, niche: string, countryCode: string): number {
+  const nicheLocalization = getNicheLocalization(niche, countryCode);
+  const { categoryText, titleText, fullText } = getPlaceSearchCorpus(place);
+
+  let score = 0;
+
+  for (const term of nicheLocalization.exactTerms) {
+    const normalizedTerm = normalizeText(term);
+    if (!normalizedTerm) continue;
+
+    if (categoryText.includes(normalizedTerm)) score += 8;
+    else if (titleText.includes(normalizedTerm)) score += 6;
+    else if (fullText.includes(normalizedTerm)) score += 3;
+  }
+
+  for (const keyword of nicheLocalization.keywordTerms) {
+    if (!keyword) continue;
+
+    if (categoryText.includes(keyword)) score += 3;
+    else if (titleText.includes(keyword)) score += 2;
+    else if (fullText.includes(keyword)) score += 1;
+  }
+
+  return score;
+}
+
+function filterAndRankPlacesByNiche(places: any[], niche: string, countryCode: string): any[] {
+  const scoredPlaces = places
+    .map((place) => ({
+      place,
+      score: getPlaceNicheScore(place, niche, countryCode),
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  const strictMatches = scoredPlaces.filter((entry) => entry.score >= 4).map((entry) => entry.place);
+  if (strictMatches.length > 0) {
+    return strictMatches;
+  }
+
+  const broadMatches = scoredPlaces.filter((entry) => entry.score >= 2).map((entry) => entry.place);
+  if (broadMatches.length > 0) {
+    return broadMatches;
+  }
+
+  return scoredPlaces.map((entry) => entry.place);
 }
 
 // Links por nicho - CADA NICHO TEM SEU LINK ESPECÍFICO
@@ -1452,7 +1579,7 @@ serve(async (req) => {
     );
     const searchQuery = searchCandidates[0]?.query || `${niche} ${searchLocation}`;
     const serperBatchSize = Math.min(10, maxResults);
-
+    
     console.log(`Global search: "${searchQuery}" in ${countryCode} (${config.gl}/${config.hl}), location: "${serperLocation}", state filter: "${stateAbbr}", candidates: ${searchCandidates.length}`);
 
     let places: any[] = [];
@@ -1474,6 +1601,10 @@ serve(async (req) => {
         break;
       }
     }
+
+    const nicheFilteredPlaces = filterAndRankPlacesByNiche(places, niche, countryCode);
+    console.log(`Niche precision filter: ${places.length} -> ${nicheFilteredPlaces.length} for niche "${niche}" (${countryCode})`);
+    places = nicheFilteredPlaces;
 
 
     // State abbreviation mappings for Brazil (for validation)
