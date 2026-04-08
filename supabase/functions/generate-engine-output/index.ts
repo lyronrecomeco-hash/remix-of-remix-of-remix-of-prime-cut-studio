@@ -338,6 +338,10 @@ REGRAS:
 async function streamAIResponse(messages: AIMessage[], options: { forceJson?: boolean } = {}) {
   const response = await callAIWithFallback(messages, options);
 
+  if (!response.ok) {
+    return response;
+  }
+
   return new Response(response.body, {
     headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
   });
