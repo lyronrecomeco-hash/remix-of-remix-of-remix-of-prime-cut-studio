@@ -5,14 +5,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+type AIMessage = { role: string; content: string };
+
+const OPENAI_MODEL = "gpt-4o-mini";
+const GEMINI_MODEL = "gemini-2.0-flash";
+const LOVABLE_MODEL = "google/gemini-2.5-flash";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { nodes, edges, prospect_context, output_type, user_instruction, chat_history } = await req.json();
-
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const nodesSummary = (nodes || []).map((n: any) => {
       const type = n.data?.nodeType || n.type || 'unknown';
@@ -117,26 +120,7 @@ Antes de responder, CLASSIFIQUE a intenção do usuário:
       // Add current message
       aiMessages.push({ role: "user", content: user_instruction || "Olá" });
 
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: aiMessages,
-          stream: true,
-        }),
-      });
-
-      if (!response.ok) {
-        return handleAIError(response);
-      }
-
-      return new Response(response.body, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-      });
+      return await streamAIResponse(aiMessages);
     }
 
     // ─── BUILD STRUCTURE ───
@@ -197,24 +181,7 @@ REGRAS:
 5. Conecte ao prospect-1 e entre si
 6. Use dados reais do prospect, NUNCA placeholders`;
 
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [{ role: "user", content: structurePrompt }],
-          stream: true,
-        }),
-      });
-
-      if (!response.ok) return handleAIError(response);
-
-      return new Response(response.body, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-      });
+      return await streamAIResponse([{ role: "user", content: structurePrompt }], { forceJson: true });
     }
 
     // ─── ENRICH CONTEXT ───
@@ -251,24 +218,7 @@ Gere uma análise completa:
 
 Seja específico. Use dados do prospect. Nada genérico.`;
 
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [{ role: "user", content: enrichPrompt }],
-          stream: true,
-        }),
-      });
-
-      if (!response.ok) return handleAIError(response);
-
-      return new Response(response.body, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-      });
+      return await streamAIResponse([{ role: "user", content: enrichPrompt }]);
     }
 
     // ─── DOCUMENT OUTPUTS ───
@@ -373,27 +323,10 @@ REGRAS:
 
     const userMessage = outputInstructions[output_type] || outputInstructions.prompt;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage },
-        ],
-        stream: true,
-      }),
-    });
-
-    if (!response.ok) return handleAIError(response);
-
-    return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-    });
+    return await streamAIResponse([
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userMessage },
+    ]);
   } catch (e) {
     console.error("Engine error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
@@ -402,20 +335,211 @@ REGRAS:
   }
 });
 
-async function handleAIError(response: Response) {
-  if (response.status === 429) {
-    return new Response(JSON.stringify({ error: "Limite de requisições excedido." }), {
-      status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+async function streamAIResponse(messages: AIMessage[], options: { forceJson?: boolean } = {}) {
+  const response = await callAIWithFallback(messages, options);
+
+  if (!response.ok) {
+    return response;
   }
-  if (response.status === 402) {
-    return new Response(JSON.stringify({ error: "Créditos insuficientes." }), {
-      status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+
+  return new Response(response.body, {
+    headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+  });
+}
+
+async function callAIWithFallback(messages: AIMessage[], options: { forceJson?: boolean } = {}): Promise<Response> {
+  const providers = [
+    {
+      name: "OpenAI",
+      enabled: !!Deno.env.get("OPENAI_API_KEY"),
+      execute: () => callOpenAI(messages, options),
+    },
+    {
+      name: "Gemini",
+      enabled: !!Deno.env.get("GEMINI_API_KEY"),
+      execute: () => callGemini(messages, options),
+    },
+    {
+      name: "Lovable AI",
+      enabled: !!Deno.env.get("LOVABLE_API_KEY"),
+      execute: () => callLovableAI(messages),
+    },
+  ].filter((provider) => provider.enabled);
+
+  if (providers.length === 0) {
+    return buildErrorResponse("Nenhum provedor de IA configurado.", 500);
   }
-  const t = await response.text();
-  console.error("AI gateway error:", response.status, t);
-  return new Response(JSON.stringify({ error: "Erro no gateway de IA" }), {
-    status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+
+  const failures: Array<{ name: string; status?: number; body: string }> = [];
+
+  for (const provider of providers) {
+    try {
+      const response = await provider.execute();
+
+      if (response.ok) {
+        console.log(`[generate-engine-output] Using ${provider.name}`);
+        return response;
+      }
+
+      const body = await response.text();
+      failures.push({ name: provider.name, status: response.status, body });
+      console.error(`[generate-engine-output] ${provider.name} failed`, response.status, body);
+
+      if (!shouldFallback(response.status, body)) {
+        return handleProviderFailure(provider.name, response.status, body);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro desconhecido";
+      failures.push({ name: provider.name, body: message });
+      console.error(`[generate-engine-output] ${provider.name} threw`, message);
+    }
+  }
+
+  const hasOnlyRateLimit = failures.length > 0 && failures.every((failure) => failure.status === 429);
+  if (hasOnlyRateLimit) {
+    return buildErrorResponse("Todos os provedores de IA atingiram limite de requisições no momento.", 429);
+  }
+
+  const hasOnlyCreditsIssue = failures.length > 0 && failures.every((failure) => failure.status === 402);
+  if (hasOnlyCreditsIssue) {
+    return buildErrorResponse("Todos os provedores de IA estão sem créditos disponíveis no momento.", 402);
+  }
+
+  return buildErrorResponse("Os provedores de IA falharam temporariamente. Tente novamente em instantes.", 500);
+}
+
+async function callOpenAI(messages: AIMessage[], options: { forceJson?: boolean }) {
+  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  if (!OPENAI_API_KEY) {
+    return buildErrorResponse("OPENAI_API_KEY não configurada.", 500);
+  }
+
+  return await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      messages,
+      temperature: 0.7,
+      stream: true,
+      ...(options.forceJson ? { response_format: { type: "json_object" } } : {}),
+    }),
+  });
+}
+
+async function callGemini(messages: AIMessage[], options: { forceJson?: boolean }) {
+  const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+  if (!GEMINI_API_KEY) {
+    return buildErrorResponse("GEMINI_API_KEY não configurada.", 500);
+  }
+
+  const systemMessage = messages.find((message) => message.role === "system")?.content;
+  const contents = messages
+    .filter((message) => message.role !== "system")
+    .map((message) => ({
+      role: message.role === "assistant" ? "model" : "user",
+      parts: [{ text: message.content }],
+    }));
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...(systemMessage ? { systemInstruction: { parts: [{ text: systemMessage }] } } : {}),
+        contents: contents.length > 0 ? contents : [{ role: "user", parts: [{ text: "Olá" }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 8192,
+          ...(options.forceJson ? { responseMimeType: "application/json" } : {}),
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    return response;
+  }
+
+  const data = await response.json();
+  const text = data.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text || "").join("") || "";
+
+  if (!text) {
+    return buildErrorResponse("Gemini retornou resposta vazia.", 500);
+  }
+
+  return new Response(createSSEStreamFromText(text), {
+    headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+  });
+}
+
+async function callLovableAI(messages: AIMessage[]) {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) {
+    return buildErrorResponse("LOVABLE_API_KEY não configurada.", 500);
+  }
+
+  return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: LOVABLE_MODEL,
+      messages,
+      temperature: 0.7,
+      stream: true,
+    }),
+  });
+}
+
+function shouldFallback(status: number, body = "") {
+  if (status === 400) {
+    return /API_KEY_INVALID|invalid api key|api key not valid|incorrect api key|invalid_request_error/i.test(body);
+  }
+
+  return status === 401 || status === 402 || status === 403 || status === 404 || status === 429 || status >= 500;
+}
+
+function handleProviderFailure(providerName: string, status: number, body: string) {
+  if (status === 429) {
+    return buildErrorResponse(`${providerName} atingiu o limite de requisições.`, 429);
+  }
+  if (status === 402) {
+    return buildErrorResponse(`${providerName} está sem créditos disponíveis.`, 402);
+  }
+
+  console.error(`[generate-engine-output] ${providerName} non-fallbackable error`, status, body);
+  return buildErrorResponse(`Erro no provedor ${providerName}.`, 500);
+}
+
+function buildErrorResponse(error: string, status: number) {
+  return new Response(JSON.stringify({ error }), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function createSSEStreamFromText(text: string) {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    start(controller) {
+      const chunkSize = 1200;
+
+      for (let index = 0; index < text.length; index += chunkSize) {
+        const chunk = text.slice(index, index + chunkSize);
+        const payload = JSON.stringify({ choices: [{ delta: { content: chunk } }] });
+        controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
+      }
+
+      controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+      controller.close();
+    },
   });
 }

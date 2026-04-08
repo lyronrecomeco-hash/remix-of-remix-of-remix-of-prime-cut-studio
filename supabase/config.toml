@@ -84,5 +84,8 @@ verify_jwt = false
 [functions.genesis-support-chat]
 verify_jwt = false
 
+[functions.generate-engine-output]
+verify_jwt = false
+
 [functions.support-chat-telegram]
 verify_jwt = false
