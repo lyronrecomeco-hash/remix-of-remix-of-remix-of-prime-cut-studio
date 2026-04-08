@@ -51,6 +51,31 @@ const msg = (
   extra?: Partial<Pick<Message, 'hasWhatsAppButton' | 'timestamp'>>,
 ): Message => ({ id: uid(), role, content, ...extra });
 
+const BUBBLE_MESSAGES = [
+  'Oi! Estou aqui se precisar de mim! 😊',
+  'Precisa de ajuda? É só chamar! 💬',
+  'Olá! Posso te ajudar com algo? ✨',
+  'Ei! Qualquer dúvida, estou por aqui! 🚀',
+];
+
+const playBubbleSound = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.08);
+    osc.frequency.exponentialRampToValueAtTime(980, ctx.currentTime + 0.15);
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } catch { /* no audio */ }
+};
+
 export function GenesisSupportChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -61,8 +86,26 @@ export function GenesisSupportChat() {
   const [showSupportOptions, setShowSupportOptions] = useState(false);
   const [liveSupportAvailable, setLiveSupportAvailable] = useState<boolean | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [bubbleText, setBubbleText] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bubbleIndexRef = useRef(0);
+
+  // Proactive bubble every 10 min (+ initial after 5s)
+  useEffect(() => {
+    const show = () => {
+      if (isOpen) return;
+      const text = BUBBLE_MESSAGES[bubbleIndexRef.current % BUBBLE_MESSAGES.length];
+      bubbleIndexRef.current++;
+      setBubbleText(text);
+      playBubbleSound();
+      setTimeout(() => setBubbleText(null), 6000);
+    };
+
+    const initialTimer = setTimeout(show, 5000);
+    const interval = setInterval(show, 10 * 60 * 1000);
+    return () => { clearTimeout(initialTimer); clearInterval(interval); };
+  }, [isOpen]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
