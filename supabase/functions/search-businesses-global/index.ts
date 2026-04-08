@@ -30,23 +30,23 @@ interface BusinessResult {
 }
 
 // Country configuration for search
-const COUNTRY_CONFIG: Record<string, { gl: string; hl: string; phonePrefix: string; lang: string }> = {
-  BR: { gl: 'br', hl: 'pt-br', phonePrefix: '55', lang: 'pt-BR' },
-  US: { gl: 'us', hl: 'en', phonePrefix: '1', lang: 'en' },
-  PT: { gl: 'pt', hl: 'pt-pt', phonePrefix: '351', lang: 'pt-PT' },
-  ES: { gl: 'es', hl: 'es', phonePrefix: '34', lang: 'es' },
-  MX: { gl: 'mx', hl: 'es', phonePrefix: '52', lang: 'es-MX' },
-  AR: { gl: 'ar', hl: 'es', phonePrefix: '54', lang: 'es-AR' },
-  CO: { gl: 'co', hl: 'es', phonePrefix: '57', lang: 'es' },
-  CL: { gl: 'cl', hl: 'es', phonePrefix: '56', lang: 'es' },
-  PE: { gl: 'pe', hl: 'es', phonePrefix: '51', lang: 'es' },
-  UK: { gl: 'uk', hl: 'en', phonePrefix: '44', lang: 'en-UK' },
-  DE: { gl: 'de', hl: 'de', phonePrefix: '49', lang: 'de' },
-  FR: { gl: 'fr', hl: 'fr', phonePrefix: '33', lang: 'fr' },
-  IT: { gl: 'it', hl: 'it', phonePrefix: '39', lang: 'it' },
-  CA: { gl: 'ca', hl: 'en', phonePrefix: '1', lang: 'en' },
-  AU: { gl: 'au', hl: 'en', phonePrefix: '61', lang: 'en' },
-  JP: { gl: 'jp', hl: 'ja', phonePrefix: '81', lang: 'ja' },
+const COUNTRY_CONFIG: Record<string, { gl: string; hl: string; phonePrefix: string; lang: string; countryName: string }> = {
+  BR: { gl: 'br', hl: 'pt-br', phonePrefix: '55', lang: 'pt-BR', countryName: 'Brasil' },
+  US: { gl: 'us', hl: 'en', phonePrefix: '1', lang: 'en', countryName: 'United States' },
+  PT: { gl: 'pt', hl: 'pt-pt', phonePrefix: '351', lang: 'pt-PT', countryName: 'Portugal' },
+  ES: { gl: 'es', hl: 'es', phonePrefix: '34', lang: 'es', countryName: 'España' },
+  MX: { gl: 'mx', hl: 'es', phonePrefix: '52', lang: 'es-MX', countryName: 'México' },
+  AR: { gl: 'ar', hl: 'es', phonePrefix: '54', lang: 'es-AR', countryName: 'Argentina' },
+  CO: { gl: 'co', hl: 'es', phonePrefix: '57', lang: 'es', countryName: 'Colombia' },
+  CL: { gl: 'cl', hl: 'es', phonePrefix: '56', lang: 'es', countryName: 'Chile' },
+  PE: { gl: 'pe', hl: 'es', phonePrefix: '51', lang: 'es', countryName: 'Perú' },
+  UK: { gl: 'uk', hl: 'en', phonePrefix: '44', lang: 'en-UK', countryName: 'United Kingdom' },
+  DE: { gl: 'de', hl: 'de', phonePrefix: '49', lang: 'de', countryName: 'Deutschland' },
+  FR: { gl: 'fr', hl: 'fr', phonePrefix: '33', lang: 'fr', countryName: 'France' },
+  IT: { gl: 'it', hl: 'it', phonePrefix: '39', lang: 'it', countryName: 'Italia' },
+  CA: { gl: 'ca', hl: 'en', phonePrefix: '1', lang: 'en', countryName: 'Canada' },
+  AU: { gl: 'au', hl: 'en', phonePrefix: '61', lang: 'en', countryName: 'Australia' },
+  JP: { gl: 'jp', hl: 'ja', phonePrefix: '81', lang: 'ja', countryName: '日本' },
 };
 
 // Search query templates per language
@@ -996,7 +996,12 @@ serve(async (req) => {
       .replace('{niche}', niche)
       .replace('{city}', searchLocation);
 
-    console.log(`Global search: "${searchQuery}" in ${countryCode} (${config.gl}/${config.hl}), state filter: "${stateAbbr}"`);
+    // Build location string for Serper geo-targeting (critical for non-BR countries)
+    const serperLocation = countryCode === 'BR' 
+      ? (stateAbbr ? `${cityName}, ${stateAbbr}, Brazil` : `${cityName}, Brazil`)
+      : `${cityName}, ${config.countryName}`;
+
+    console.log(`Global search: "${searchQuery}" in ${countryCode} (${config.gl}/${config.hl}), location: "${serperLocation}", state filter: "${stateAbbr}"`);
 
     // Get message template for this country
     const messageTemplate = MESSAGE_TEMPLATES[config.lang] || MESSAGE_TEMPLATES['en'];
@@ -1005,7 +1010,8 @@ serve(async (req) => {
     // FAST SEARCH: limit to 50 results to filter by state
     const maxResults = Math.min(50, Math.max(10, requestedMax || 50));
 
-    const searchResponse = await fetch('https://google.serper.dev/places', {
+    // First attempt: search with location parameter for precision
+    let searchResponse = await fetch('https://google.serper.dev/places', {
       method: 'POST',
       headers: {
         'X-API-KEY': apiKey,
@@ -1015,6 +1021,7 @@ serve(async (req) => {
         q: searchQuery,
         gl: config.gl,
         hl: config.hl,
+        location: serperLocation,
         num: maxResults,
       }),
     });
@@ -1028,9 +1035,62 @@ serve(async (req) => {
       );
     }
 
-    const searchData = await searchResponse.json();
-    const places = searchData.places || [];
-    console.log(`Found ${places.length} raw results`);
+    let searchData = await searchResponse.json();
+    let places = searchData.places || [];
+    console.log(`Found ${places.length} results with location param`);
+
+    // Fallback: if 0 results, retry without location but with country in query
+    if (places.length === 0 && countryCode !== 'BR') {
+      console.log('Retrying with country name in query...');
+      const fallbackQuery = `${niche} ${cityName} ${config.countryName}`;
+      
+      const fallbackResponse = await fetch('https://google.serper.dev/places', {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: fallbackQuery,
+          gl: config.gl,
+          hl: config.hl,
+          num: maxResults,
+        }),
+      });
+
+      if (fallbackResponse.ok) {
+        const fallbackData = await fallbackResponse.json();
+        places = fallbackData.places || [];
+        console.log(`Fallback found ${places.length} results with query: "${fallbackQuery}"`);
+      }
+    }
+
+    // Second fallback: try with English niche terms for non-English/Portuguese countries
+    if (places.length === 0 && !['BR', 'US', 'UK', 'CA', 'AU', 'PT'].includes(countryCode)) {
+      console.log('Retrying with English niche terms...');
+      const englishQuery = `${niche} in ${cityName}, ${config.countryName}`;
+      
+      const englishResponse = await fetch('https://google.serper.dev/places', {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: englishQuery,
+          gl: config.gl,
+          hl: 'en',
+          num: maxResults,
+        }),
+      });
+
+      if (englishResponse.ok) {
+        const englishData = await englishResponse.json();
+        places = englishData.places || [];
+        console.log(`English fallback found ${places.length} results`);
+      }
+    }
+
 
     // State abbreviation mappings for Brazil (for validation)
     const BRAZILIAN_STATE_ABBRS: Record<string, string[]> = {
