@@ -1091,18 +1091,6 @@ serve(async (req) => {
       }
     }
 
-    if (!searchResponse.ok) {
-      const errorText = await searchResponse.text();
-      console.error('Serper error:', searchResponse.status, errorText);
-      return new Response(
-        JSON.stringify({ success: false, error: `Search error: ${searchResponse.status}` }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const searchData = await searchResponse.json();
-    const places = searchData.places || [];
-    console.log(`Found ${places.length} raw results`);
 
     // State abbreviation mappings for Brazil (for validation)
     const BRAZILIAN_STATE_ABBRS: Record<string, string[]> = {
