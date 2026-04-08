@@ -390,23 +390,24 @@ export function GenesisSupportChat() {
   if (!isOpen) {
     return (
       <div className="fixed bottom-5 right-5 z-50 flex items-end gap-3">
-        {/* Proactive bubble tooltip */}
-        {bubbleText && (
-          <motion.div
-            initial={{ opacity: 0, x: 20, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 20, scale: 0.9 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            onClick={() => { setBubbleText(null); setIsOpen(true); }}
-            className="cursor-pointer mb-1 max-w-[220px] rounded-2xl rounded-br-md border border-sky-500/30 bg-sky-950/90 px-4 py-3 shadow-lg backdrop-blur-sm"
-          >
-            <p className="text-[13px] leading-snug text-sky-100 font-medium">{bubbleText}</p>
-            <div className="mt-1 flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
-              <span className="text-[10px] text-sky-400/70">Genesis IA</span>
-            </div>
-          </motion.div>
-        )}
+        <AnimatePresence>
+          {bubbleText && (
+            <motion.div
+              initial={{ opacity: 0, x: 20, scale: 0.9 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 20, scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              onClick={() => { setBubbleText(null); setIsOpen(true); }}
+              className="cursor-pointer mb-1 max-w-[220px] rounded-2xl rounded-br-md border border-sky-500/30 bg-sky-950/90 px-4 py-3 shadow-lg backdrop-blur-sm"
+            >
+              <p className="text-[13px] leading-snug text-sky-100 font-medium">{bubbleText}</p>
+              <div className="mt-1 flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
+                <span className="text-[10px] text-sky-400/70">Genesis IA</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <button
           type="button"
