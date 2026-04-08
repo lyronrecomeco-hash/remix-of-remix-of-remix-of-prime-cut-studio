@@ -380,11 +380,11 @@ function resolveCanonicalNicheKey(niche: string): string | null {
   const normalizedNiche = normalizeText(niche);
 
   for (const [canonicalKey, definition] of Object.entries(LOCALIZED_NICHE_TERMS)) {
-    const terms = [
+      const terms = [
       canonicalKey,
       ...definition.aliases,
       ...definition.english,
-      ...Object.values(definition.localized).flat(),
+        ...Object.values(definition.localized).flatMap((localizedTerms) => localizedTerms ?? []),
     ];
 
     const hasMatch = terms.some((term) => {
@@ -445,7 +445,7 @@ function getNicheLocalization(niche: string, countryCode: string): NicheLocaliza
     ...localizedTerms,
     ...definition.aliases,
     ...definition.english,
-    ...Object.values(definition.localized).flat(),
+    ...Object.values(definition.localized).flatMap((localizedTerms) => localizedTerms ?? []),
   ]);
 
   return {
