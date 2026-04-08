@@ -7,6 +7,15 @@ const corsHeaders = {
 
 type AIMessage = { role: string; content: string };
 
+type LocalFallbackContext = {
+  outputType: string;
+  userInstruction?: string;
+  prospectContext?: Record<string, any> | null;
+  nodes?: Array<{ type?: string; data?: Record<string, any> }>;
+  edges?: Array<{ source?: string; target?: string }>;
+  chatHistory?: AIMessage[];
+};
+
 const OPENAI_MODEL = "gpt-4o-mini";
 const GEMINI_MODEL = "gemini-2.0-flash";
 const LOVABLE_MODEL = "google/gemini-2.5-flash";
@@ -45,6 +54,15 @@ OBJETIVO: ${qa.objective || 'N/A'}
 RESPOSTAS: ${JSON.stringify(qa)}
 NOTAS: ${prospect_context.notes || 'N/A'}
 ` : 'Sem contexto de prospect';
+
+    const fallbackContext: LocalFallbackContext = {
+      outputType: output_type || 'chat',
+      userInstruction: user_instruction,
+      prospectContext: prospect_context,
+      nodes: Array.isArray(nodes) ? nodes : [],
+      edges: Array.isArray(edges) ? edges : [],
+      chatHistory: Array.isArray(chat_history) ? chat_history : [],
+    };
 
     // ─── CHAT MODE (Intent Engine) ───
     if (output_type === 'chat') {
@@ -120,7 +138,7 @@ Antes de responder, CLASSIFIQUE a intenção do usuário:
       // Add current message
       aiMessages.push({ role: "user", content: user_instruction || "Olá" });
 
-      return await streamAIResponse(aiMessages);
+      return await streamAIResponse(aiMessages, {}, fallbackContext);
     }
 
     // ─── BUILD STRUCTURE ───
@@ -181,7 +199,7 @@ REGRAS:
 5. Conecte ao prospect-1 e entre si
 6. Use dados reais do prospect, NUNCA placeholders`;
 
-      return await streamAIResponse([{ role: "user", content: structurePrompt }], { forceJson: true });
+      return await streamAIResponse([{ role: "user", content: structurePrompt }], { forceJson: true }, fallbackContext);
     }
 
     // ─── ENRICH CONTEXT ───
@@ -218,7 +236,7 @@ Gere uma análise completa:
 
 Seja específico. Use dados do prospect. Nada genérico.`;
 
-      return await streamAIResponse([{ role: "user", content: enrichPrompt }]);
+      return await streamAIResponse([{ role: "user", content: enrichPrompt }], {}, fallbackContext);
     }
 
     // ─── DOCUMENT OUTPUTS ───
@@ -326,7 +344,7 @@ REGRAS:
     return await streamAIResponse([
       { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },
-    ]);
+    ], {}, fallbackContext);
   } catch (e) {
     console.error("Engine error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
@@ -335,8 +353,12 @@ REGRAS:
   }
 });
 
-async function streamAIResponse(messages: AIMessage[], options: { forceJson?: boolean } = {}) {
-  const response = await callAIWithFallback(messages, options);
+async function streamAIResponse(
+  messages: AIMessage[],
+  options: { forceJson?: boolean } = {},
+  fallbackContext: LocalFallbackContext,
+) {
+  const response = await callAIWithFallback(messages, options, fallbackContext);
 
   if (!response.ok) {
     return response;
@@ -347,7 +369,11 @@ async function streamAIResponse(messages: AIMessage[], options: { forceJson?: bo
   });
 }
 
-async function callAIWithFallback(messages: AIMessage[], options: { forceJson?: boolean } = {}): Promise<Response> {
+async function callAIWithFallback(
+  messages: AIMessage[],
+  options: { forceJson?: boolean } = {},
+  fallbackContext: LocalFallbackContext,
+): Promise<Response> {
   const providers = [
     {
       name: "OpenAI",
@@ -367,6 +393,8 @@ async function callAIWithFallback(messages: AIMessage[], options: { forceJson?: 
   ].filter((provider) => provider.enabled);
 
   if (providers.length === 0) {
+    const localFallback = buildLocalFallbackResponse(fallbackContext);
+    if (localFallback) return localFallback;
     return buildErrorResponse("Nenhum provedor de IA configurado.", 500);
   }
 
@@ -393,6 +421,11 @@ async function callAIWithFallback(messages: AIMessage[], options: { forceJson?: 
       failures.push({ name: provider.name, body: message });
       console.error(`[generate-engine-output] ${provider.name} threw`, message);
     }
+  }
+
+  const localFallback = buildLocalFallbackResponse(fallbackContext, failures);
+  if (localFallback) {
+    return localFallback;
   }
 
   const hasOnlyRateLimit = failures.length > 0 && failures.every((failure) => failure.status === 429);
@@ -516,6 +549,574 @@ function handleProviderFailure(providerName: string, status: number, body: strin
 
   console.error(`[generate-engine-output] ${providerName} non-fallbackable error`, status, body);
   return buildErrorResponse(`Erro no provedor ${providerName}.`, 500);
+}
+
+function buildLocalFallbackResponse(
+  context: LocalFallbackContext,
+  failures: Array<{ name: string; status?: number; body: string }> = [],
+) {
+  const content = buildLocalFallbackOutput(context);
+  if (!content) return null;
+
+  console.warn(`[generate-engine-output] Using local fallback for ${context.outputType}`, failures);
+
+  return new Response(createSSEStreamFromText(content), {
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "text/event-stream",
+      "X-Genesis-Fallback": "local",
+    },
+  });
+}
+
+function buildLocalFallbackOutput(context: LocalFallbackContext) {
+  switch (context.outputType) {
+    case "chat":
+      return buildLocalChatResponse(context);
+    case "build_structure":
+      return JSON.stringify(buildLocalStructure(context), null, 2);
+    case "enrich_context":
+      return buildLocalEnrichment(context);
+    case "analyze":
+      return buildLocalAnalysis(context);
+    case "strategy":
+      return buildLocalStrategy(context);
+    case "scope":
+      return buildLocalScope(context);
+    case "blueprint":
+      return buildLocalBlueprint(context);
+    case "prompt":
+      return buildLocalPrompt(context);
+    case "checklist":
+      return buildLocalChecklist(context);
+    case "executive":
+      return buildLocalExecutive(context);
+    case "objections":
+      return buildLocalObjections(context);
+    case "deploy_plan":
+      return buildLocalDeployPlan(context);
+    default:
+      return null;
+  }
+}
+
+function buildLocalChatResponse(context: LocalFallbackContext) {
+  const facts = extractProspectFacts(context.prospectContext);
+  const message = getLatestUserMessage(context).toLowerCase();
+  const existingTypes = getExistingNodeTypes(context.nodes || []);
+  const priorityBlocks = recommendPriorityBlocks(existingTypes).slice(0, 5).map((type) => NODE_LABELS[type]);
+
+  if (isApprovalIntent(message)) {
+    return [
+      `Perfeito — vou aplicar o plano no canvas da ${facts.companyName} agora.`,
+      "",
+      "```action",
+      '{"type":"execute_plan"}',
+      "```",
+    ].join("\n");
+  }
+
+  if (isGreetingIntent(message)) {
+    return [
+      `Oi! Já revisei o canvas da ${facts.companyName}.`,
+      `Hoje a prioridade é conectar contexto, oferta e execução para ${facts.niche}.`,
+      `Se quiser, eu já monto a próxima estrutura ideal em cima do que falta no fluxo.`,
+    ].join("\n");
+  }
+
+  if (isCanvasIntent(message)) {
+    return [
+      `Posso deixar o canvas da ${facts.companyName} funcional em ${priorityBlocks.length} frentes:`,
+      ...priorityBlocks.map((item) => `- ${item}`),
+      "",
+      "```action",
+      '{"type":"approval","title":"Plano de Ação","description":"Deseja que eu implemente esta estrutura no canvas?"}',
+      "```",
+    ].join("\n");
+  }
+
+  if (isAnalysisIntent(message)) {
+    const gaps = recommendPriorityBlocks(existingTypes).slice(0, 3).map((type) => NODE_LABELS[type]).join(", ");
+    return [
+      `### Leitura rápida do canvas`,
+      `- Negócio: **${facts.companyName}** (${facts.niche}${facts.location ? ` • ${facts.location}` : ""})`,
+      `- Estrutura atual cobre **${existingTypes.size || 1}** frente(s), mas ainda faltam: **${gaps || 'ajustes finos de execução'}**.`,
+      `- Melhor caminho agora: fechar proposta, abordagem e rotina de follow-up antes de escalar o envio.`,
+    ].join("\n");
+  }
+
+  if (isStrategyIntent(message)) {
+    return [
+      `### Estratégia recomendada`,
+      `- Posicione ${facts.companyName} com foco em resultado visível para ${facts.niche}.`,
+      `- Abra contato com diagnóstico curto, prova de oportunidade e CTA para reunião rápida.`,
+      `- Depois conecte oferta, objeções e follow-up em uma trilha única de conversão.`,
+    ].join("\n");
+  }
+
+  if (isCopyIntent(message)) {
+    return [
+      `Posso te sugerir esta abordagem inicial para ${facts.companyName}:`,
+      `"Notei uma oportunidade clara para ${facts.niche} ganhar previsibilidade comercial${facts.location ? ` em ${facts.location}` : ""}.`,
+      `Montei uma estrutura simples para diagnosticar gargalos, organizar a oferta e acelerar conversão.`,
+      `Se fizer sentido, te mostro em 10 minutos como isso entra no fluxo atual."`,
+    ].join("\n");
+  }
+
+  return [
+    `Entendi. Para ${facts.companyName}, eu seguiria em três passos:`,
+    `1. consolidar diagnóstico e proposta,`,
+    `2. transformar isso em abordagem comercial,`,
+    `3. fechar com execução e follow-up.`,
+    `Se quiser, eu monto isso no canvas agora sem mexer no restante do fluxo.`,
+  ].join("\n");
+}
+
+function buildLocalStructure(context: LocalFallbackContext) {
+  const facts = extractProspectFacts(context.prospectContext);
+  const existingTypes = getExistingNodeTypes(context.nodes || []);
+  const selectedTypes = recommendPriorityBlocks(existingTypes).slice(0, 8);
+  const finalTypes = selectedTypes.length > 0 ? selectedTypes : ["notes"];
+  const columns = [400, 700, 1000];
+
+  const nodes = finalTypes.map((type, index) => ({
+    id: `${type}-${Date.now()}-${index + 1}`,
+    type,
+    label: NODE_LABELS[type],
+    content: buildNodeContent(type, facts, existingTypes),
+    position: {
+      x: columns[index % columns.length],
+      y: 100 + Math.floor(index / columns.length) * 180,
+    },
+  }));
+
+  const edges = nodes.flatMap((node, index) => {
+    if (index === 0) {
+      return [{ source: "prospect-1", target: node.id }];
+    }
+    return [{ source: nodes[index - 1].id, target: node.id }];
+  });
+
+  return { nodes, edges };
+}
+
+function buildLocalEnrichment(context: LocalFallbackContext) {
+  const facts = extractProspectFacts(context.prospectContext);
+  const existingTypes = getExistingNodeTypes(context.nodes || []);
+
+  return [
+    "## PERFIL DO NEGÓCIO",
+    `- Empresa: **${facts.companyName}**`,
+    `- Nicho: **${facts.niche}**${facts.location ? ` • ${facts.location}` : ""}`,
+    `- Maturidade digital estimada: **${estimateDigitalMaturity(facts, existingTypes)}/10**`,
+    "",
+    "## PRESENÇA DIGITAL",
+    `- Ativos identificados: site **${facts.website ? 'presente' : 'não informado'}**, Instagram **${facts.instagram ? 'presente' : 'não informado'}**.`,
+    "- Gap principal: transformar presença em jornada clara de captação, prova e conversão.",
+    "",
+    "## OPORTUNIDADES COMERCIAIS",
+    `- Oferta recomendada: diagnóstico + estrutura de conversão para ${facts.niche}.`,
+    "- Melhor ângulo comercial: previsibilidade, diferenciação e follow-up operacional.",
+    "- Urgência estimada: média/alta quando já existe tráfego ou operação rodando sem rotina comercial.",
+    "",
+    "## DORES PROVÁVEIS",
+    "- Falta de clareza da proposta de valor.",
+    "- Abordagem comercial sem cadência e sem prova.",
+    "- Processo de follow-up inconsistente.",
+    "- Execução desconectada entre estratégia e operação.",
+    "- Dependência excessiva de atendimento manual.",
+    "",
+    "## CONCORRÊNCIA E DIFERENCIAÇÃO",
+    `- Diferencial viável: posicionar ${facts.companyName} com mensagem objetiva, oferta enxuta e resposta rápida.`,
+    "- Benchmark implícito: operações locais que convertem melhor tendem a unir prova, urgência e CTA curto.",
+    "",
+    "## BRANDING SUGERIDO",
+    "- Paleta: #0F172A, #1D4ED8, #22C55E, #F8FAFC",
+    "- Estilo visual: direto, confiável e orientado a performance.",
+    "- Tom de voz: consultivo, seguro e sem excesso de promessa.",
+  ].join("\n");
+}
+
+function buildLocalAnalysis(context: LocalFallbackContext) {
+  const facts = extractProspectFacts(context.prospectContext);
+  const existingTypes = getExistingNodeTypes(context.nodes || []);
+  const missing = recommendPriorityBlocks(existingTypes);
+  const score = Math.max(35, Math.min(96, Math.round((existingTypes.size / ESSENTIAL_BLOCKS.length) * 100)));
+
+  return [
+    "## DIAGNÓSTICO GERAL",
+    `- O canvas de **${facts.companyName}** já tem base para ${facts.niche}, mas ainda está incompleto para execução comercial contínua.`,
+    "",
+    "## GAPS IDENTIFICADOS",
+    ...missing.slice(0, 5).map((type) => `- ${NODE_LABELS[type]}`),
+    "",
+    "## OPORTUNIDADES",
+    "- Encadear descoberta, oferta e follow-up no mesmo fluxo.",
+    "- Reduzir atrito no primeiro contato com mensagem mais objetiva.",
+    "",
+    "## RISCOS",
+    "- Excesso de blocos soltos sem prioridade de execução.",
+    "- WhatsApp/ação sem uma proposta bem amarrada antes.",
+    "",
+    "## SUGESTÕES DE MELHORIA",
+    "- Consolidar diagnóstico, oportunidade e estratégia antes de disparar execução.",
+    "- Criar bloco de objeções e bloco de follow-up se ainda não existirem.",
+    "",
+    "## QUALIDADE DO CONTEÚDO",
+    `- Conteúdo atual: **${existingTypes.size >= 6 ? 'bom' : 'inicial'}**`,
+    "",
+    "## PRÓXIMOS PASSOS",
+    "- Fechar a estrutura mínima e então revisar a copy de abordagem.",
+    "",
+    `## SCORE DE COMPLETUDE\n- **${score}%**`,
+  ].join("\n");
+}
+
+function buildLocalStrategy(context: LocalFallbackContext) {
+  const facts = extractProspectFacts(context.prospectContext);
+  return [
+    "## Diagnóstico Comercial",
+    `- ${facts.companyName} precisa transformar contexto de ${facts.niche} em proposta clara e repetível.`,
+    "",
+    "## Proposta de Valor",
+    `- Estruturar uma jornada comercial enxuta para gerar mais resposta, mais reunião e mais fechamento.`,
+    "",
+    "## Argumentos Principais",
+    "- Clareza de posicionamento.",
+    "- Redução de gargalos no primeiro contato.",
+    "- Follow-up menos improvisado.",
+    "- Melhor leitura de oportunidade comercial.",
+    "- Execução com menos retrabalho.",
+    "",
+    "## Sequência de Abordagem",
+    "- Diagnóstico curto → oportunidade visível → proposta objetiva → CTA de próxima etapa.",
+    "",
+    "## Follow-up Strategy",
+    "- D0 contato inicial, D2 reforço com prova, D5 fechamento de agenda, D7 última tentativa com CTA simples.",
+  ].join("\n");
+}
+
+function buildLocalScope(context: LocalFallbackContext) {
+  const facts = extractProspectFacts(context.prospectContext);
+  return [
+    "## Módulos do Sistema",
+    "- Diagnóstico comercial",
+    "- Estrutura de oferta",
+    "- Abordagem e objeções",
+    "- Execução e follow-up",
+    "",
+    "## Funcionalidades por Módulo",
+    `- Contexto do prospect de ${facts.companyName}`,
+    "- Blocos de decisão e ação conectados",
+    "- Saídas de estratégia, escopo e checklist",
+    "",
+    "## Tecnologias Recomendadas",
+    "- React + TypeScript no frontend",
+    "- Backend integrado para persistência e funções",
+    "- Execução orientada por blocos no canvas",
+    "",
+    "## Prioridades",
+    "- P0: diagnóstico, estratégia, abordagem",
+    "- P1: objeções, follow-up, automação",
+    "- P2: refinamentos e otimização",
+  ].join("\n");
+}
+
+function buildLocalBlueprint(context: LocalFallbackContext) {
+  const facts = extractProspectFacts(context.prospectContext);
+  return [
+    "## Arquitetura Geral",
+    `- Entrada de contexto do prospect (${facts.companyName}) → processamento no engine → saídas acionáveis no canvas.`,
+    "",
+    "## Frontend",
+    "- Canvas de blocos, chat copiloto, histórico de outputs e painel de execução.",
+    "",
+    "## Backend",
+    "- Função de geração, persistência de sessões e conectores de execução.",
+    "",
+    "## Modelo de Dados",
+    "- Sessão do engine, blocos/nodes, edges, outputs e logs de execução.",
+    "",
+    "## Segurança",
+    "- Validação de entrada, isolamento por usuário e respostas resilientes a falhas de provedor.",
+  ].join("\n");
+}
+
+function buildLocalPrompt(context: LocalFallbackContext) {
+  const facts = extractProspectFacts(context.prospectContext);
+  return [
+    "## Prompt Consolidado",
+    `Crie uma solução para ${facts.companyName}, do nicho ${facts.niche}${facts.location ? `, em ${facts.location}` : ""}.`,
+    "Priorize diagnóstico comercial, oferta, objeções, abordagem, automação e follow-up.",
+    "A resposta deve ser prática, orientada a conversão e pronta para virar blocos executáveis no canvas.",
+    "Evite genericidade e use sempre o contexto real informado pelo prospect.",
+  ].join("\n");
+}
+
+function buildLocalChecklist(context: LocalFallbackContext) {
+  const facts = extractProspectFacts(context.prospectContext);
+  return [
+    "## FASE 1 - SETUP",
+    `- Validar contexto de ${facts.companyName}`,
+    "- Definir proposta central",
+    "",
+    "## FASE 2 - CORE",
+    "- Montar blocos de diagnóstico, dor, oportunidade e estratégia",
+    "- Validar sequência principal do canvas",
+    "",
+    "## FASE 3 - EXECUÇÃO",
+    "- Fechar abordagem, objeções e follow-up",
+    "- Testar conectores reais antes de escalar",
+    "",
+    "## FASE 4 - POLISH",
+    "- Revisar copy, clareza e ordem dos blocos",
+    "- Remover redundâncias e reforçar CTAs",
+  ].join("\n");
+}
+
+function buildLocalExecutive(context: LocalFallbackContext) {
+  const facts = extractProspectFacts(context.prospectContext);
+  return [
+    "## Contexto e Diagnóstico",
+    `- ${facts.companyName} opera em ${facts.niche} e precisa de uma estrutura comercial mais previsível.`,
+    "",
+    "## Solução Proposta",
+    "- Organizar o canvas em descoberta, proposta, abordagem e execução.",
+    "",
+    "## Benefícios",
+    "- Menos improviso comercial",
+    "- Mais clareza na proposta",
+    "- Melhor cadência de follow-up",
+    "",
+    "## Próximos Passos",
+    "- Aprovar a estrutura sugerida e aplicar no canvas.",
+  ].join("\n");
+}
+
+function buildLocalObjections(context: LocalFallbackContext) {
+  const facts = extractProspectFacts(context.prospectContext);
+  return [
+    `## Objeções prováveis para ${facts.companyName}`,
+    "1. Já fazemos isso hoje → mostrar gargalos atuais e oportunidade perdida.",
+    "2. Agora não é prioridade → conectar com impacto direto em resposta e fechamento.",
+    "3. Parece complexo → quebrar em etapas simples e de rápida implementação.",
+    "4. Preciso pensar melhor → propor próxima ação objetiva com baixo compromisso.",
+    "5. Está caro → reposicionar em ganho operacional e previsibilidade comercial.",
+    "6. Não tenho tempo → destacar redução de retrabalho e clareza na execução.",
+    "7. Minha equipe não vai usar → estruturar rotina simples e acionável.",
+    "8. Já tentei algo parecido → diferenciar pela organização do fluxo e follow-up real.",
+  ].join("\n");
+}
+
+function buildLocalDeployPlan(context: LocalFallbackContext) {
+  return [
+    "## Timeline com Marcos",
+    "- M1: estrutura mínima do canvas",
+    "- M2: abordagem e objeções prontas",
+    "- M3: execução e follow-up validados",
+    "",
+    "## Fases",
+    "- Staging: validar fluxo e mensagens",
+    "- Produção: ativar conectores e monitorar resposta",
+    "",
+    "## Pós-entrega",
+    "- Ajustar gargalos, acompanhar uso real e iterar por prioridade.",
+  ].join("\n");
+}
+
+const ESSENTIAL_BLOCKS = [
+  "diagnosis",
+  "pain",
+  "opportunity",
+  "strategy",
+  "offer",
+  "objections",
+  "approach",
+  "structure",
+  "followup",
+  "checklist",
+] as const;
+
+const NODE_LABELS: Record<string, string> = {
+  diagnosis: "Diagnóstico",
+  pain: "Dor Principal",
+  opportunity: "Oportunidade",
+  strategy: "Estratégia",
+  offer: "Oferta",
+  objections: "Objeções",
+  approach: "Abordagem",
+  structure: "Estrutura Técnica",
+  integrations: "Integrações",
+  automation: "Automações",
+  followup: "Follow-up",
+  checklist: "Checklist",
+  deploy: "Deploy",
+  prompt: "Prompt Final",
+  notes: "Notas",
+};
+
+function extractProspectFacts(prospectContext?: Record<string, any> | null) {
+  const qa = prospectContext?.questionnaire_answers || {};
+  const companyName = prospectContext?.company_name || "o negócio";
+  const niche = prospectContext?.niche || qa.niche || "negócio local";
+  const city = prospectContext?.company_city || qa.city || "";
+  const state = prospectContext?.company_state || qa.state || "";
+  const website = prospectContext?.company_website || qa.website || "";
+  const instagram = prospectContext?.instagram || qa.instagram || "";
+  const services = prospectContext?.services || qa.services || "";
+  const location = [city, state].filter(Boolean).join(" • ");
+
+  return { companyName, niche, city, state, website, instagram, services, location };
+}
+
+function getExistingNodeTypes(nodes: Array<{ type?: string; data?: Record<string, any> }>) {
+  return new Set(
+    nodes
+      .map((node) => node?.data?.nodeType || node?.type)
+      .filter((value): value is string => typeof value === "string" && value.length > 0),
+  );
+}
+
+function recommendPriorityBlocks(existingTypes: Set<string>) {
+  return [
+    "diagnosis",
+    "pain",
+    "opportunity",
+    "strategy",
+    "offer",
+    "objections",
+    "approach",
+    "structure",
+    "integrations",
+    "automation",
+    "followup",
+    "checklist",
+    "deploy",
+    "prompt",
+    "notes",
+  ].filter((type) => !existingTypes.has(type));
+}
+
+function buildNodeContent(type: string, facts: ReturnType<typeof extractProspectFacts>, existingTypes: Set<string>) {
+  const base = {
+    diagnosis: [
+      `Negócio analisado: ${facts.companyName} no nicho ${facts.niche}${facts.location ? `, em ${facts.location}` : ""}.`,
+      "O canvas precisa ligar leitura de cenário, proposta de valor e ação comercial em sequência única.",
+      "Prioridade imediata: reduzir dispersão e concentrar o fluxo em conversão.",
+    ],
+    pain: [
+      `A dor mais provável de ${facts.companyName} é ter operação ativa sem uma rotina comercial suficientemente clara.`,
+      "Isso costuma gerar perda de timing, baixa resposta e follow-up inconsistente.",
+      "O bloco deve orientar a conversa para impacto de faturamento e previsibilidade.",
+    ],
+    opportunity: [
+      `Existe espaço para posicionar ${facts.companyName} com mais clareza diante do mercado de ${facts.niche}.`,
+      "A melhor oportunidade é unir proposta objetiva, abordagem simples e prova de valor rápida.",
+      "Isso encurta decisão e melhora a qualidade do próximo passo comercial.",
+    ],
+    strategy: [
+      `Estratégia central: transformar o contexto de ${facts.companyName} em uma oferta simples de entender e fácil de vender.`,
+      "Sequência sugerida: diagnóstico curto → oportunidade → proposta → CTA.",
+      "Tudo no canvas deve servir para aproximar esse fechamento.",
+    ],
+    offer: [
+      `Oferta recomendada: estrutura de conversão orientada a resultado para ${facts.niche}.`,
+      "A entrega precisa ser clara, com início rápido e ganho percebido logo no começo.",
+      "Evite amplitude demais; foque em poucos elementos com alta utilidade prática.",
+    ],
+    objections: [
+      "Antecipe as objeções antes da execução para não travar o fluxo no momento do contato.",
+      "Principais respostas devem cobrir prioridade, custo, tempo e confiança na implementação.",
+      "Esse bloco protege o fechamento e melhora a consistência da abordagem.",
+    ],
+    approach: [
+      `Abordagem sugerida: abrir com diagnóstico enxuto e oportunidade específica para ${facts.companyName}.`,
+      "Depois apresentar a proposta em linguagem direta, sem excesso de detalhe técnico no primeiro contato.",
+      "Finalizar sempre com CTA curto e fácil de responder.",
+    ],
+    structure: [
+      "A estrutura técnica deve sustentar captação, decisão e execução sem retrabalho.",
+      "Organize frontend, dados e automações em blocos independentes, mas conectados pela mesma lógica comercial.",
+      "O objetivo é deixar o canvas operável e fácil de evoluir.",
+    ],
+    integrations: [
+      "Mapeie apenas integrações que destravam execução real: comunicação, coleta de dados e acompanhamento.",
+      "Cada integração precisa ter papel claro no fluxo e não aumentar complexidade sem retorno.",
+      "Integrações boas aceleram a operação; integrações demais bagunçam a entrega.",
+    ],
+    automation: [
+      "Automatize apenas o que já estiver validado manualmente dentro do fluxo.",
+      "Priorize gatilhos simples: follow-up, atualização de estado e registro de saída.",
+      "A automação deve reduzir atrito, não esconder problemas do processo.",
+    ],
+    followup: [
+      "Defina uma cadência curta e previsível para não depender de memória operacional.",
+      "Cada follow-up deve ter um objetivo: retomar contexto, reforçar valor ou pedir decisão.",
+      "O bloco precisa dizer quando insistir, quando ajustar e quando encerrar.",
+    ],
+    checklist: [
+      "Transforme a estratégia em itens acionáveis por ordem de impacto.",
+      `Como o canvas já possui ${existingTypes.size} bloco(s), use este checklist para priorizar o que entra primeiro.`,
+      "Checklist bom reduz dispersão e mantém a execução limpa.",
+    ],
+    deploy: [
+      "Só avance para deploy depois de validar a narrativa comercial e a ordem dos blocos.",
+      "Ambiente de teste deve confirmar clareza, conexão entre etapas e ausência de pontos mortos.",
+      "Deploy aqui significa colocar o fluxo para operar sem perder controle.",
+    ],
+    prompt: [
+      `Consolidar um prompt final específico para ${facts.companyName} e para o nicho ${facts.niche}.`,
+      "Esse prompt deve refletir contexto real, objetivo comercial e ordem correta de construção.",
+      "Ele serve como base de execução consistente para as próximas iterações.",
+    ],
+    notes: [
+      "Use este bloco para registrar ajustes de priorização, observações do prospect e decisões importantes.",
+      "Notas boas evitam retrabalho e preservam o raciocínio do canvas.",
+      "Se algo ainda estiver difuso, anote antes de expandir a estrutura.",
+    ],
+  } as Record<string, string[]>;
+
+  return (base[type] || base.notes).join("\n");
+}
+
+function getLatestUserMessage(context: LocalFallbackContext) {
+  const historyMessage = [...(context.chatHistory || [])].reverse().find((message) => message.role === "user")?.content;
+  return context.userInstruction || historyMessage || "";
+}
+
+function estimateDigitalMaturity(facts: ReturnType<typeof extractProspectFacts>, existingTypes: Set<string>) {
+  let score = 4;
+  if (facts.website) score += 1;
+  if (facts.instagram) score += 1;
+  if (facts.services) score += 1;
+  if (existingTypes.size >= 5) score += 1;
+  if (existingTypes.has("followup") || existingTypes.has("automation")) score += 1;
+  return Math.min(score, 9);
+}
+
+function isGreetingIntent(message: string) {
+  return /^(oi|olá|ola|eai|opa|bom dia|boa tarde|boa noite)\b/.test(message.trim());
+}
+
+function isApprovalIntent(message: string) {
+  return /\b(sim|aprovado|aprovo|pode|manda|manda ver|implementa|executa|pode fazer|fechado)\b/.test(message);
+}
+
+function isCanvasIntent(message: string) {
+  return /\b(canvas|canva|estrutura|estruturar|organiza|organizar|blocos|monta|monte)\b/.test(message);
+}
+
+function isAnalysisIntent(message: string) {
+  return /\b(analisa|analise|avalia|revisa|o que acha|diagnóstico|diagnostico)\b/.test(message);
+}
+
+function isStrategyIntent(message: string) {
+  return /\b(estratégia|estrategia|como vender|abordar|abordagem|plano comercial)\b/.test(message);
+}
+
+function isCopyIntent(message: string) {
+  return /\b(copy|mensagem|abordagem|escreve|cria mensagem|texto)\b/.test(message);
 }
 
 function buildErrorResponse(error: string, status: number) {
