@@ -1602,8 +1602,10 @@ serve(async (req) => {
     console.log(`Global search: "${searchQuery}" in ${countryCode} (${config.gl}/${config.hl}), location: "${serperLocation}", state filter: "${stateAbbr}", candidates: ${searchCandidates.length}`);
 
     let places: any[] = [];
+    const minCandidatesBeforeStopping = Math.min(2, searchCandidates.length);
 
-    for (const candidate of searchCandidates) {
+    for (let index = 0; index < searchCandidates.length; index += 1) {
+      const candidate = searchCandidates[index];
       const candidatePlaces = await fetchSerperPlaces(apiKeys, {
         q: candidate.query,
         gl: config.gl,
@@ -1616,7 +1618,11 @@ serve(async (req) => {
 
       places = dedupePlaces([...places, ...candidatePlaces]);
 
-      if (places.length >= maxResults) {
+      const rankedPlaces = filterAndRankPlacesByNiche(places, niche, countryCode);
+      const hasEnoughPreciseResults = rankedPlaces.length >= maxResults;
+      const triedEnoughCandidates = index + 1 >= minCandidatesBeforeStopping;
+
+      if (hasEnoughPreciseResults && triedEnoughCandidates) {
         break;
       }
     }
