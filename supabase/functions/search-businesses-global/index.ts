@@ -996,7 +996,12 @@ serve(async (req) => {
       .replace('{niche}', niche)
       .replace('{city}', searchLocation);
 
-    console.log(`Global search: "${searchQuery}" in ${countryCode} (${config.gl}/${config.hl}), state filter: "${stateAbbr}"`);
+    // Build location string for Serper geo-targeting (critical for non-BR countries)
+    const serperLocation = countryCode === 'BR' 
+      ? (stateAbbr ? `${cityName}, ${stateAbbr}, Brazil` : `${cityName}, Brazil`)
+      : `${cityName}, ${config.countryName}`;
+
+    console.log(`Global search: "${searchQuery}" in ${countryCode} (${config.gl}/${config.hl}), location: "${serperLocation}", state filter: "${stateAbbr}"`);
 
     // Get message template for this country
     const messageTemplate = MESSAGE_TEMPLATES[config.lang] || MESSAGE_TEMPLATES['en'];
@@ -1005,7 +1010,8 @@ serve(async (req) => {
     // FAST SEARCH: limit to 50 results to filter by state
     const maxResults = Math.min(50, Math.max(10, requestedMax || 50));
 
-    const searchResponse = await fetch('https://google.serper.dev/places', {
+    // First attempt: search with location parameter for precision
+    let searchResponse = await fetch('https://google.serper.dev/places', {
       method: 'POST',
       headers: {
         'X-API-KEY': apiKey,
@@ -1015,9 +1021,75 @@ serve(async (req) => {
         q: searchQuery,
         gl: config.gl,
         hl: config.hl,
+        location: serperLocation,
         num: maxResults,
       }),
     });
+
+    if (!searchResponse.ok) {
+      const errorText = await searchResponse.text();
+      console.error('Serper error:', searchResponse.status, errorText);
+      return new Response(
+        JSON.stringify({ success: false, error: `Search error: ${searchResponse.status}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    let searchData = await searchResponse.json();
+    let places = searchData.places || [];
+    console.log(`Found ${places.length} results with location param`);
+
+    // Fallback: if 0 results, retry without location but with country in query
+    if (places.length === 0 && countryCode !== 'BR') {
+      console.log('Retrying with country name in query...');
+      const fallbackQuery = `${niche} ${cityName} ${config.countryName}`;
+      
+      const fallbackResponse = await fetch('https://google.serper.dev/places', {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: fallbackQuery,
+          gl: config.gl,
+          hl: config.hl,
+          num: maxResults,
+        }),
+      });
+
+      if (fallbackResponse.ok) {
+        const fallbackData = await fallbackResponse.json();
+        places = fallbackData.places || [];
+        console.log(`Fallback found ${places.length} results with query: "${fallbackQuery}"`);
+      }
+    }
+
+    // Second fallback: try with English niche terms for non-English/Portuguese countries
+    if (places.length === 0 && !['BR', 'US', 'UK', 'CA', 'AU', 'PT'].includes(countryCode)) {
+      console.log('Retrying with English niche terms...');
+      const englishQuery = `${niche} in ${cityName}, ${config.countryName}`;
+      
+      const englishResponse = await fetch('https://google.serper.dev/places', {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: englishQuery,
+          gl: config.gl,
+          hl: 'en',
+          num: maxResults,
+        }),
+      });
+
+      if (englishResponse.ok) {
+        const englishData = await englishResponse.json();
+        places = englishData.places || [];
+        console.log(`English fallback found ${places.length} results`);
+      }
+    }
 
     if (!searchResponse.ok) {
       const errorText = await searchResponse.text();
