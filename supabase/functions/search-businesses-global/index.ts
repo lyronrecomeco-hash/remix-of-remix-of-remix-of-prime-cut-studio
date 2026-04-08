@@ -30,23 +30,23 @@ interface BusinessResult {
 }
 
 // Country configuration for search
-const COUNTRY_CONFIG: Record<string, { gl: string; hl: string; phonePrefix: string; lang: string }> = {
-  BR: { gl: 'br', hl: 'pt-br', phonePrefix: '55', lang: 'pt-BR' },
-  US: { gl: 'us', hl: 'en', phonePrefix: '1', lang: 'en' },
-  PT: { gl: 'pt', hl: 'pt-pt', phonePrefix: '351', lang: 'pt-PT' },
-  ES: { gl: 'es', hl: 'es', phonePrefix: '34', lang: 'es' },
-  MX: { gl: 'mx', hl: 'es', phonePrefix: '52', lang: 'es-MX' },
-  AR: { gl: 'ar', hl: 'es', phonePrefix: '54', lang: 'es-AR' },
-  CO: { gl: 'co', hl: 'es', phonePrefix: '57', lang: 'es' },
-  CL: { gl: 'cl', hl: 'es', phonePrefix: '56', lang: 'es' },
-  PE: { gl: 'pe', hl: 'es', phonePrefix: '51', lang: 'es' },
-  UK: { gl: 'uk', hl: 'en', phonePrefix: '44', lang: 'en-UK' },
-  DE: { gl: 'de', hl: 'de', phonePrefix: '49', lang: 'de' },
-  FR: { gl: 'fr', hl: 'fr', phonePrefix: '33', lang: 'fr' },
-  IT: { gl: 'it', hl: 'it', phonePrefix: '39', lang: 'it' },
-  CA: { gl: 'ca', hl: 'en', phonePrefix: '1', lang: 'en' },
-  AU: { gl: 'au', hl: 'en', phonePrefix: '61', lang: 'en' },
-  JP: { gl: 'jp', hl: 'ja', phonePrefix: '81', lang: 'ja' },
+const COUNTRY_CONFIG: Record<string, { gl: string; hl: string; phonePrefix: string; lang: string; countryName: string }> = {
+  BR: { gl: 'br', hl: 'pt-br', phonePrefix: '55', lang: 'pt-BR', countryName: 'Brasil' },
+  US: { gl: 'us', hl: 'en', phonePrefix: '1', lang: 'en', countryName: 'United States' },
+  PT: { gl: 'pt', hl: 'pt-pt', phonePrefix: '351', lang: 'pt-PT', countryName: 'Portugal' },
+  ES: { gl: 'es', hl: 'es', phonePrefix: '34', lang: 'es', countryName: 'España' },
+  MX: { gl: 'mx', hl: 'es', phonePrefix: '52', lang: 'es-MX', countryName: 'México' },
+  AR: { gl: 'ar', hl: 'es', phonePrefix: '54', lang: 'es-AR', countryName: 'Argentina' },
+  CO: { gl: 'co', hl: 'es', phonePrefix: '57', lang: 'es', countryName: 'Colombia' },
+  CL: { gl: 'cl', hl: 'es', phonePrefix: '56', lang: 'es', countryName: 'Chile' },
+  PE: { gl: 'pe', hl: 'es', phonePrefix: '51', lang: 'es', countryName: 'Perú' },
+  UK: { gl: 'uk', hl: 'en', phonePrefix: '44', lang: 'en-UK', countryName: 'United Kingdom' },
+  DE: { gl: 'de', hl: 'de', phonePrefix: '49', lang: 'de', countryName: 'Deutschland' },
+  FR: { gl: 'fr', hl: 'fr', phonePrefix: '33', lang: 'fr', countryName: 'France' },
+  IT: { gl: 'it', hl: 'it', phonePrefix: '39', lang: 'it', countryName: 'Italia' },
+  CA: { gl: 'ca', hl: 'en', phonePrefix: '1', lang: 'en', countryName: 'Canada' },
+  AU: { gl: 'au', hl: 'en', phonePrefix: '61', lang: 'en', countryName: 'Australia' },
+  JP: { gl: 'jp', hl: 'ja', phonePrefix: '81', lang: 'ja', countryName: '日本' },
 };
 
 // Search query templates per language
