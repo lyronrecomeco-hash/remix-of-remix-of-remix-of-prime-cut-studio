@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const SYSTEM_PROMPT = `Você é a **Genesis IA**, assistente de suporte inteligente da plataforma **Genesis Hub**.
@@ -58,30 +59,153 @@ function cleanReply(reply: string): string {
   return reply.replace(/\[WHATSAPP_SUPPORT\]/g, '').trim();
 }
 
+// ─── Local fallback intent engine ───
+function buildLocalFallback(messages: Array<{ role: string; content: string }>): { reply: string; hasWhatsAppButton: boolean } {
+  const lastUserMsg = [...messages].reverse().find(m => m.role === "user")?.content?.toLowerCase().trim() || "";
+
+  if (isGreeting(lastUserMsg)) {
+    return {
+      reply: "Olá! 👋 Sou a **Genesis IA**, assistente de suporte da plataforma.\n\nComo posso te ajudar hoje? Pode perguntar sobre qualquer módulo, funcionalidade ou dúvida técnica! 😊",
+      hasWhatsAppButton: false,
+    };
+  }
+
+  if (isHumanSupportIntent(lastUserMsg)) {
+    return {
+      reply: "Entendi! Posso resolver a maioria das dúvidas aqui mesmo, mas se preferir atendimento especializado, posso abrir um chamado com a equipe diretamente neste chat. 😊",
+      hasWhatsAppButton: true,
+    };
+  }
+
+  if (isPlanQuestion(lastUserMsg)) {
+    return {
+      reply: "A Genesis Hub oferece **3 planos**:\n\n- **Mensal** — acesso completo por 30 dias\n- **Trimestral** — melhor custo-benefício\n- **Anual** — maior economia\n\nTodos incluem acesso a todos os módulos. O pagamento é feito via checkout com **Pix ou cartão de crédito**. 💳",
+      hasWhatsAppButton: false,
+    };
+  }
+
+  if (isScannerQuestion(lastUserMsg)) {
+    return {
+      reply: "O **Scanner IA** busca empresas sem presença digital em qualquer cidade do mundo! 🌍\n\n- Filtre por país, estado, cidade, nicho e estrelas\n- Até **20 resultados** por pesquisa\n- Clique em **\"Aceitar Projeto\"** para salvar na sua pipeline\n\nÉ o jeito mais rápido de encontrar clientes potenciais!",
+      hasWhatsAppButton: false,
+    };
+  }
+
+  if (isRadarQuestion(lastUserMsg)) {
+    return {
+      reply: "O **Radar Global** faz varreduras automáticas por cidades e nichos que você configurar! 📡\n\n- Funciona continuamente em segundo plano\n- Filtros avançados por tamanho de cidade, países e nichos\n- Painel de logs em tempo real\n\nAssim você encontra oportunidades sem ficar buscando manualmente.",
+      hasWhatsAppButton: false,
+    };
+  }
+
+  if (isTemplateQuestion(lastUserMsg)) {
+    return {
+      reply: "Na **Biblioteca de Modelos** você encontra **40+ nichos** prontos! 🎨\n\n- Pizzaria, Barbearia, Clínica, Advocacia e muito mais\n- Configure cores, tipografia e idioma\n- Gere um **prompt profissional** para criar o projeto na Lovable ou outra plataforma de IA",
+      hasWhatsAppButton: false,
+    };
+  }
+
+  if (isWhatsAppQuestion(lastUserMsg)) {
+    return {
+      reply: "O **Genesis WhatsApp** permite criar automações inteligentes com a **Luna IA**! 💬\n\n- Chatbots personalizados por nicho\n- Gerencie instâncias conectadas\n- Automação de atendimento e follow-up\n\nConfigure tudo pelo painel de **Instâncias** no menu lateral.",
+      hasWhatsAppButton: false,
+    };
+  }
+
+  if (isProposalQuestion(lastUserMsg)) {
+    return {
+      reply: "O módulo de **Propostas** gera textos persuasivos com IA! ✍️\n\n- Baseados no nicho e dados da empresa\n- Vários estilos de copy disponíveis\n- Acompanhe propostas aceitas na pipeline\n\nDepois de aceita, você gerencia tudo pelo módulo de **Contratos**.",
+      hasWhatsAppButton: false,
+    };
+  }
+
+  if (isHowItWorksQuestion(lastUserMsg)) {
+    return {
+      reply: "A **Genesis Hub** ajuda consultores digitais a encontrar clientes sem presença digital, criar projetos profissionais com IA e fechar negócios — tudo em uma única plataforma! 🚀\n\nExplore o menu lateral para acessar cada módulo.",
+      hasWhatsAppButton: false,
+    };
+  }
+
+  if (isErrorReport(lastUserMsg)) {
+    return {
+      reply: "Sinto muito pelo inconveniente! 😕 Para ajudar melhor:\n\n- **Qual tela** você estava usando?\n- **O que fez** antes do erro?\n- Apareceu alguma **mensagem de erro**?\n\nEnquanto isso, tente **atualizar a página** (F5). Se persistir, posso abrir atendimento com a equipe!",
+      hasWhatsAppButton: false,
+    };
+  }
+
+  // Generic helpful response
+  return {
+    reply: "Posso te ajudar com qualquer dúvida sobre a Genesis Hub! 😊\n\nAlguns temas populares:\n- **Scanner IA** — encontrar clientes\n- **Radar Global** — busca automática\n- **Modelos** — criar projetos por nicho\n- **WhatsApp** — automação com Luna IA\n- **Planos** — valores e funcionalidades\n\nSobre o que quer saber mais?",
+    hasWhatsAppButton: false,
+  };
+}
+
+function isGreeting(msg: string) {
+  return /^(oi|olá|ola|hey|eai|opa|bom dia|boa tarde|boa noite|hello|hi)\b/.test(msg);
+}
+
+function isHumanSupportIntent(msg: string) {
+  return /\b(suporte|atendente|humano|falar com|atendimento|pessoa|agente)\b/.test(msg);
+}
+
+function isPlanQuestion(msg: string) {
+  return /\b(plano|planos|preço|preco|valor|assinatura|pagar|pagamento|mensal|trimestral|anual)\b/.test(msg);
+}
+
+function isScannerQuestion(msg: string) {
+  return /\b(scanner|encontrar cliente|buscar empresa|busca de cliente|encontrar lead)\b/.test(msg);
+}
+
+function isRadarQuestion(msg: string) {
+  return /\b(radar|varredura|busca automática|busca automatica)\b/.test(msg);
+}
+
+function isTemplateQuestion(msg: string) {
+  return /\b(modelo|template|biblioteca|nicho|mockup|prompt)\b/.test(msg);
+}
+
+function isWhatsAppQuestion(msg: string) {
+  return /\b(whatsapp|luna|chatbot|instância|instancia|automação whats|automacao whats)\b/.test(msg);
+}
+
+function isProposalQuestion(msg: string) {
+  return /\b(proposta|propostas|contrato|contratos|copy|texto persuasivo)\b/.test(msg);
+}
+
+function isHowItWorksQuestion(msg: string) {
+  return /\b(como funciona|o que é|o que e|pra que serve|para que serve|sobre a plataforma)\b/.test(msg);
+}
+
+function isErrorReport(msg: string) {
+  return /\b(erro|bug|travou|não funciona|nao funciona|quebrou|problema|falha|não carrega|nao carrega)\b/.test(msg);
+}
+
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { messages } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
     if (!LOVABLE_API_KEY) {
+      console.warn("[genesis-support-chat] No LOVABLE_API_KEY, using local fallback");
+      const fallback = buildLocalFallback(messages || []);
       return new Response(
-        JSON.stringify({ reply: 'Serviço temporariamente indisponível. Tente novamente em instantes.' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify(fallback),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: 'system', content: `${SYSTEM_PROMPT}\n\n${SYSTEM_PROMPT_APPENDIX}` },
           ...messages,
@@ -90,41 +214,62 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[genesis-support-chat] AI gateway error:", response.status, errorText);
+
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ reply: 'Muitas mensagens em pouco tempo. Aguarde alguns segundos e tente novamente.' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ reply: "Muitas mensagens em pouco tempo. Aguarde alguns segundos e tente novamente." }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ reply: 'Serviço temporariamente indisponível. Tente mais tarde.' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
+
+      // For any other error (402, 500, etc.), use local fallback instead of showing error
+      console.warn("[genesis-support-chat] Falling back to local engine for status", response.status);
+      const fallback = buildLocalFallback(messages || []);
       return new Response(
-        JSON.stringify({ reply: 'Erro ao processar mensagem. Tente novamente.' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify(fallback),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const data = await response.json();
-    let reply = data.choices?.[0]?.message?.content || 'Desculpe, não consegui gerar uma resposta.';
-    
+    let reply = data.choices?.[0]?.message?.content || "";
+
+    // If AI returned empty, use local fallback
+    if (!reply.trim()) {
+      console.warn("[genesis-support-chat] Empty AI response, using local fallback");
+      const fallback = buildLocalFallback(messages || []);
+      return new Response(
+        JSON.stringify(fallback),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const hasWhatsAppButton = needsWhatsAppButton(reply);
     reply = cleanReply(reply);
 
     return new Response(
       JSON.stringify({ reply, hasWhatsAppButton }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
-    console.error('Support chat error:', error);
+    console.error("[genesis-support-chat] Unexpected error:", error);
+
+    // Even on unexpected errors, try local fallback
+    try {
+      const fallback = buildLocalFallback([]);
+      return new Response(
+        JSON.stringify(fallback),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    } catch {
+      // absolute last resort
+    }
+
     return new Response(
-      JSON.stringify({ reply: 'Erro interno. Tente novamente em instantes.' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ reply: "Olá! Estou aqui para ajudar com a Genesis Hub. Como posso te ajudar? 😊" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
