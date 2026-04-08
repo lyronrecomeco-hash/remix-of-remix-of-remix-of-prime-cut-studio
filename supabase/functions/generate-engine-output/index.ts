@@ -385,7 +385,7 @@ async function callAIWithFallback(messages: AIMessage[], options: { forceJson?: 
       failures.push({ name: provider.name, status: response.status, body });
       console.error(`[generate-engine-output] ${provider.name} failed`, response.status, body);
 
-      if (!shouldFallback(response.status)) {
+      if (!shouldFallback(response.status, body)) {
         return handleProviderFailure(provider.name, response.status, body);
       }
     } catch (error) {
@@ -498,7 +498,11 @@ async function callLovableAI(messages: AIMessage[]) {
   });
 }
 
-function shouldFallback(status: number) {
+function shouldFallback(status: number, body = "") {
+  if (status === 400) {
+    return /API_KEY_INVALID|invalid api key|api key not valid|incorrect api key|invalid_request_error/i.test(body);
+  }
+
   return status === 401 || status === 402 || status === 403 || status === 404 || status === 429 || status >= 500;
 }
 
