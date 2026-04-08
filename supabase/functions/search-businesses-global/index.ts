@@ -61,6 +61,442 @@ const SEARCH_TEMPLATES: Record<string, string> = {
   'ja': '{city} {niche}',
 };
 
+interface SearchCandidate {
+  query: string;
+  hl: string;
+  useLocation: boolean;
+}
+
+interface LocalizedNicheDefinition {
+  aliases: string[];
+  english: string[];
+  localized: Partial<Record<string, string[]>>;
+}
+
+const LOCALIZED_NICHE_TERMS: Record<string, LocalizedNicheDefinition> = {
+  barbearia: {
+    aliases: ['barbearia', 'barbeiro', 'barber shop', 'barbershop', 'barberia', 'barbería', 'barbier', 'barbiere', 'herrenfriseur', '理髪店'],
+    english: ['barbershop', 'barber shop'],
+    localized: {
+      BR: ['barbearia', 'barbeiro'],
+      PT: ['barbearia', 'barbeiro'],
+      ES: ['barbería', 'peluquería de caballero'],
+      MX: ['barbería', 'estética masculina'],
+      AR: ['barbería', 'peluquería masculina'],
+      CO: ['barbería', 'peluquería masculina'],
+      CL: ['barbería', 'peluquería masculina'],
+      PE: ['barbería', 'peluquería masculina'],
+      US: ['barbershop', 'barber shop'],
+      UK: ['barbershop', 'barber shop'],
+      CA: ['barbershop', 'barber shop'],
+      AU: ['barbershop', 'barber shop'],
+      DE: ['barbershop', 'herrenfriseur'],
+      FR: ['barbier', 'barbershop'],
+      IT: ['barbiere', 'barbershop'],
+      JP: ['理髪店', 'バーバー'],
+    },
+  },
+  salao: {
+    aliases: ['salão de beleza', 'salao de beleza', 'salão', 'salao', 'cabeleireiro', 'hair salon', 'beauty salon', 'hairdresser', 'peluqueria', 'peluquería', 'salon de coiffure', 'parrucchiere', '美容院'],
+    english: ['hair salon', 'beauty salon'],
+    localized: {
+      BR: ['salão de beleza', 'cabeleireiro'],
+      PT: ['cabeleireiro', 'salão de beleza'],
+      ES: ['peluquería', 'salón de belleza'],
+      MX: ['estética', 'salón de belleza'],
+      AR: ['peluquería', 'salón de belleza'],
+      CO: ['peluquería', 'salón de belleza'],
+      CL: ['peluquería', 'salón de belleza'],
+      PE: ['peluquería', 'salón de belleza'],
+      US: ['hair salon', 'beauty salon'],
+      UK: ['hair salon', 'beauty salon'],
+      CA: ['hair salon', 'beauty salon'],
+      AU: ['hair salon', 'beauty salon'],
+      DE: ['friseursalon', 'beauty salon'],
+      FR: ['salon de coiffure', 'institut de beauté'],
+      IT: ['parrucchiere', 'salone di bellezza'],
+      JP: ['美容院', 'ヘアサロン'],
+    },
+  },
+  clinica: {
+    aliases: ['clínica', 'clinica', 'medical clinic', 'medical centre', 'cabinet médical', 'studio medico', 'arztpraxis', 'consultorio', 'consultório', 'クリニック'],
+    english: ['medical clinic', 'medical centre'],
+    localized: {
+      BR: ['clínica médica', 'consultório médico'],
+      PT: ['clínica médica', 'consultório médico'],
+      ES: ['clínica médica', 'centro médico'],
+      MX: ['clínica médica', 'consultorio médico'],
+      AR: ['clínica médica', 'consultorio médico'],
+      CO: ['clínica médica', 'consultorio médico'],
+      CL: ['clínica médica', 'centro médico'],
+      PE: ['clínica médica', 'consultorio médico'],
+      US: ['medical clinic', 'medical centre'],
+      UK: ['medical clinic', 'medical centre'],
+      CA: ['medical clinic', 'medical centre'],
+      AU: ['medical centre', 'medical clinic'],
+      DE: ['arztpraxis', 'medizinisches zentrum'],
+      FR: ['cabinet médical', 'centre médical'],
+      IT: ['studio medico', 'centro medico'],
+      JP: ['クリニック', '医院'],
+    },
+  },
+  dentista: {
+    aliases: ['dentista', 'clínica odontológica', 'clinica odontologica', 'dental clinic', 'dental practice', 'consultorio dental', 'clinica dental', 'zahnarzt', 'cabinet dentaire', 'studio dentistico', '歯科医院'],
+    english: ['dental clinic', 'dentist'],
+    localized: {
+      BR: ['dentista', 'clínica odontológica'],
+      PT: ['clínica dentária', 'dentista'],
+      ES: ['clínica dental', 'dentista'],
+      MX: ['consultorio dental', 'dentista'],
+      AR: ['consultorio odontológico', 'dentista'],
+      CO: ['consultorio odontológico', 'dentista'],
+      CL: ['clínica dental', 'dentista'],
+      PE: ['consultorio dental', 'dentista'],
+      US: ['dental clinic', 'dentist'],
+      UK: ['dental practice', 'dentist'],
+      CA: ['dental clinic', 'dentist'],
+      AU: ['dental clinic', 'dentist'],
+      DE: ['zahnarzt', 'zahnklinik'],
+      FR: ['cabinet dentaire', 'dentiste'],
+      IT: ['studio dentistico', 'dentista'],
+      JP: ['歯科医院', '歯医者'],
+    },
+  },
+  academia: {
+    aliases: ['academia', 'gym', 'fitness', 'ginásio', 'ginasio', 'gimnasio', 'fitnessstudio', 'salle de sport', 'palestra', 'ジム'],
+    english: ['gym', 'fitness gym'],
+    localized: {
+      BR: ['academia', 'academia de musculação'],
+      PT: ['ginásio', 'academia'],
+      ES: ['gimnasio', 'centro fitness'],
+      MX: ['gimnasio', 'fitness'],
+      AR: ['gimnasio', 'fitness'],
+      CO: ['gimnasio', 'fitness'],
+      CL: ['gimnasio', 'fitness'],
+      PE: ['gimnasio', 'fitness'],
+      US: ['gym', 'fitness gym'],
+      UK: ['gym', 'fitness centre'],
+      CA: ['gym', 'fitness gym'],
+      AU: ['gym', 'fitness centre'],
+      DE: ['fitnessstudio', 'gym'],
+      FR: ['salle de sport', 'fitness'],
+      IT: ['palestra', 'fitness'],
+      JP: ['ジム', 'フィットネスジム'],
+    },
+  },
+  restaurante: {
+    aliases: ['restaurante', 'restaurant', 'ristorante', 'restaurateur', 'レストラン'],
+    english: ['restaurant'],
+    localized: {
+      BR: ['restaurante'],
+      PT: ['restaurante'],
+      ES: ['restaurante'],
+      MX: ['restaurante'],
+      AR: ['restaurante'],
+      CO: ['restaurante'],
+      CL: ['restaurante'],
+      PE: ['restaurante'],
+      US: ['restaurant'],
+      UK: ['restaurant'],
+      CA: ['restaurant'],
+      AU: ['restaurant'],
+      DE: ['restaurant'],
+      FR: ['restaurant'],
+      IT: ['ristorante'],
+      JP: ['レストラン'],
+    },
+  },
+  petshop: {
+    aliases: ['pet shop', 'petshop', 'pet store', 'animalerie', 'tienda de mascotas', 'pet store grooming', '動物病院'],
+    english: ['pet shop', 'pet store'],
+    localized: {
+      BR: ['pet shop', 'clínica veterinária'],
+      PT: ['pet shop', 'clínica veterinária'],
+      ES: ['tienda de mascotas', 'veterinaria'],
+      MX: ['veterinaria', 'tienda de mascotas'],
+      AR: ['pet shop', 'veterinaria'],
+      CO: ['veterinaria', 'tienda de mascotas'],
+      CL: ['veterinaria', 'tienda de mascotas'],
+      PE: ['veterinaria', 'tienda de mascotas'],
+      US: ['pet shop', 'pet store'],
+      UK: ['pet shop', 'veterinary clinic'],
+      CA: ['pet store', 'veterinary clinic'],
+      AU: ['pet shop', 'vet clinic'],
+      DE: ['tierhandlung', 'tierarzt'],
+      FR: ['animalerie', 'vétérinaire'],
+      IT: ['negozio di animali', 'veterinario'],
+      JP: ['ペットショップ', '動物病院'],
+    },
+  },
+  mecanica: {
+    aliases: ['oficina mecânica', 'oficina mecanica', 'oficina automóvel', 'oficina automovel', 'taller mecánico', 'taller mecanico', 'auto repair', 'mechanic', 'autowerkstatt', 'garage automobile', 'officina meccanica', '自動車修理'],
+    english: ['auto repair shop', 'mechanic'],
+    localized: {
+      BR: ['oficina mecânica', 'auto center'],
+      PT: ['oficina automóvel', 'mecânico'],
+      ES: ['taller mecánico', 'taller'],
+      MX: ['taller mecánico', 'taller'],
+      AR: ['taller mecánico', 'taller'],
+      CO: ['taller mecánico', 'taller'],
+      CL: ['taller mecánico', 'taller'],
+      PE: ['taller mecánico', 'taller'],
+      US: ['auto repair shop', 'mechanic'],
+      UK: ['car garage', 'mechanic'],
+      CA: ['auto repair', 'mechanic'],
+      AU: ['mechanic', 'auto repair'],
+      DE: ['autowerkstatt', 'kfz werkstatt'],
+      FR: ['garage automobile', 'mécanicien'],
+      IT: ['officina meccanica', 'meccanico'],
+      JP: ['自動車修理', '整備工場'],
+    },
+  },
+  contabilidade: {
+    aliases: ['contabilidade', 'contador', 'accounting', 'accountant', 'accounting firm', 'asesoría contable', 'estudio contable', 'steuerberater', 'cabinet comptable', 'commercialista', '会計事務所'],
+    english: ['accounting firm', 'accountant'],
+    localized: {
+      BR: ['contabilidade', 'escritório contábil'],
+      PT: ['contabilidade', 'gabinete de contabilidade'],
+      ES: ['asesoría contable', 'contabilidad'],
+      MX: ['despacho contable', 'contabilidad'],
+      AR: ['estudio contable', 'contabilidad'],
+      CO: ['contabilidad', 'asesoría contable'],
+      CL: ['contabilidad', 'asesoría contable'],
+      PE: ['contabilidad', 'asesoría contable'],
+      US: ['accounting firm', 'accountant'],
+      UK: ['accountancy firm', 'accountant'],
+      CA: ['accounting firm', 'accountant'],
+      AU: ['accountant', 'accounting firm'],
+      DE: ['steuerberater', 'buchhaltung'],
+      FR: ['cabinet comptable', 'expert comptable'],
+      IT: ['commercialista', 'studio contabile'],
+      JP: ['会計事務所', '税理士'],
+    },
+  },
+  advocacia: {
+    aliases: ['advocacia', 'advogado', 'law firm', 'attorney', 'despacho de abogados', 'estudio jurídico', 'rechtsanwalt', 'cabinet d avocats', 'studio legale', '法律事務所'],
+    english: ['law firm', 'attorney'],
+    localized: {
+      BR: ['escritório de advocacia', 'advogado'],
+      PT: ['escritório de advogados', 'advogado'],
+      ES: ['despacho de abogados', 'abogado'],
+      MX: ['despacho de abogados', 'abogado'],
+      AR: ['estudio jurídico', 'abogado'],
+      CO: ['oficina de abogados', 'abogado'],
+      CL: ['estudio de abogados', 'abogado'],
+      PE: ['estudio de abogados', 'abogado'],
+      US: ['law firm', 'attorney'],
+      UK: ['law firm', 'solicitor'],
+      CA: ['law firm', 'attorney'],
+      AU: ['law firm', 'solicitor'],
+      DE: ['rechtsanwalt', 'anwaltskanzlei'],
+      FR: ['cabinet d avocats', 'avocat'],
+      IT: ['studio legale', 'avvocato'],
+      JP: ['法律事務所', '弁護士'],
+    },
+  },
+  imobiliaria: {
+    aliases: ['imobiliária', 'imobiliaria', 'real estate', 'estate agent', 'inmobiliaria', 'agence immobilière', 'agenzia immobiliare', 'immobilienbüro', '不動産会社'],
+    english: ['real estate agency', 'estate agent'],
+    localized: {
+      BR: ['imobiliária', 'corretor de imóveis'],
+      PT: ['imobiliária', 'mediação imobiliária'],
+      ES: ['inmobiliaria', 'agencia inmobiliaria'],
+      MX: ['inmobiliaria', 'bienes raíces'],
+      AR: ['inmobiliaria', 'bienes raíces'],
+      CO: ['inmobiliaria', 'bienes raíces'],
+      CL: ['inmobiliaria', 'bienes raíces'],
+      PE: ['inmobiliaria', 'bienes raíces'],
+      US: ['real estate agency', 'estate agent'],
+      UK: ['estate agent', 'real estate agency'],
+      CA: ['real estate agency', 'estate agent'],
+      AU: ['real estate agent', 'estate agent'],
+      DE: ['immobilienbüro', 'immobilienmakler'],
+      FR: ['agence immobilière', 'immobilier'],
+      IT: ['agenzia immobiliare', 'immobiliare'],
+      JP: ['不動産会社', '不動産'],
+    },
+  },
+  padaria: {
+    aliases: ['padaria', 'bakery', 'panadería', 'panaderia', 'boulangerie', 'panetteria', 'パン屋'],
+    english: ['bakery'],
+    localized: {
+      BR: ['padaria'],
+      PT: ['padaria', 'pastelaria'],
+      ES: ['panadería'],
+      MX: ['panadería'],
+      AR: ['panadería'],
+      CO: ['panadería'],
+      CL: ['panadería'],
+      PE: ['panadería'],
+      US: ['bakery'],
+      UK: ['bakery'],
+      CA: ['bakery'],
+      AU: ['bakery'],
+      DE: ['bäckerei'],
+      FR: ['boulangerie'],
+      IT: ['panetteria'],
+      JP: ['パン屋'],
+    },
+  },
+};
+
+function normalizeText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function dedupeStrings(values: (string | undefined)[]): string[] {
+  const seen = new Set<string>();
+
+  return values
+    .map((value) => value?.trim())
+    .filter((value): value is string => !!value)
+    .filter((value) => {
+      const normalized = normalizeText(value);
+      if (!normalized || seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    });
+}
+
+function resolveCanonicalNicheKey(niche: string): string | null {
+  const normalizedNiche = normalizeText(niche);
+
+  for (const [canonicalKey, definition] of Object.entries(LOCALIZED_NICHE_TERMS)) {
+    const terms = [
+      canonicalKey,
+      ...definition.aliases,
+      ...definition.english,
+      ...Object.values(definition.localized).flat(),
+    ];
+
+    const hasMatch = terms.some((term) => {
+      const normalizedTerm = normalizeText(term);
+      return normalizedTerm === normalizedNiche || normalizedNiche.includes(normalizedTerm) || normalizedTerm.includes(normalizedNiche);
+    });
+
+    if (hasMatch) {
+      return canonicalKey;
+    }
+  }
+
+  return null;
+}
+
+function getLocalizedNicheTerms(niche: string, countryCode: string): string[] {
+  const canonicalKey = resolveCanonicalNicheKey(niche);
+  if (!canonicalKey) {
+    return dedupeStrings([niche]);
+  }
+
+  const definition = LOCALIZED_NICHE_TERMS[canonicalKey];
+  const countryTerms = definition.localized[countryCode] || [];
+
+  return dedupeStrings([...countryTerms, niche, ...definition.english]);
+}
+
+function buildSearchCandidates(
+  niche: string,
+  countryCode: string,
+  cityName: string,
+  searchLocation: string,
+  countryName: string,
+  defaultHl: string,
+): SearchCandidate[] {
+  const template = SEARCH_TEMPLATES[defaultHl] || SEARCH_TEMPLATES['en'];
+  const localizedTerms = getLocalizedNicheTerms(niche, countryCode);
+  const englishTerms = dedupeStrings([
+    ...localizedTerms.filter((term) => /[a-zA-Z]/.test(term)),
+    ...((resolveCanonicalNicheKey(niche) && LOCALIZED_NICHE_TERMS[resolveCanonicalNicheKey(niche)!]?.english) || []),
+  ]);
+
+  const candidates: SearchCandidate[] = [];
+
+  for (const term of localizedTerms) {
+    candidates.push({
+      query: template.replace('{niche}', term).replace('{city}', searchLocation),
+      hl: defaultHl,
+      useLocation: true,
+    });
+
+    if (countryCode !== 'BR') {
+      candidates.push({
+        query: `${term} ${cityName} ${countryName}`,
+        hl: defaultHl,
+        useLocation: false,
+      });
+    }
+  }
+
+  if (defaultHl !== 'en') {
+    for (const term of englishTerms) {
+      candidates.push({
+        query: SEARCH_TEMPLATES['en'].replace('{niche}', term).replace('{city}', cityName),
+        hl: 'en',
+        useLocation: true,
+      });
+    }
+  }
+
+  const seen = new Set<string>();
+  return candidates.filter((candidate) => {
+    const key = `${candidate.hl}::${candidate.useLocation ? '1' : '0'}::${normalizeText(candidate.query)}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+async function fetchSerperPlaces(
+  apiKeys: string[],
+  payload: Record<string, unknown>,
+): Promise<any[]> {
+  let lastStatus = 500;
+  let lastErrorText = '';
+
+  for (let keyIndex = 0; keyIndex < apiKeys.length; keyIndex += 1) {
+    const response = await fetch('https://google.serper.dev/places', {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': apiKeys[keyIndex],
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return Array.isArray(data.places) ? data.places : [];
+    }
+
+    lastStatus = response.status;
+    lastErrorText = await response.text();
+    console.error(`Serper error with key #${keyIndex + 1}:`, response.status, lastErrorText);
+
+    if (response.status !== 429) {
+      break;
+    }
+  }
+
+  throw new Error(lastStatus === 429 ? 'Limite de requisições atingido. Tente novamente em instantes.' : `Search error: ${lastStatus}`);
+}
+
+function dedupePlaces(places: any[]): any[] {
+  const seen = new Set<string>();
+
+  return places.filter((place) => {
+    const key = `${place.placeId || place.cid || ''}::${place.title || place.name || ''}::${place.address || ''}`.toLowerCase();
+    if (!key.trim() || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 // Links por nicho - CADA NICHO TEM SEU LINK ESPECÍFICO
 const NICHE_LINKS: Record<string, string> = {
   'barbearia': 'https://genesishub.cloud/barbearia/ogim2u',
@@ -972,8 +1408,12 @@ serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get('SERPER_API_KEY');
-    if (!apiKey) {
+    const apiKeys = dedupeStrings([
+      Deno.env.get('SERPER_API_KEY'),
+      Deno.env.get('SERPER_API_KEY_2'),
+    ]);
+
+    if (apiKeys.length === 0) {
       console.error('SERPER_API_KEY not configured');
       return new Response(
         JSON.stringify({ success: false, error: 'Search API not configured' }),
@@ -989,19 +1429,12 @@ serve(async (req) => {
     const cityName = cityParts[0];
     const stateAbbr = cityParts[1] || ''; // Estado (sigla)
     
-    // Build search query based on language - include state for precision
-    const template = SEARCH_TEMPLATES[config.hl] || SEARCH_TEMPLATES['en'];
     const searchLocation = stateAbbr ? `${cityName}, ${stateAbbr}` : cityName;
-    const searchQuery = template
-      .replace('{niche}', niche)
-      .replace('{city}', searchLocation);
 
     // Build location string for Serper geo-targeting (critical for non-BR countries)
     const serperLocation = countryCode === 'BR' 
       ? (stateAbbr ? `${cityName}, ${stateAbbr}, Brazil` : `${cityName}, Brazil`)
       : `${cityName}, ${config.countryName}`;
-
-    console.log(`Global search: "${searchQuery}" in ${countryCode} (${config.gl}/${config.hl}), location: "${serperLocation}", state filter: "${stateAbbr}"`);
 
     // Get message template for this country
     const messageTemplate = MESSAGE_TEMPLATES[config.lang] || MESSAGE_TEMPLATES['en'];
@@ -1009,85 +1442,36 @@ serve(async (req) => {
 
     // FAST SEARCH: limit to 50 results to filter by state
     const maxResults = Math.min(50, Math.max(10, requestedMax || 50));
+    const searchCandidates = buildSearchCandidates(
+      niche,
+      countryCode,
+      cityName,
+      searchLocation,
+      config.countryName,
+      config.hl,
+    );
+    const searchQuery = searchCandidates[0]?.query || `${niche} ${searchLocation}`;
+    const serperBatchSize = Math.min(10, maxResults);
 
-    // First attempt: search with location parameter for precision
-    let searchResponse = await fetch('https://google.serper.dev/places', {
-      method: 'POST',
-      headers: {
-        'X-API-KEY': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        q: searchQuery,
+    console.log(`Global search: "${searchQuery}" in ${countryCode} (${config.gl}/${config.hl}), location: "${serperLocation}", state filter: "${stateAbbr}", candidates: ${searchCandidates.length}`);
+
+    let places: any[] = [];
+
+    for (const candidate of searchCandidates) {
+      const candidatePlaces = await fetchSerperPlaces(apiKeys, {
+        q: candidate.query,
         gl: config.gl,
-        hl: config.hl,
-        location: serperLocation,
-        num: maxResults,
-      }),
-    });
-
-    if (!searchResponse.ok) {
-      const errorText = await searchResponse.text();
-      console.error('Serper error:', searchResponse.status, errorText);
-      return new Response(
-        JSON.stringify({ success: false, error: `Search error: ${searchResponse.status}` }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    let searchData = await searchResponse.json();
-    let places = searchData.places || [];
-    console.log(`Found ${places.length} results with location param`);
-
-    // Fallback: if 0 results, retry without location but with country in query
-    if (places.length === 0 && countryCode !== 'BR') {
-      console.log('Retrying with country name in query...');
-      const fallbackQuery = `${niche} ${cityName} ${config.countryName}`;
-      
-      const fallbackResponse = await fetch('https://google.serper.dev/places', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          q: fallbackQuery,
-          gl: config.gl,
-          hl: config.hl,
-          num: maxResults,
-        }),
+        hl: candidate.hl,
+        num: serperBatchSize,
+        ...(candidate.useLocation ? { location: serperLocation } : {}),
       });
 
-      if (fallbackResponse.ok) {
-        const fallbackData = await fallbackResponse.json();
-        places = fallbackData.places || [];
-        console.log(`Fallback found ${places.length} results with query: "${fallbackQuery}"`);
-      }
-    }
+      console.log(`Query "${candidate.query}" (${candidate.hl}${candidate.useLocation ? ', location' : ''}) found ${candidatePlaces.length} results`);
 
-    // Second fallback: try with English niche terms for non-English/Portuguese countries
-    if (places.length === 0 && !['BR', 'US', 'UK', 'CA', 'AU', 'PT'].includes(countryCode)) {
-      console.log('Retrying with English niche terms...');
-      const englishQuery = `${niche} in ${cityName}, ${config.countryName}`;
-      
-      const englishResponse = await fetch('https://google.serper.dev/places', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          q: englishQuery,
-          gl: config.gl,
-          hl: 'en',
-          num: maxResults,
-        }),
-      });
+      places = dedupePlaces([...places, ...candidatePlaces]);
 
-      if (englishResponse.ok) {
-        const englishData = await englishResponse.json();
-        places = englishData.places || [];
-        console.log(`English fallback found ${places.length} results`);
+      if (places.length >= maxResults) {
+        break;
       }
     }
 
@@ -1207,7 +1591,8 @@ serve(async (req) => {
           generatedMessage,
         } as BusinessResult;
       })
-      .filter((r: BusinessResult | null): r is BusinessResult => !!r);
+      .filter((r: BusinessResult | null): r is BusinessResult => !!r)
+      .slice(0, maxResults);
 
     console.log(`Final results with messages: ${results.length}`);
 
