@@ -378,26 +378,45 @@ function dedupeStrings(values: (string | undefined)[]): string[] {
 
 function resolveCanonicalNicheKey(niche: string): string | null {
   const normalizedNiche = normalizeText(niche);
+  const nicheTokens = extractMeaningfulTokens(niche);
+  let bestMatch: { key: string; score: number } | null = null;
 
   for (const [canonicalKey, definition] of Object.entries(LOCALIZED_NICHE_TERMS)) {
-      const terms = [
+    const terms = dedupeStrings([
       canonicalKey,
       ...definition.aliases,
       ...definition.english,
-        ...Object.values(definition.localized).flatMap((localizedTerms) => localizedTerms ?? []),
-    ];
+      ...Object.values(definition.localized).flatMap((localizedTerms) => localizedTerms ?? []),
+    ]);
 
-    const hasMatch = terms.some((term) => {
+    for (const term of terms) {
       const normalizedTerm = normalizeText(term);
-      return normalizedTerm === normalizedNiche || normalizedNiche.includes(normalizedTerm) || normalizedTerm.includes(normalizedNiche);
-    });
+      if (!normalizedTerm) continue;
 
-    if (hasMatch) {
-      return canonicalKey;
+      let score = 0;
+
+      if (normalizedTerm === normalizedNiche) {
+        score = 1000 + normalizedTerm.length;
+      } else if (normalizedNiche.includes(normalizedTerm)) {
+        score = 700 + normalizedTerm.length;
+      } else if (normalizedTerm.includes(normalizedNiche)) {
+        score = 550 + normalizedNiche.length;
+      } else {
+        const termTokens = extractMeaningfulTokens(term);
+        const overlapCount = termTokens.filter((token) => nicheTokens.includes(token)).length;
+
+        if (overlapCount > 0) {
+          score = 100 + overlapCount * 25 + normalizedTerm.length;
+        }
+      }
+
+      if (!bestMatch || score > bestMatch.score) {
+        bestMatch = { key: canonicalKey, score };
+      }
     }
   }
 
-  return null;
+  return bestMatch?.score ? bestMatch.key : null;
 }
 
 function extractMeaningfulTokens(value: string): string[] {
@@ -1583,8 +1602,10 @@ serve(async (req) => {
     console.log(`Global search: "${searchQuery}" in ${countryCode} (${config.gl}/${config.hl}), location: "${serperLocation}", state filter: "${stateAbbr}", candidates: ${searchCandidates.length}`);
 
     let places: any[] = [];
+    const minCandidatesBeforeStopping = Math.min(2, searchCandidates.length);
 
-    for (const candidate of searchCandidates) {
+    for (let index = 0; index < searchCandidates.length; index += 1) {
+      const candidate = searchCandidates[index];
       const candidatePlaces = await fetchSerperPlaces(apiKeys, {
         q: candidate.query,
         gl: config.gl,
@@ -1597,7 +1618,11 @@ serve(async (req) => {
 
       places = dedupePlaces([...places, ...candidatePlaces]);
 
-      if (places.length >= maxResults) {
+      const rankedPlaces = filterAndRankPlacesByNiche(places, niche, countryCode);
+      const hasEnoughPreciseResults = rankedPlaces.length >= maxResults;
+      const triedEnoughCandidates = index + 1 >= minCandidatesBeforeStopping;
+
+      if (hasEnoughPreciseResults && triedEnoughCandidates) {
         break;
       }
     }
