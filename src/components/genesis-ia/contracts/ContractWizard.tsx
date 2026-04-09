@@ -31,52 +31,37 @@ interface ContractWizardProps {
 }
 
 interface FormData {
-  // Contratante
   contractor_name: string;
   contractor_document: string;
   contractor_document_type: 'cpf' | 'cnpj';
   contractor_address: string;
   contractor_email: string;
   contractor_phone: string;
-  
-  // Contratado
   contracted_name: string;
   contracted_document: string;
   contracted_document_type: 'cpf' | 'cnpj';
   contracted_address: string;
   contracted_email: string;
   contracted_phone: string;
-  
-  // Objeto
   service_type: string;
   service_description: string;
   service_modality: 'pontual' | 'recorrente' | 'demanda';
   delivery_type: 'digital' | 'fisico' | 'ambos';
-  
-  // Prazo
   start_date: string;
   end_date: string;
   delivery_in_stages: boolean;
   allows_extension: boolean;
-  
-  // Valores
   total_value: string;
   payment_method: string;
   installments: number;
   late_fee_percentage: string;
-  
-  // Garantias
   has_warranty: boolean;
   warranty_period: string;
   liability_limit: string;
   not_included: string;
-  
-  // Rescisão
   allows_early_termination: boolean;
   termination_penalty_percentage: string;
   notice_period_days: number;
-  
-  // Foro
   jurisdiction_city: string;
   jurisdiction_state: string;
 }
@@ -142,7 +127,6 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
   const validateCurrentStep = (): boolean => {
     const currentStepData = steps[currentStep];
     const requiredFields = currentStepData.requiredFields;
-    
     for (const field of requiredFields) {
       const value = formData[field as keyof FormData];
       if (!value || (typeof value === 'string' && value.trim() === '')) {
@@ -155,7 +139,6 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
 
   const handleNext = () => {
     if (!validateCurrentStep()) return;
-    
     if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
@@ -181,13 +164,10 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
 
   const handleSubmit = async () => {
     if (!validateCurrentStep()) return;
-    
     setGenerating(true);
-    
     try {
       const contractNumber = generateContractNumber();
       const signatureHash = crypto.randomUUID();
-      
       const contractData = {
         affiliate_id: affiliateId,
         contract_number: contractNumber,
@@ -230,18 +210,14 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
         questionnaire_answers: JSON.parse(JSON.stringify(formData)),
       };
 
-      const { data: insertedContract, error } = await supabase
+      const { error } = await supabase
         .from('contracts')
         .insert([contractData])
         .select()
         .single();
 
       if (error) throw error;
-
-      toast.success('Contrato criado com sucesso!', {
-        description: `Número: ${contractNumber}`
-      });
-      
+      toast.success('Contrato criado com sucesso!', { description: `Número: ${contractNumber}` });
       onComplete();
     } catch (error) {
       console.error('Error creating contract:', error);
@@ -251,76 +227,49 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
     }
   };
 
+  const inputClass = "bg-white/5 border-white/10 focus:border-primary/50 h-9 sm:h-10 text-xs sm:text-sm";
+  const textareaClass = "bg-white/5 border-white/10 focus:border-primary/50 text-xs sm:text-sm";
+
   const renderStepContent = () => {
     const step = steps[currentStep];
 
     switch (step.id) {
       case 'contractor':
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Nome completo do Contratante *</Label>
-                <Input
-                  value={formData.contractor_name}
-                  onChange={(e) => updateField('contractor_name', e.target.value)}
-                  placeholder="Nome completo ou razão social"
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs sm:text-sm">Nome completo do Contratante *</Label>
+                <Input value={formData.contractor_name} onChange={(e) => updateField('contractor_name', e.target.value)} placeholder="Nome completo ou razão social" className={inputClass} />
               </div>
-              <div className="space-y-2">
-                <Label>Tipo de documento</Label>
-                <RadioGroup
-                  value={formData.contractor_document_type}
-                  onValueChange={(v) => updateField('contractor_document_type', v as 'cpf' | 'cnpj')}
-                  className="flex gap-4"
-                >
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Tipo de documento</Label>
+                <RadioGroup value={formData.contractor_document_type} onValueChange={(v) => updateField('contractor_document_type', v as 'cpf' | 'cnpj')} className="flex gap-4">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="cpf" id="contractor_cpf" />
-                    <Label htmlFor="contractor_cpf">CPF</Label>
+                    <Label htmlFor="contractor_cpf" className="text-xs sm:text-sm">CPF</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="cnpj" id="contractor_cnpj" />
-                    <Label htmlFor="contractor_cnpj">CNPJ</Label>
+                    <Label htmlFor="contractor_cnpj" className="text-xs sm:text-sm">CNPJ</Label>
                   </div>
                 </RadioGroup>
               </div>
-              <div className="space-y-2">
-                <Label>{formData.contractor_document_type.toUpperCase()} *</Label>
-                <Input
-                  value={formData.contractor_document}
-                  onChange={(e) => updateField('contractor_document', e.target.value)}
-                  placeholder={formData.contractor_document_type === 'cpf' ? '000.000.000-00' : '00.000.000/0000-00'}
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">{formData.contractor_document_type.toUpperCase()} *</Label>
+                <Input value={formData.contractor_document} onChange={(e) => updateField('contractor_document', e.target.value)} placeholder={formData.contractor_document_type === 'cpf' ? '000.000.000-00' : '00.000.000/0000-00'} className={inputClass} />
               </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Endereço completo *</Label>
-                <Input
-                  value={formData.contractor_address}
-                  onChange={(e) => updateField('contractor_address', e.target.value)}
-                  placeholder="Rua, número, bairro, cidade, estado, CEP"
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs sm:text-sm">Endereço completo *</Label>
+                <Input value={formData.contractor_address} onChange={(e) => updateField('contractor_address', e.target.value)} placeholder="Rua, número, bairro, cidade, estado, CEP" className={inputClass} />
               </div>
-              <div className="space-y-2">
-                <Label>E-mail</Label>
-                <Input
-                  type="email"
-                  value={formData.contractor_email}
-                  onChange={(e) => updateField('contractor_email', e.target.value)}
-                  placeholder="email@exemplo.com"
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">E-mail</Label>
+                <Input type="email" value={formData.contractor_email} onChange={(e) => updateField('contractor_email', e.target.value)} placeholder="email@exemplo.com" className={inputClass} />
               </div>
-              <div className="space-y-2">
-                <Label>Telefone</Label>
-                <Input
-                  value={formData.contractor_phone}
-                  onChange={(e) => updateField('contractor_phone', e.target.value)}
-                  placeholder="(00) 00000-0000"
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Telefone</Label>
+                <Input value={formData.contractor_phone} onChange={(e) => updateField('contractor_phone', e.target.value)} placeholder="(00) 00000-0000" className={inputClass} />
               </div>
             </div>
           </div>
@@ -328,70 +277,40 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
 
       case 'contracted':
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Nome completo do Contratado *</Label>
-                <Input
-                  value={formData.contracted_name}
-                  onChange={(e) => updateField('contracted_name', e.target.value)}
-                  placeholder="Nome completo ou razão social"
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs sm:text-sm">Nome completo do Contratado *</Label>
+                <Input value={formData.contracted_name} onChange={(e) => updateField('contracted_name', e.target.value)} placeholder="Nome completo ou razão social" className={inputClass} />
               </div>
-              <div className="space-y-2">
-                <Label>Tipo de documento</Label>
-                <RadioGroup
-                  value={formData.contracted_document_type}
-                  onValueChange={(v) => updateField('contracted_document_type', v as 'cpf' | 'cnpj')}
-                  className="flex gap-4"
-                >
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Tipo de documento</Label>
+                <RadioGroup value={formData.contracted_document_type} onValueChange={(v) => updateField('contracted_document_type', v as 'cpf' | 'cnpj')} className="flex gap-4">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="cpf" id="contracted_cpf" />
-                    <Label htmlFor="contracted_cpf">CPF</Label>
+                    <Label htmlFor="contracted_cpf" className="text-xs sm:text-sm">CPF</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="cnpj" id="contracted_cnpj" />
-                    <Label htmlFor="contracted_cnpj">CNPJ</Label>
+                    <Label htmlFor="contracted_cnpj" className="text-xs sm:text-sm">CNPJ</Label>
                   </div>
                 </RadioGroup>
               </div>
-              <div className="space-y-2">
-                <Label>{formData.contracted_document_type.toUpperCase()} *</Label>
-                <Input
-                  value={formData.contracted_document}
-                  onChange={(e) => updateField('contracted_document', e.target.value)}
-                  placeholder={formData.contracted_document_type === 'cpf' ? '000.000.000-00' : '00.000.000/0000-00'}
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">{formData.contracted_document_type.toUpperCase()} *</Label>
+                <Input value={formData.contracted_document} onChange={(e) => updateField('contracted_document', e.target.value)} placeholder={formData.contracted_document_type === 'cpf' ? '000.000.000-00' : '00.000.000/0000-00'} className={inputClass} />
               </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Endereço completo *</Label>
-                <Input
-                  value={formData.contracted_address}
-                  onChange={(e) => updateField('contracted_address', e.target.value)}
-                  placeholder="Rua, número, bairro, cidade, estado, CEP"
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs sm:text-sm">Endereço completo *</Label>
+                <Input value={formData.contracted_address} onChange={(e) => updateField('contracted_address', e.target.value)} placeholder="Rua, número, bairro, cidade, estado, CEP" className={inputClass} />
               </div>
-              <div className="space-y-2">
-                <Label>E-mail</Label>
-                <Input
-                  type="email"
-                  value={formData.contracted_email}
-                  onChange={(e) => updateField('contracted_email', e.target.value)}
-                  placeholder="email@exemplo.com"
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">E-mail</Label>
+                <Input type="email" value={formData.contracted_email} onChange={(e) => updateField('contracted_email', e.target.value)} placeholder="email@exemplo.com" className={inputClass} />
               </div>
-              <div className="space-y-2">
-                <Label>Telefone</Label>
-                <Input
-                  value={formData.contracted_phone}
-                  onChange={(e) => updateField('contracted_phone', e.target.value)}
-                  placeholder="(00) 00000-0000"
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Telefone</Label>
+                <Input value={formData.contracted_phone} onChange={(e) => updateField('contracted_phone', e.target.value)} placeholder="(00) 00000-0000" className={inputClass} />
               </div>
             </div>
           </div>
@@ -399,54 +318,36 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
 
       case 'object':
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Tipo de serviço prestado *</Label>
-              <Input
-                value={formData.service_type}
-                onChange={(e) => updateField('service_type', e.target.value)}
-                placeholder="Ex: Desenvolvimento de Website, Consultoria, Marketing Digital..."
-                className="bg-card/60 border-border/60 focus:border-primary/50"
-              />
+          <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">Tipo de serviço prestado *</Label>
+              <Input value={formData.service_type} onChange={(e) => updateField('service_type', e.target.value)} placeholder="Ex: Desenvolvimento de Website, Consultoria..." className={inputClass} />
             </div>
-            <div className="space-y-2">
-              <Label>Descrição detalhada do serviço *</Label>
-              <Textarea
-                value={formData.service_description}
-                onChange={(e) => updateField('service_description', e.target.value)}
-                placeholder="Descreva em detalhes o que será entregue, quais são os entregáveis, metodologia..."
-                className="bg-card/60 border-border/60 focus:border-primary/50 min-h-[120px]"
-              />
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">Descrição detalhada do serviço *</Label>
+              <Textarea value={formData.service_description} onChange={(e) => updateField('service_description', e.target.value)} placeholder="Descreva em detalhes o que será entregue..." className={`${textareaClass} min-h-[100px]`} />
             </div>
-            <div className="space-y-2">
-              <Label>Modalidade do serviço *</Label>
-              <RadioGroup
-                value={formData.service_modality}
-                onValueChange={(v) => updateField('service_modality', v as 'pontual' | 'recorrente' | 'demanda')}
-                className="grid grid-cols-1 sm:grid-cols-3 gap-3"
-              >
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">Modalidade</Label>
+              <RadioGroup value={formData.service_modality} onValueChange={(v) => updateField('service_modality', v as any)} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {[
                   { value: 'pontual', label: 'Pontual', desc: 'Serviço único' },
                   { value: 'recorrente', label: 'Recorrente', desc: 'Mensal/contínuo' },
                   { value: 'demanda', label: 'Por demanda', desc: 'Quando solicitado' },
                 ].map((option) => (
-                  <div key={option.value} className="flex items-center space-x-2 p-3 rounded-lg border border-white/10 bg-white/5 hover:border-primary/50 transition-colors">
+                  <div key={option.value} className="flex items-center space-x-2 p-3 rounded-xl border border-white/10 bg-white/5 hover:border-primary/30 transition-colors">
                     <RadioGroupItem value={option.value} id={`modality_${option.value}`} />
                     <div>
-                      <Label htmlFor={`modality_${option.value}`} className="cursor-pointer">{option.label}</Label>
+                      <Label htmlFor={`modality_${option.value}`} className="cursor-pointer text-xs sm:text-sm">{option.label}</Label>
                       <p className="text-[10px] text-muted-foreground">{option.desc}</p>
                     </div>
                   </div>
                 ))}
               </RadioGroup>
             </div>
-            <div className="space-y-2">
-              <Label>Tipo de entrega</Label>
-              <RadioGroup
-                value={formData.delivery_type}
-                onValueChange={(v) => updateField('delivery_type', v as 'digital' | 'fisico' | 'ambos')}
-                className="flex flex-wrap gap-3"
-              >
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">Tipo de entrega</Label>
+              <RadioGroup value={formData.delivery_type} onValueChange={(v) => updateField('delivery_type', v as any)} className="flex flex-wrap gap-3">
                 {[
                   { value: 'digital', label: 'Digital' },
                   { value: 'fisico', label: 'Físico' },
@@ -454,7 +355,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                 ].map((option) => (
                   <div key={option.value} className="flex items-center space-x-2">
                     <RadioGroupItem value={option.value} id={`delivery_${option.value}`} />
-                    <Label htmlFor={`delivery_${option.value}`}>{option.label}</Label>
+                    <Label htmlFor={`delivery_${option.value}`} className="text-xs sm:text-sm">{option.label}</Label>
                   </div>
                 ))}
               </RadioGroup>
@@ -464,91 +365,53 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
 
       case 'deadline':
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Data de início *</Label>
-                <Input
-                  type="date"
-                  value={formData.start_date}
-                  onChange={(e) => updateField('start_date', e.target.value)}
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Data de início *</Label>
+                <Input type="date" value={formData.start_date} onChange={(e) => updateField('start_date', e.target.value)} className={inputClass} />
               </div>
-              <div className="space-y-2">
-                <Label>Data de término (opcional)</Label>
-                <Input
-                  type="date"
-                  value={formData.end_date}
-                  onChange={(e) => updateField('end_date', e.target.value)}
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Data de término (opcional)</Label>
+                <Input type="date" value={formData.end_date} onChange={(e) => updateField('end_date', e.target.value)} className={inputClass} />
               </div>
             </div>
-            <div className="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-white/5">
+            <div className="flex items-center justify-between p-3 sm:p-4 rounded-xl border border-white/10 bg-white/5">
               <div>
-                <Label>Entrega em etapas?</Label>
-                <p className="text-xs text-muted-foreground">O serviço será entregue em partes</p>
+                <Label className="text-xs sm:text-sm">Entrega em etapas?</Label>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">O serviço será entregue em partes</p>
               </div>
-              <Switch
-                checked={formData.delivery_in_stages}
-                onCheckedChange={(v) => updateField('delivery_in_stages', v)}
-              />
+              <Switch checked={formData.delivery_in_stages} onCheckedChange={(v) => updateField('delivery_in_stages', v)} />
             </div>
-            <div className="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-white/5">
+            <div className="flex items-center justify-between p-3 sm:p-4 rounded-xl border border-white/10 bg-white/5">
               <div>
-                <Label>Permite prorrogação?</Label>
-                <p className="text-xs text-muted-foreground">O prazo pode ser estendido</p>
+                <Label className="text-xs sm:text-sm">Permite prorrogação?</Label>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">O prazo pode ser estendido</p>
               </div>
-              <Switch
-                checked={formData.allows_extension}
-                onCheckedChange={(v) => updateField('allows_extension', v)}
-              />
+              <Switch checked={formData.allows_extension} onCheckedChange={(v) => updateField('allows_extension', v)} />
             </div>
           </div>
         );
 
       case 'payment':
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Valor total do serviço *</Label>
-                <Input
-                  value={formData.total_value}
-                  onChange={(e) => updateField('total_value', e.target.value)}
-                  placeholder="R$ 0,00"
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Valor total *</Label>
+                <Input value={formData.total_value} onChange={(e) => updateField('total_value', e.target.value)} placeholder="R$ 0,00" className={inputClass} />
               </div>
-              <div className="space-y-2">
-                <Label>Forma de pagamento *</Label>
-                <Input
-                  value={formData.payment_method}
-                  onChange={(e) => updateField('payment_method', e.target.value)}
-                  placeholder="Ex: Pix, Transferência, Boleto..."
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Forma de pagamento *</Label>
+                <Input value={formData.payment_method} onChange={(e) => updateField('payment_method', e.target.value)} placeholder="Ex: Pix, Transferência..." className={inputClass} />
               </div>
-              <div className="space-y-2">
-                <Label>Número de parcelas</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={24}
-                  value={formData.installments}
-                  onChange={(e) => updateField('installments', parseInt(e.target.value) || 1)}
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Parcelas</Label>
+                <Input type="number" min={1} max={24} value={formData.installments} onChange={(e) => updateField('installments', parseInt(e.target.value) || 1)} className={inputClass} />
               </div>
-              <div className="space-y-2">
-                <Label>Multa por atraso (%)</Label>
-                <Input
-                  value={formData.late_fee_percentage}
-                  onChange={(e) => updateField('late_fee_percentage', e.target.value)}
-                  placeholder="Ex: 2"
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Multa por atraso (%)</Label>
+                <Input value={formData.late_fee_percentage} onChange={(e) => updateField('late_fee_percentage', e.target.value)} placeholder="Ex: 2" className={inputClass} />
               </div>
             </div>
           </div>
@@ -556,82 +419,50 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
 
       case 'warranty':
         return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-white/5">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between p-3 sm:p-4 rounded-xl border border-white/10 bg-white/5">
               <div>
-                <Label>O serviço possui garantia?</Label>
-                <p className="text-xs text-muted-foreground">Período de garantia após entrega</p>
+                <Label className="text-xs sm:text-sm">Possui garantia?</Label>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Período de garantia após entrega</p>
               </div>
-              <Switch
-                checked={formData.has_warranty}
-                onCheckedChange={(v) => updateField('has_warranty', v)}
-              />
+              <Switch checked={formData.has_warranty} onCheckedChange={(v) => updateField('has_warranty', v)} />
             </div>
             {formData.has_warranty && (
-              <div className="space-y-2">
-                <Label>Período de garantia</Label>
-                <Input
-                  value={formData.warranty_period}
-                  onChange={(e) => updateField('warranty_period', e.target.value)}
-                  placeholder="Ex: 90 dias, 6 meses, 1 ano..."
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Período de garantia</Label>
+                <Input value={formData.warranty_period} onChange={(e) => updateField('warranty_period', e.target.value)} placeholder="Ex: 90 dias, 6 meses..." className={inputClass} />
               </div>
             )}
-            <div className="space-y-2">
-              <Label>Limite de responsabilidade (opcional)</Label>
-              <Input
-                value={formData.liability_limit}
-                onChange={(e) => updateField('liability_limit', e.target.value)}
-                placeholder="Ex: Limitado ao valor do contrato"
-                className="bg-card/60 border-border/60 focus:border-primary/50"
-              />
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">Limite de responsabilidade (opcional)</Label>
+              <Input value={formData.liability_limit} onChange={(e) => updateField('liability_limit', e.target.value)} placeholder="Ex: Limitado ao valor do contrato" className={inputClass} />
             </div>
-            <div className="space-y-2">
-              <Label>O que NÃO está incluso (opcional)</Label>
-              <Textarea
-                value={formData.not_included}
-                onChange={(e) => updateField('not_included', e.target.value)}
-                placeholder="Liste itens que não fazem parte do escopo..."
-                className="bg-card/60 border-border/60 focus:border-primary/50 min-h-[80px]"
-              />
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">O que NÃO está incluso (opcional)</Label>
+              <Textarea value={formData.not_included} onChange={(e) => updateField('not_included', e.target.value)} placeholder="Liste itens que não fazem parte do escopo..." className={`${textareaClass} min-h-[80px]`} />
             </div>
           </div>
         );
 
       case 'termination':
         return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-white/5">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between p-3 sm:p-4 rounded-xl border border-white/10 bg-white/5">
               <div>
-                <Label>Permite rescisão antecipada?</Label>
-                <p className="text-xs text-muted-foreground">Qualquer parte pode cancelar antes do prazo</p>
+                <Label className="text-xs sm:text-sm">Permite rescisão antecipada?</Label>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Qualquer parte pode cancelar antes do prazo</p>
               </div>
-              <Switch
-                checked={formData.allows_early_termination}
-                onCheckedChange={(v) => updateField('allows_early_termination', v)}
-              />
+              <Switch checked={formData.allows_early_termination} onCheckedChange={(v) => updateField('allows_early_termination', v)} />
             </div>
             {formData.allows_early_termination && (
               <>
-                <div className="space-y-2">
-                  <Label>Multa por rescisão (%)</Label>
-                  <Input
-                    value={formData.termination_penalty_percentage}
-                    onChange={(e) => updateField('termination_penalty_percentage', e.target.value)}
-                    placeholder="Ex: 10"
-                    className="bg-card/60 border-border/60 focus:border-primary/50"
-                  />
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm">Multa por rescisão (%)</Label>
+                  <Input value={formData.termination_penalty_percentage} onChange={(e) => updateField('termination_penalty_percentage', e.target.value)} placeholder="Ex: 10" className={inputClass} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Aviso prévio (dias)</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={formData.notice_period_days}
-                    onChange={(e) => updateField('notice_period_days', parseInt(e.target.value) || 0)}
-                    className="bg-card/60 border-border/60 focus:border-primary/50"
-                  />
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm">Aviso prévio (dias)</Label>
+                  <Input type="number" min={0} value={formData.notice_period_days} onChange={(e) => updateField('notice_period_days', parseInt(e.target.value) || 0)} className={inputClass} />
                 </div>
               </>
             )}
@@ -640,28 +471,18 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
 
       case 'jurisdiction':
         return (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Defina a cidade e estado onde serão resolvidas eventuais disputas judiciais relacionadas a este contrato.
+          <div className="space-y-3 sm:space-y-4">
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Defina a cidade e estado para disputas judiciais.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Cidade *</Label>
-                <Input
-                  value={formData.jurisdiction_city}
-                  onChange={(e) => updateField('jurisdiction_city', e.target.value)}
-                  placeholder="Ex: São Paulo"
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Cidade *</Label>
+                <Input value={formData.jurisdiction_city} onChange={(e) => updateField('jurisdiction_city', e.target.value)} placeholder="Ex: São Paulo" className={inputClass} />
               </div>
-              <div className="space-y-2">
-                <Label>Estado *</Label>
-                <Input
-                  value={formData.jurisdiction_state}
-                  onChange={(e) => updateField('jurisdiction_state', e.target.value)}
-                  placeholder="Ex: SP"
-                  className="bg-card/60 border-border/60 focus:border-primary/50"
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Estado *</Label>
+                <Input value={formData.jurisdiction_state} onChange={(e) => updateField('jurisdiction_state', e.target.value)} placeholder="Ex: SP" className={inputClass} />
               </div>
             </div>
           </div>
@@ -686,13 +507,12 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
         <Progress value={progress} className="h-2" />
       </div>
 
-      {/* Steps indicator - scrollable on mobile */}
+      {/* Steps indicator */}
       <div className="flex gap-1 overflow-x-auto pb-2 -mx-2 px-2 sm:mx-0 sm:px-0">
         {steps.map((step, index) => {
           const StepIcon = step.icon;
           const isActive = index === currentStep;
           const isCompleted = index < currentStep;
-          
           return (
             <div
               key={step.id}
@@ -701,22 +521,18 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
                   ? 'bg-primary/20 text-primary border border-primary/30'
                   : isCompleted
                   ? 'bg-emerald-500/20 text-emerald-400'
-                  : 'bg-muted/30 text-muted-foreground'
+                  : 'bg-white/5 text-muted-foreground'
               }`}
             >
-              {isCompleted ? (
-                <CheckCircle2 className="w-3 h-3" />
-              ) : (
-                <StepIcon className="w-3 h-3" />
-              )}
+              {isCompleted ? <CheckCircle2 className="w-3 h-3" /> : <StepIcon className="w-3 h-3" />}
               <span className="hidden sm:inline">{step.title}</span>
             </div>
           );
         })}
       </div>
 
-      {/* Current Step Content */}
-      <div className="p-4 sm:p-6 rounded-xl border bg-gradient-to-br from-card to-card/80">
+      {/* Current Step Content — Glass Design */}
+      <div className="p-4 sm:p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
         <div className="flex items-center gap-3 mb-4 sm:mb-6">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
             <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -742,7 +558,7 @@ export function ContractWizard({ affiliateId, onBack, onComplete }: ContractWiza
 
       {/* Navigation */}
       <div className="flex items-center justify-between gap-3">
-        <Button variant="outline" onClick={handleBack} className="gap-2 flex-1 sm:flex-none">
+        <Button variant="outline" onClick={handleBack} className="gap-2 flex-1 sm:flex-none border-white/10 hover:bg-white/5">
           <ArrowLeft className="w-4 h-4" />
           <span className="hidden sm:inline">{currentStep === 0 ? 'Cancelar' : 'Voltar'}</span>
         </Button>

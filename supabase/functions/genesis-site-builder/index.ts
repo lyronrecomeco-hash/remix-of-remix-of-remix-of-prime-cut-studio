@@ -106,6 +106,80 @@ OBRIGATÓRIO no preview.html:
 - NUNCA código genérico sem personalização
 - NUNCA estrutura desorganizada`;
 
+// Provider configurations with fallback chain
+const PROVIDERS = [
+  {
+    name: 'OpenAI',
+    envKey: 'OPENAI_API_KEY',
+    url: 'https://api.openai.com/v1/chat/completions',
+    model: 'gpt-4o',
+    extraBody: { max_tokens: 16000 },
+  },
+  {
+    name: 'Lovable AI Gateway',
+    envKey: 'LOVABLE_API_KEY',
+    url: 'https://ai.gateway.lovable.dev/v1/chat/completions',
+    model: 'google/gemini-2.5-flash',
+    extraBody: {},
+  },
+];
+
+async function tryProvider(provider: { name: string; url: string; model: string; extraBody: Record<string, unknown> }, apiKey: string, messages: unknown[], retries = 3): Promise<Response> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`[${provider.name}] Attempt ${attempt}/${retries}`);
+
+      const response = await fetch(provider.url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: provider.model,
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            ...messages as any[],
+          ],
+          stream: true,
+          ...provider.extraBody,
+        }),
+      });
+
+      if (response.ok) {
+        console.log(`[${provider.name}] Success on attempt ${attempt}`);
+        return response;
+      }
+
+      const status = response.status;
+      console.error(`[${provider.name}] Error ${status} on attempt ${attempt}`);
+
+      // Don't retry on 402 (credits) - it won't help
+      if (status === 402) {
+        throw new Error(`CREDITS_EXHAUSTED`);
+      }
+
+      // Retry on 429 (rate limit) and 5xx with exponential backoff
+      if ((status === 429 || status >= 500) && attempt < retries) {
+        const delay = Math.min(2000 * Math.pow(2, attempt - 1), 15000);
+        console.log(`[${provider.name}] Waiting ${delay}ms before retry...`);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+
+      throw new Error(`API_ERROR_${status}`);
+    } catch (e) {
+      if (e instanceof Error && (e.message.startsWith('CREDITS') || e.message.startsWith('API_ERROR'))) {
+        throw e;
+      }
+      if (attempt === retries) throw e;
+      const delay = 2000 * attempt;
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+  throw new Error('MAX_RETRIES_EXCEEDED');
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -114,73 +188,44 @@ serve(async (req) => {
   try {
     const { messages } = await req.json();
     
-    // Try OpenAI first, fallback to Lovable AI Gateway
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    
-    let apiUrl: string;
-    let apiKey: string;
-    let model: string;
-    
-    if (OPENAI_API_KEY) {
-      apiUrl = 'https://api.openai.com/v1/chat/completions';
-      apiKey = OPENAI_API_KEY;
-      model = 'gpt-4o';
-    } else if (LOVABLE_API_KEY) {
-      apiUrl = 'https://ai.gateway.lovable.dev/v1/chat/completions';
-      apiKey = LOVABLE_API_KEY;
-      model = 'google/gemini-2.5-flash';
-    } else {
-      return new Response(JSON.stringify({ error: 'Nenhuma API key configurada (OpenAI ou Lovable AI)' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // Try each provider in order with retries
+    let lastError = '';
+    for (const providerConfig of PROVIDERS) {
+      const apiKey = Deno.env.get(providerConfig.envKey);
+      if (!apiKey) continue;
+
+      try {
+        console.log(`Using AI provider: ${providerConfig.name} (${providerConfig.model})`);
+        const response = await tryProvider(providerConfig, apiKey, messages);
+        
+        return new Response(response.body, {
+          headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
+        });
+      } catch (e) {
+        lastError = e instanceof Error ? e.message : 'Unknown error';
+        console.error(`[${providerConfig.name}] Failed: ${lastError}`);
+        
+        // If credits exhausted, try next provider
+        if (lastError === 'CREDITS_EXHAUSTED') continue;
+        // If all retries failed, try next provider
+        continue;
+      }
     }
 
-    console.log(`Using AI provider: ${OPENAI_API_KEY ? 'OpenAI (gpt-4o)' : 'Lovable AI Gateway'}`);
+    // All providers failed
+    const errorMessage = lastError === 'CREDITS_EXHAUSTED'
+      ? 'Créditos insuficientes em todos os provedores de IA.'
+      : 'Todos os provedores de IA estão temporariamente indisponíveis. Tente novamente em instantes.';
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          ...messages,
-        ],
-        stream: true,
-        ...(OPENAI_API_KEY ? { max_tokens: 16000 } : {}),
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Limite de requisições atingido. Tente novamente em instantes.' }), {
-          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'Créditos insuficientes.' }), {
-          status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      const t = await response.text();
-      console.error('AI API error:', response.status, t);
-      return new Response(JSON.stringify({ error: `Erro na API de IA (${response.status})` }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(response.body, {
-      headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 200, // Return 200 with error in body to avoid edge function error
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
     console.error('site-builder error:', e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : 'Erro desconhecido' }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });

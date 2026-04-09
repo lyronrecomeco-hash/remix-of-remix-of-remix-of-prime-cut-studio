@@ -4,21 +4,51 @@ import { TemplateFormData } from './TemplateQuickForm';
 export function generateTemplatePrompt(template: TemplateModel, form: TemplateFormData): string {
   const isApp = template.category === 'app';
   const projectType = isApp ? 'aplicação web completa (SPA)' : 'site profissional e moderno';
+  const isTraditional = form.codeStyle === 'traditional';
 
   const languageInstructions = getLanguageInstructions(form.language);
 
   const aiName = (form as any).targetAI || 'lovable';
   const AI_PLATFORMS: Record<string, string> = {
     lovable: 'Lovable (React + Vite + Tailwind + Shadcn/UI)',
-    cursor: 'Cursor IDE (React + Vite + Tailwind)',
-    v0: 'v0 by Vercel (Next.js + Shadcn/UI)',
-    bolt: 'Bolt.new (Full-stack IA Environment)',
+    cursor: 'Cursor IDE',
+    antigravity: 'Google Antigravity (Gemini 3 Pro)',
     windsurf: 'Windsurf IDE (Codeium AI)',
+    trae: 'Trae IDE (ByteDance)',
+    v0: 'v0 by Vercel (Next.js + Shadcn/UI)',
+    bolt: 'Bolt.new (Full-stack IA)',
+    replit: 'Replit (IDE + Deploy)',
+    chatgpt: 'ChatGPT (OpenAI)',
+    claude: 'Claude (Anthropic)',
+    'google-studio': 'Google AI Studio (Gemini)',
   };
   const platformLabel = AI_PLATFORMS[aiName] || AI_PLATFORMS.lovable;
 
+  const stackSection = isTraditional
+    ? `### Stack Técnica (Tradicional)
+- **Backend**: PHP 8+ com estrutura MVC
+- **Frontend**: HTML5 semântico + CSS3 moderno + JavaScript ES6+
+- **Banco de Dados**: MySQL 8+ com PDO prepared statements
+- **Styling**: CSS3 com custom properties, Flexbox/Grid
+- **Animações**: CSS transitions + ScrollReveal/AOS.js
+- **Formulários**: Validação client + server-side
+- **Organização**: /includes, /assets/css, /assets/js, /config
+- **Segurança**: Sanitização de inputs, CSRF tokens, XSS prevention`
+    : `### Stack Técnica (Moderna)
+- **React 18** com TypeScript strict mode
+- **Vite 5** como bundler
+- **Tailwind CSS v3** para estilização
+- **Shadcn/UI** como base de componentes
+- **Framer Motion** para animações
+- **Lucide React** para iconografia
+- **React Hook Form + Zod** para formulários
+- **React Router DOM** para navegação`;
+
+  const aiInstructions = getAIInstructions(aiName, isTraditional, isApp);
+
   return `# 🚀 PROJETO COMPLETO: ${form.businessName.toUpperCase()} — ${template.name.toUpperCase()}
-# 📋 Plataforma de destino: **${platformLabel}**
+# 📋 Plataforma: **${platformLabel}**
+# 🔧 Estilo de código: **${isTraditional ? 'Tradicional (PHP/HTML/CSS/JS)' : 'Moderno (React/TypeScript/Tailwind)'}**
 
 ---
 
@@ -28,6 +58,7 @@ Você é um desenvolvedor sênior full-stack especializado em criar ${projectTyp
 
 ${form.cityState ? `📍 **Localização**: ${form.cityState}` : ''}
 ${form.slogan ? `💬 **Slogan**: "${form.slogan}"` : ''}
+${form.targetAudience ? `👥 **Público-Alvo**: ${form.targetAudience}` : ''}
 
 **IMPORTANTE**: Este projeto deve parecer feito por uma agência profissional. Sem atalhos, sem placeholders genéricos, sem "Lorem Ipsum". Use textos realistas e profissionais no idioma selecionado.
 
@@ -39,142 +70,78 @@ ${form.slogan ? `💬 **Slogan**: "${form.slogan}"` : ''}
 - **Cor Primária**: ${form.primaryColor}
 - **Cor Secundária**: ${form.secondaryColor}
 - **Tema Base**: Dark mode como padrão, com toggle para light mode
-- **Variações**: Gerar tons claros e escuros automaticamente a partir das cores primária/secundária
-- **Contraste**: Garantir WCAG AA em todas as combinações de texto/fundo
-- **Gradientes**: Usar gradientes sutis baseados nas cores primárias para CTAs e headers
+- **Gradientes**: Usar gradientes sutis baseados nas cores primárias
 
 ### ✏️ Tipografia
 - **Família Principal**: ${form.typography}
-- **Hierarquia completa**:
-  - H1: 2.5rem (40px), bold, tracking tight
-  - H2: 2rem (32px), semibold
-  - H3: 1.5rem (24px), semibold
-  - H4: 1.25rem (20px), medium
-  - Body: 1rem (16px), regular, line-height 1.7
-  - Small: 0.875rem (14px), regular
-  - Caption: 0.75rem (12px), medium
-- **Importar a fonte**: Via Google Fonts com font-display: swap
+- **Hierarquia**: H1 (40px bold) > H2 (32px semibold) > H3 (24px) > Body (16px) > Small (14px)
+- **Import**: Via Google Fonts com font-display: swap
 
 ### 🎯 Design System
-- **Bordas**: border-radius 8px para cards, 12px para modais, 9999px para pills
-- **Sombras**: 3 níveis (sm, md, lg) usando HSL com opacidade
-- **Espaçamentos**: Sistema de 4px/8px (p-1, p-2, p-4, p-6, p-8)
-- **Animações**: Framer Motion para transições de página (200-300ms), hover states suaves
-- **Glassmorphism**: Usar backdrop-blur e transparências para cards sobre backgrounds
-- **Ícones**: Lucide React exclusivamente, tamanhos consistentes (w-4 h-4 para inline, w-5 h-5 para botões, w-6 h-6 para features)
+- **Bordas**: 8px cards, 12px modais, 9999px pills
+- **Ícones**: ${isTraditional ? 'Font Awesome ou Lucide CDN' : 'Lucide React'}
+- **Glassmorphism**: backdrop-blur e transparências para cards sobre backgrounds
 
 ---
 
-## 3. ESTRUTURA DE PÁGINAS E NAVEGAÇÃO
+## 3. ESTRUTURA DE PÁGINAS
 
-### Páginas obrigatórias:
-${template.suggestedPages.map((p, i) => `${i + 1}. **${p}** — implementação completa com todos os estados`).join('\n')}
+${template.suggestedPages.map((p, i) => `${i + 1}. **${p}** — implementação completa`).join('\n')}
 
-### Sistema de Navegação
-- **Header**: Sticky com blur de fundo, logo à esquerda, menu centralizado, CTA à direita
-- **Menu Mobile**: Hamburger com overlay animado (slide da direita), links com ícones
-- **Active State**: Indicador visual no item de menu atual (underline animada ou cor)
-- **Scroll**: scroll-behavior smooth, scroll-spy para highlights de seção
-- **Footer**: Completo com 3-4 colunas (Sobre, Links, Contato, Redes Sociais)
-- **Breadcrumbs**: Em páginas internas quando aplicável
-- **Back to Top**: Botão flutuante que aparece após scroll
+### Navegação
+- Header sticky com blur de fundo, logo + menu + CTA
+- Menu mobile hamburger com overlay animado
+- Footer completo com 3-4 colunas
+- Scroll suave + botão back-to-top
 
 ---
 
 ## 4. OBJETIVOS DE NEGÓCIO
 
-O projeto deve atender a estes objetivos estratégicos:
 ${template.objectives.map(o => `- ✅ ${o}`).join('\n')}
 
 ---
 
-## 5. FUNCIONALIDADES — IMPLEMENTAÇÃO DETALHADA
-
-Cada funcionalidade deve ser **100% funcional** com todos os estados:
+## 5. FUNCIONALIDADES
 
 ${template.suggestedFeatures.map((f, i) => `### 5.${i + 1}. ${f}
-- **Estados**: loading (skeleton), empty (ilustração + mensagem), error (retry button), success
-- **Responsividade**: Adaptar layout para mobile, tablet e desktop
-- **Acessibilidade**: aria-labels, keyboard navigation, focus indicators
-- **Validação**: Formulários com React Hook Form + Zod, mensagens de erro inline
-- **Feedback**: Toast notifications para ações, confirmação para ações destrutivas
-- **Performance**: Lazy loading quando abaixo do fold`).join('\n\n')}
+- **Estados**: loading, empty, error, success
+- **Responsividade**: mobile, tablet, desktop
+- **Validação**: Formulários com mensagens de erro inline`).join('\n\n')}
 
 ---
 
-## 6. STACK TÉCNICA OBRIGATÓRIA
+## 6. STACK TÉCNICA
 
-### Frontend (Lovable)
-- **React 18** com TypeScript strict mode
-- **Vite 5** como bundler
-- **Tailwind CSS v3** para toda estilização (sem CSS modules, sem styled-components)
-- **Shadcn/UI** como base de componentes (Button, Card, Dialog, Input, Select, Toast, etc.)
-- **Framer Motion** para todas as animações e transições
-- **Lucide React** para iconografia
-- **React Hook Form + Zod** para formulários e validação
-- **React Router DOM** para navegação entre páginas
-- **Recharts** para gráficos quando necessário
-- **date-fns** para formatação de datas
+${stackSection}
 
-${isApp ? `### Backend (Supabase — via Lovable Cloud)
-- **Autenticação**: Supabase Auth com email/senha
-- **Database**: PostgreSQL com tabelas normalizadas e RLS policies
-- **Edge Functions**: Para lógica server-side e integrações
-- **Storage**: Para uploads de arquivos/imagens
-- **Realtime**: Para funcionalidades em tempo real quando aplicável
-
-### Tabelas Sugeridas
-- users/profiles (dados do usuário)
-- Tabelas específicas do nicho baseadas nas funcionalidades
-- Logs/analytics para acompanhamento
-` : ''}
-
-### Padrões de Código
-- Componentes **pequenos, focados e reutilizáveis** (máx 150 linhas)
-- Custom hooks para lógica compartilhada
-- TypeScript estrito — **zero \`any\`**
-- Organização por feature: \`/components/[feature]/\`
-- Separação clara: \`components/ hooks/ utils/ types/ lib/\`
-- Naming: PascalCase para componentes, camelCase para funções, UPPER_CASE para constantes
+${isApp ? `### Backend
+${isTraditional ? `- PHP 8+ com PDO e sessions
+- MySQL com migrations manuais
+- Autenticação com bcrypt + sessions` : `- Supabase (Auth, Database, Storage, Edge Functions)
+- TanStack Query para cache
+- RLS policies para segurança`}` : ''}
 
 ---
 
-## 7. RESPONSIVIDADE COMPLETA
+## 7. RESPONSIVIDADE
 
-### Breakpoints
 | Dispositivo | Range | Abordagem |
 |------------|-------|-----------|
-| Mobile | 320px — 480px | Layout vertical, touch-first |
-| Tablet | 481px — 768px | Grid 2 colunas, menus adaptados |
-| Desktop | 769px — 1024px | Layout completo, 3+ colunas |
-| Large | 1025px+ | Max-width container, espaçamento generoso |
-
-### Regras Obrigatórias
-- **Mobile-first** approach em todo CSS
-- Touch targets mínimo **44x44px** em mobile
-- Nenhum scroll horizontal acidental
-- Imagens responsivas com aspect-ratio
-- Tipografia fluida com clamp() quando necessário
-- Menu hamburger no mobile com overlay suave
+| Mobile | 320-480px | Layout vertical, touch-first |
+| Tablet | 481-768px | Grid 2 colunas |
+| Desktop | 769-1024px | Layout completo |
+| Large | 1025px+ | Max-width container |
 
 ---
 
 ## 8. SEO & PERFORMANCE
 
-### SEO Técnico
-- **Meta tags**: title (<60 chars), description (<160 chars), og:image, og:title, og:description
-- **HTML Semântico**: header, main, nav, section, article, aside, footer
-- **Heading hierarchy**: Único H1 por página, H2-H6 sequenciais
-- **Alt text**: Em 100% das imagens
-- **JSON-LD**: Schema.org para LocalBusiness ou tipo apropriado
-- **Canonical**: Tags em todas as páginas
-
-### Performance
-- **Lazy loading**: Todas as imagens abaixo do fold
-- **Code splitting**: React.lazy + Suspense por rota
-- **Font loading**: font-display: swap
-- **Bundle**: Tree shaking automático do Vite
-- **Target**: Lighthouse > 90 em Performance, Accessibility, Best Practices, SEO
+- Meta tags: title, description, og:image
+- HTML Semântico, único H1
+- JSON-LD para LocalBusiness
+- Lazy loading em imagens
+- Lighthouse > 90
 
 ---
 
@@ -182,56 +149,108 @@ ${languageInstructions}
 
 ---
 
-${form.additionalDescription ? `## 9. REQUISITOS ADICIONAIS DO CLIENTE
+${form.additionalDescription ? `## 10. REQUISITOS ADICIONAIS
 
 ${form.additionalDescription}
 
+---` : ''}
+
+## 🤖 INSTRUÇÕES PARA ${platformLabel.toUpperCase()}
+
+${aiInstructions}
+
 ---
 
-## 10. CHECKLIST DE QUALIDADE` : '## 9. CHECKLIST DE QUALIDADE'}
+## CHECKLIST FINAL
 
-Antes de finalizar, verificar TODOS os itens:
-
-- [ ] Todas as páginas implementadas e navegáveis
-- [ ] 100% responsivo (testar em 320px, 768px, 1024px, 1440px)
-- [ ] Formulários com validação visual e mensagens de erro claras
-- [ ] CTA principal funcionando (WhatsApp, agendamento, etc.)
-- [ ] SEO básico implementado (meta tags, schema, alt texts)
-- [ ] Zero erros no console do browser
-- [ ] Animações suaves e não intrusivas (sem janks)
-- [ ] Loading states em todas as ações assíncronas
-- [ ] Empty states informativos com call-to-action
-- [ ] Acessibilidade (keyboard nav, aria-labels, contraste)
-- [ ] TypeScript sem erros de tipo
-- [ ] Dark/Light mode funcionando
-- [ ] Textos realistas no idioma selecionado (não Lorem Ipsum)
+- [ ] Todas as páginas navegáveis
+- [ ] 100% responsivo
+- [ ] Formulários validados
+- [ ] CTAs funcionando
+- [ ] SEO implementado
+- [ ] Zero erros no console
+- [ ] Textos no idioma selecionado
 - [ ] Imagens com lazy loading e alt text
 
 ---
 
-## INSTRUÇÃO FINAL
+*Prompt gerado pelo Genesis-IA. Execute cada seção para resultado profissional.*`.trim();
+}
 
-Gere o projeto **COMPLETO** seguindo **TODAS** as especificações acima. Comece pela estrutura base (layout, design system, navegação) e implemente cada funcionalidade incrementalmente. 
+function getAIInstructions(aiName: string, isTraditional: boolean, isApp: boolean): string {
+  const instructions: Record<string, string> = {
+    'lovable': `- Stack padrão: React + TypeScript + Vite + Tailwind + Shadcn/UI
+- Use Framer Motion para animações
+- Organize em src/components/ e src/pages/
+> Nota: Lovable trabalha exclusivamente com código moderno.`,
 
-**Prioridades**:
-1. Design System e Layout base
-2. Navegação e rotas
-3. Páginas principais com conteúdo realista
-4. Formulários e interações
-5. SEO e otimizações
-6. Polish final (animações, micro-interações)
+    'cursor': isTraditional
+      ? `- Crie estrutura PHP MVC: /public, /src, /includes, /assets
+- PDO para acesso ao banco MySQL
+- CSS3 com variáveis + JS ES6+ modular
+- .htaccess para URLs amigáveis`
+      : `- Configure Vite + React + TypeScript + Tailwind
+- Instale Shadcn/UI via CLI
+- Configure ESLint e Prettier`,
 
-O resultado deve parecer um **produto profissional** pronto para um cliente real. Use placeholders de alta qualidade para imagens (Unsplash URLs quando possível).`.trim();
+    'antigravity': `- IDE agêntica - forneça instruções de alto nível
+- Gemini 3 Pro integrado para máxima qualidade
+${isTraditional ? '- Peça estrutura PHP 8+ com MVC e PDO\n- CSS modular com BEM/SMACSS' : '- React + TypeScript + Tailwind + Vite'}
+- Antigravity valida e testa automaticamente`,
+
+    'windsurf': isTraditional
+      ? `- PHP 8+ com MVC, PDO para queries
+- CSS3 moderno com Grid e Flexbox
+- JavaScript modular ES6+`
+      : `- Vite + React + TypeScript + Tailwind
+- Use Cascade para edições multi-arquivo`,
+
+    'trae': `- Agentes autônomos - use instruções de alto nível
+- Builder Mode para geração completa
+${isTraditional ? '- PHP 8+ com autoloading PSR-4, PDO wrapper, template engine' : '- React + TypeScript + Tailwind + Shadcn/UI'}
+- Envie todo o briefing como contexto`,
+
+    'v0': `- v0 gera componentes React + Tailwind
+- Foque na UI visual
+- Componentes prontos para Next.js
+> Nota: v0 trabalha exclusivamente com código moderno.`,
+
+    'bolt': isTraditional
+      ? `- Estruture com PHP/HTML/JS
+- Configure pastas manualmente
+- CSS3 + JS vanilla`
+      : `- Full-stack React + Node
+- Terminal integrado para pacotes`,
+
+    'replit': isTraditional
+      ? `- Template PHP do Replit
+- MySQL via banco integrado
+- Deploy automático`
+      : `- Template React do Replit
+- Configure Tailwind
+- Deploy automático integrado`,
+
+    'chatgpt': `- Peça cada arquivo individualmente
+${isTraditional ? '- Solicite PHP, HTML, CSS e JS separados\n- Schema MySQL primeiro' : '- Comece por configuração, depois componentes'}`,
+
+    'claude': `- Claude gera código limpo e bem estruturado
+${isTraditional ? '- Peça arquitetura PHP completa\n- SQL com índices e foreign keys' : '- Componentes React bem tipados'}`,
+
+    'google-studio': `- Contexto longo para projetos grandes
+${isTraditional ? '- Estrutura PHP completa\n- SQL com views/procedures' : '- Componentes React + TypeScript'}`,
+  };
+
+  return instructions[aiName] || `- Adapte as instruções para a IA escolhida
+${isTraditional ? '- Siga melhores práticas PHP 8+ e JS ES6+' : '- Siga melhores práticas React e TypeScript'}`;
 }
 
 function getLanguageInstructions(language: string): string {
   const map: Record<string, string> = {
     'Portugues (Brasil)': `## IDIOMA E LOCALIZAÇÃO
-- Todo o conteúdo do site em **Português Brasileiro**
-- Tom: profissional mas acessível, levemente informal
-- CTAs persuasivos: "Faça seu pedido", "Agende agora", "Fale conosco"
-- Formatação BR: datas (dd/mm/aaaa), moeda (R$), telefone (+55 XX XXXXX-XXXX)
-- Botão WhatsApp flutuante com número formatado`,
+- Todo o conteúdo em **Português Brasileiro**
+- Tom: profissional mas acessível
+- Formatação BR: datas (dd/mm/aaaa), moeda (R$), tel (+55)
+- WhatsApp flutuante`,
 
     'Portugues (Portugal)': `## IDIOMA E LOCALIZAÇÃO
 - Todo o conteúdo em **Português de Portugal**
@@ -240,28 +259,28 @@ function getLanguageInstructions(language: string): string {
 
     'English (US)': `## LANGUAGE & LOCALIZATION
 - All content in **American English**
-- Tone: professional, confident, results-oriented
-- US formatting: dates (mm/dd/yyyy), currency ($), phone format`,
+- Tone: professional, confident
+- US formatting: dates (mm/dd/yyyy), currency ($)`,
 
     'Espanol': `## IDIOMA Y LOCALIZACIÓN
 - Todo el contenido en **Español**
-- Tono: profesional, cercano y persuasivo
-- Formato: fechas (dd/mm/aaaa), moneda según país`,
+- Tono: profesional, cercano
+- Formato: fechas (dd/mm/aaaa)`,
 
     'Francais': `## LANGUE ET LOCALISATION
 - Tout le contenu en **Français**
 - Ton: professionnel et élégant
-- Format français: dates (jj/mm/aaaa), devise (€)`,
+- Format: dates (jj/mm/aaaa), devise (€)`,
 
     'Italiano': `## LINGUA E LOCALIZZAZIONE
 - Tutto il contenuto in **Italiano**
 - Tono: professionale ed elegante
-- Formato italiano: date (gg/mm/aaaa), valuta (€)`,
+- Formato: date (gg/mm/aaaa), valuta (€)`,
 
     'Deutsch': `## SPRACHE UND LOKALISIERUNG
 - Alle Inhalte auf **Deutsch**
-- Ton: professionell und vertrauenswürdig
-- Deutsches Format: Datum (TT.MM.JJJJ), Währung (€)`,
+- Ton: professionell
+- Format: Datum (TT.MM.JJJJ), Währung (€)`,
   };
 
   return map[language] || map['Portugues (Brasil)'];
