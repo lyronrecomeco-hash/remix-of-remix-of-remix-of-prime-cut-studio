@@ -549,7 +549,7 @@ ${isApp ? '- [ ] RLS policies no banco de dados\n- [ ] Auth tokens seguros\n- [ 
 
 ## 💡 INSTRUÇÕES ESPECÍFICAS PARA ${targetAI?.name?.toUpperCase() || 'A IA'}
 
-${getAISpecificInstructions(formData.targetAI, formData.otherAI, isApp)}
+${getAISpecificInstructions(formData.targetAI, formData.otherAI, isApp, formData.codeStyle)}
 
 ---
 
