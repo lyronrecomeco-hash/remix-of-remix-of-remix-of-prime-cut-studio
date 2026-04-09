@@ -167,11 +167,25 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
   };
 
   const handleImportProposal = async (proposal: ProposalForImport) => {
+    const answers = proposal.questionnaire_answers as any;
+    
+    // Extract city from address field (format: "Rua X, N - Bairro, Cidade - UF, CEP")
+    const address = answers?.address || answers?.city || answers?.location || '';
+    let cityState = '';
+    if (address) {
+      const cityMatch = address.match(/,\s*([^,]+?)\s*-\s*([A-Z]{2})\s*,/);
+      if (cityMatch) {
+        cityState = `${cityMatch[1].trim()}, ${cityMatch[2]}`;
+      } else {
+        cityState = address;
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       businessName: proposal.company_name || prev.businessName,
-      slogan: (proposal.questionnaire_answers as any)?.slogan || prev.slogan,
-      cityState: (proposal.questionnaire_answers as any)?.city || (proposal.questionnaire_answers as any)?.location || prev.cityState,
+      slogan: answers?.slogan || prev.slogan,
+      cityState: cityState || prev.cityState,
     }));
     setShowProposalModal(false);
     toast.success('Dados importados!', { description: `Dados de "${proposal.company_name}" aplicados.` });
@@ -179,8 +193,8 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
     // Auto-analyze target audience with AI
     setAnalyzingAudience(true);
     try {
-      const nicheInfo = (proposal.ai_analysis as any)?.niche || (proposal.questionnaire_answers as any)?.niche || template.name;
-      const analysisText = typeof proposal.ai_analysis === 'object' ? JSON.stringify(proposal.ai_analysis) : '';
+      const nicheInfo = answers?.niche || (proposal.ai_analysis as any)?.niche || template.name;
+      const analysisText = typeof proposal.ai_analysis === 'object' && proposal.ai_analysis ? JSON.stringify(proposal.ai_analysis) : '';
 
       const { data: funcData } = await supabase.functions.invoke('genesis-ai-chat', {
         body: {
@@ -190,7 +204,9 @@ export function TemplateQuickForm({ template, onBack, onComplete, affiliateId }:
               content: `Com base nestes dados do negócio, gere um BREVE público-alvo (máximo 2 linhas):
 Empresa: ${proposal.company_name}
 Nicho: ${nicheInfo}
-Cidade: ${(proposal.questionnaire_answers as any)?.city || ''}
+Endereço: ${address}
+Website: ${answers?.website || ''}
+Avaliação: ${answers?.rating || ''}
 ${analysisText ? `Análise: ${analysisText.slice(0, 500)}` : ''}
 Responda APENAS o público-alvo, sem introdução.`
             }

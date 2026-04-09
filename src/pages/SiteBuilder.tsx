@@ -828,6 +828,15 @@ export default function SiteBuilder() {
         throw new Error(err?.error || `Erro ${resp?.status}`);
       }
 
+      // Check if response is actually a stream (not a JSON error returned with 200)
+      const contentType = resp.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const errBody = await resp.json().catch(() => ({ error: 'Resposta inesperada do servidor' }));
+        if (errBody?.error) {
+          throw new Error(errBody.error);
+        }
+      }
+
       addLogEntry({ type: 'status', content: 'Definindo a arquitetura do projeto...', stage: 'definindo_arquitetura' });
 
       const reader = resp.body!.getReader();
