@@ -420,14 +420,23 @@ ${generateBackendRequirementsSection(niche, appNiche)}
 ## 📱 REQUISITOS TÉCNICOS
 
 ### Stack Recomendada:
-- **Frontend**: React 18+ com TypeScript
+${formData.codeStyle === 'traditional' ? `- **Backend**: PHP 8+ com MVC simples ou Laravel
+- **Frontend**: HTML5 semântico + CSS3 moderno + JavaScript ES6+
+- **Banco de Dados**: MySQL 8+ ou MariaDB
+- **Styling**: CSS3 com variáveis customizadas (custom properties) + Flexbox/Grid
+- **Animações**: CSS transitions/animations + ScrollReveal ou AOS.js
+- **Formulários**: Validação PHP server-side + JavaScript client-side
+- **Build**: Sem build tool - arquivos diretos (.php, .html, .css, .js)
+${isApp ? `- **Auth**: Sessions PHP com bcrypt para senhas
+- **ORM**: PDO prepared statements para segurança` : `- **SEO**: Meta tags nativas, sitemap.xml, robots.txt
+- **Forms**: PHP mail() ou PHPMailer para envio de emails`}` : `- **Frontend**: React 18+ com TypeScript
 - **Styling**: Tailwind CSS + Shadcn/UI
 - **Animações**: Framer Motion
 - **Ícones**: Lucide React
 - **Build**: Vite
 ${isApp ? `- **Backend**: Supabase (Auth, Database, Storage, Edge Functions)
 - **State**: TanStack Query para cache e sincronização` : `- **Forms**: React Hook Form + Zod
-- **SEO**: Meta tags dinâmicas, sitemap, robots.txt`}
+- **SEO**: Meta tags dinâmicas, sitemap, robots.txt`}`}
 
 ### Performance:
 ${formData.isPerformanceOptimized ? `- **Lazy Loading**: Imagens e componentes carregados sob demanda
@@ -540,7 +549,7 @@ ${isApp ? '- [ ] RLS policies no banco de dados\n- [ ] Auth tokens seguros\n- [ 
 
 ## 💡 INSTRUÇÕES ESPECÍFICAS PARA ${targetAI?.name?.toUpperCase() || 'A IA'}
 
-${getAISpecificInstructions(formData.targetAI, formData.otherAI, isApp)}
+${getAISpecificInstructions(formData.targetAI, formData.otherAI, isApp, formData.codeStyle)}
 
 ---
 
@@ -585,7 +594,9 @@ ${getAISpecificInstructions(formData.targetAI, formData.otherAI, isApp)}
   return prompt.trim();
 }
 
-function getAISpecificInstructions(targetAI: string, otherAI?: string, isApp?: boolean): string {
+function getAISpecificInstructions(targetAI: string, otherAI?: string, isApp?: boolean, codeStyle?: string): string {
+  const isTraditional = codeStyle === 'traditional';
+  
   const instructions: Record<string, string> = {
     'lovable': `### Para Lovable (lovable.dev):
 - Utilize a stack padrão do Lovable: React + TypeScript + Vite + Tailwind + Shadcn/UI
@@ -599,59 +610,131 @@ function getAISpecificInstructions(targetAI: string, otherAI?: string, isApp?: b
 - Utilitários em src/lib/
 - Não precisa configurar build, Vite já está configurado
 - Use as variáveis CSS do design system em index.css
-${isApp ? '- Ative Lovable Cloud para backend com Supabase integrado\n- Use Edge Functions para lógica de backend\n- Configure RLS para segurança dos dados' : ''}`,
+${isApp ? '- Ative Lovable Cloud para backend com Supabase integrado\n- Use Edge Functions para lógica de backend\n- Configure RLS para segurança dos dados' : ''}
+> **Nota**: Lovable trabalha exclusivamente com código moderno (React + TypeScript).`,
 
     'cursor': `### Para Cursor:
-- Configure o projeto com Vite + React + TypeScript
+${isTraditional ? `- Crie a estrutura de pastas: /public, /src, /includes, /assets
+- Configure o servidor PHP local para desenvolvimento
+- Use PDO para acesso seguro ao banco de dados MySQL
+- Implemente MVC simplificado com controllers e views
+- CSS3 com variáveis customizadas para o design system
+- JavaScript ES6+ modular com import/export
+- Validação dupla: client-side (JS) + server-side (PHP)
+- .htaccess para URLs amigáveis e redirecionamentos` : `- Configure o projeto com Vite + React + TypeScript
 - Instale Tailwind CSS e configure corretamente
 - Adicione Shadcn/UI manualmente via CLI
 - Use Framer Motion para animações
 - Estruture o projeto seguindo convenções de pasta
 - Configure ESLint e Prettier
-- Crie .env para variáveis de ambiente
-${isApp ? '- Configure Supabase client separadamente\n- Implemente autenticação com @supabase/auth-helpers-react\n- Crie migrations SQL para o schema' : ''}`,
+- Crie .env para variáveis de ambiente`}
+${isApp ? (isTraditional ? '- Configure MySQL com migrations manuais\n- Implemente autenticação com PHP sessions + bcrypt' : '- Configure Supabase client separadamente\n- Implemente autenticação com @supabase/auth-helpers-react\n- Crie migrations SQL para o schema') : ''}`,
+
+    'antigravity': `### Para Google Antigravity:
+- Antigravity é uma IDE agêntica - forneça instruções claras e de alto nível
+- Deixe o agente autônomo planejar a arquitetura e executar
+- Use Gemini 3 Pro integrado para máxima qualidade
+${isTraditional ? `- Peça estrutura PHP 8+ com MVC e PDO
+- Configure Apache/Nginx virtual host
+- Implemente autoloader PSR-4
+- CSS modular com metodologia BEM ou SMACSS
+- JavaScript vanilla com modules e bundling mínimo
+- MySQL com migrations versionadas` : `- Stack recomendada: React + TypeScript + Tailwind + Vite
+- Aproveite a capacidade de teste autônomo do Antigravity
+- Configure CI/CD diretamente na IDE
+- Use o terminal integrado para dependências`}
+- Antigravity valida e testa código automaticamente - confie no pipeline
+${isApp ? (isTraditional ? '- Peça ao agente para criar o schema MySQL completo\n- Implemente CRUD com prepared statements' : '- Configure Supabase ou backend preferido\n- Peça ao agente para implementar auth + CRUD completo') : ''}`,
+
+    'windsurf': `### Para Windsurf:
+${isTraditional ? `- Estruture com PHP 8+ e padrão MVC
+- Use PDO para queries seguras
+- CSS3 moderno com Grid e Flexbox
+- JavaScript modular com ES6+
+- Configure .env para credenciais` : `- Configure o projeto com Vite + React + TypeScript
+- Instale Tailwind e Shadcn/UI
+- Use os flows de IA para refatoração
+- Aproveite o Cascade para edições multi-arquivo`}
+${isApp ? (isTraditional ? '- Implemente autenticação PHP com sessions\n- MySQL com índices otimizados' : '- Configure Supabase para backend\n- Implemente auth e RLS') : ''}`,
+
+    'trae': `### Para Trae (ByteDance):
+- Trae possui agentes autônomos avançados - use instruções de alto nível
+- Aproveite o Builder Mode para geração completa do projeto
+${isTraditional ? `- Peça estrutura PHP 8+ profissional com:
+  - Autoloading PSR-4
+  - Router simples para URLs limpas
+  - PDO wrapper para banco de dados
+  - Template engine básica (ou PHP puro com includes)
+  - CSS3 com variáveis customizadas
+  - JavaScript ES6+ modular
+  - Validação server-side rigorosa` : `- Stack: React + TypeScript + Tailwind CSS + Vite
+- Use Shadcn/UI para componentes prontos
+- Framer Motion para animações
+- Configure ESLint + Prettier`}
+- Trae suporta contexto de projeto completo - envie todo o briefing
+${isApp ? (isTraditional ? '- MySQL com PDO prepared statements\n- Sessions PHP seguras com CSRF tokens\n- CRUD completo com soft-delete' : '- Supabase para auth + database\n- TanStack Query para state management\n- RLS policies para segurança') : ''}`,
+
+    'replit': `### Para Replit:
+${isTraditional ? `- Use o template PHP do Replit
+- Configure MySQL via banco integrado ou externo
+- Estrutura MVC com arquivos PHP diretos
+- CSS3 + JavaScript ES6 sem build tools
+- Deploy automático do Replit` : `- Use o template React do Replit
+- Configure Tailwind CSS no projeto
+- Instale dependências via shell
+- Deploy automático integrado`}
+${isApp ? '- Configure banco de dados via painel\n- Implemente auth com o stack escolhido' : ''}`,
 
     'v0': `### Para v0 (Vercel):
 - O v0 gera componentes React + Tailwind
 - Foque na UI visual, pois v0 é especializado nisso
 - Use os componentes gerados como base
-- Pode ser necessário ajustar para integrar com backend
 - Componentes saem prontos para Next.js
 - Adapte para Vite se necessário
+> **Nota**: v0 trabalha exclusivamente com código moderno (React + Tailwind).
 ${isApp ? '- Integre com Vercel Postgres ou Supabase após geração\n- Configure API routes separadamente' : ''}`,
 
     'bolt': `### Para Bolt.new:
-- Bolt suporta full-stack com React + Node
+${isTraditional ? `- Bolt suporta projetos PHP/HTML/JS
+- Configure a estrutura de pastas manualmente
+- Use o terminal para instalar dependências PHP
+- CSS3 + JS vanilla ou jQuery` : `- Bolt suporta full-stack com React + Node
 - Configure o projeto inicial com as dependências
-- Utilize o terminal integrado para instalar pacotes
-- Backend pode ser feito com Express ou similar
-- Configure variáveis de ambiente no painel
-${isApp ? '- Use o backend integrado para APIs\n- Configure banco de dados via painel\n- Implemente autenticação com JWT' : ''}`,
+- Utilize o terminal integrado para instalar pacotes`}
+${isApp ? (isTraditional ? '- Configure MySQL via variáveis de ambiente\n- Implemente auth com PHP sessions' : '- Use o backend integrado para APIs\n- Configure banco de dados via painel\n- Implemente autenticação com JWT') : ''}`,
 
     'chatgpt': `### Para ChatGPT:
 - Peça a criação de cada arquivo individualmente
 - Comece pela estrutura de pastas e configuração
-- Depois avance para componentes e páginas
-- Solicite explicações quando necessário
-- Peça revisões e melhorias incrementais
-- Use Code Interpreter para gerar arquivos se disponível
-${isApp ? '- Solicite schema do banco de dados primeiro\n- Depois as APIs e autenticação\n- Por último o frontend integrado' : ''}`,
+${isTraditional ? `- Solicite arquivos PHP, HTML, CSS e JS separadamente
+- Peça o schema MySQL primeiro
+- Depois avance para controllers e views` : `- Depois avance para componentes e páginas
+- Solicite explicações quando necessário`}
+${isApp ? (isTraditional ? '- Solicite schema MySQL primeiro\n- Depois os controllers PHP\n- Por último as views e JS' : '- Solicite schema do banco de dados primeiro\n- Depois as APIs e autenticação\n- Por último o frontend integrado') : ''}`,
+
+    'claude': `### Para Claude:
+- Claude é excelente em gerar código limpo e bem estruturado
+${isTraditional ? `- Peça a arquitetura PHP completa de uma vez
+- Claude gera PHP robusto com tratamento de erros
+- Solicite SQL completo com índices e foreign keys` : `- Peça componentes React bem tipados
+- Claude gera TypeScript rigoroso`}
+${isApp ? '- Solicite o schema e auth primeiro\n- Depois implemente por módulos' : ''}`,
 
     'google-studio': `### Para Google AI Studio (Gemini):
-- Similar ao ChatGPT, peça arquivos um por um
 - Gemini é bom em gerar código estruturado
 - Aproveite o contexto longo para projetos grandes
-- Peça explicações técnicas quando útil
-- Use exemplos de código quando possível
+${isTraditional ? `- Solicite a estrutura PHP completa
+- Peça SQL com views e procedures se necessário` : `- Solicite componentes React + TypeScript
+- Use exemplos de código quando possível`}
 ${isApp ? '- Solicite diagramas de arquitetura primeiro\n- Depois implemente por módulos\n- Revise segurança ao final' : ''}`,
   };
 
   return instructions[targetAI] || `### Para ${otherAI || 'Outra IA'}:
 - Adapte as instruções conforme a capacidade da IA escolhida
-- Siga as melhores práticas de React e TypeScript
-- Implemente gradualmente, começando pela estrutura base
+${isTraditional ? `- Siga as melhores práticas de PHP 8+ e JavaScript ES6+
+- Implemente gradualmente, começando pela estrutura base` : `- Siga as melhores práticas de React e TypeScript
+- Implemente gradualmente, começando pela estrutura base`}
 - Revise e teste cada componente antes de avançar
-- Solicite melhorias e otimizações quando necessário
 ${isApp ? '- Configure backend conforme a plataforma suportar\n- Priorize segurança e performance' : ''}`;
 }
 

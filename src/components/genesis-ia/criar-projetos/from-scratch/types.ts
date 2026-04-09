@@ -2,7 +2,9 @@
 
 export type ProjectType = 'app' | 'site';
 
-export type TargetAI = 'lovable' | 'cursor' | 'v0' | 'bolt' | 'chatgpt' | 'google-studio' | 'windsurf' | 'claude' | 'other';
+export type TargetAI = 'lovable' | 'cursor' | 'v0' | 'bolt' | 'chatgpt' | 'google-studio' | 'windsurf' | 'claude' | 'antigravity' | 'trae' | 'replit' | 'other';
+
+export type CodeStyle = 'modern' | 'traditional';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 
@@ -61,6 +63,7 @@ export interface FromScratchFormData {
   // Step 10: Target AI
   targetAI: TargetAI;
   otherAI?: string;
+  codeStyle: CodeStyle;
 }
 
 export const LANGUAGES = [
@@ -169,68 +172,89 @@ export const INTEGRATIONS = [
 ];
 
 // AI Targets with real icons/logos represented
-export const AI_TARGETS: { id: TargetAI; name: string; description: string; icon: string; logoUrl?: string }[] = [
+export const AI_TARGETS: { id: TargetAI; name: string; description: string; icon: string; logoUrl?: string; category?: 'ide' | 'builder' | 'chat' }[] = [
   { 
     id: 'lovable', 
     name: 'Lovable', 
     description: 'IA para criar apps React completos com deploy automático', 
     icon: '💜',
-    logoUrl: 'https://lovable.dev/favicon.ico'
+    category: 'builder',
   },
   { 
     id: 'cursor', 
     name: 'Cursor', 
     description: 'IDE com IA integrada para desenvolvedores', 
     icon: '⚡',
-    logoUrl: 'https://cursor.sh/favicon.ico'
+    category: 'ide',
   },
   { 
-    id: 'v0', 
-    name: 'v0 (Vercel)', 
-    description: 'Gerador de UI da Vercel com shadcn/ui', 
-    icon: '▲',
-    logoUrl: 'https://v0.dev/favicon.ico'
-  },
-  { 
-    id: 'bolt', 
-    name: 'Bolt.new', 
-    description: 'Ambiente IA full-stack com preview instantâneo', 
-    icon: '⚡',
-    logoUrl: 'https://bolt.new/favicon.ico'
+    id: 'antigravity', 
+    name: 'Antigravity', 
+    description: 'IDE agêntica do Google com Gemini 3 Pro', 
+    icon: '🚀',
+    category: 'ide',
   },
   { 
     id: 'windsurf', 
     name: 'Windsurf', 
     description: 'IDE IA da Codeium para desenvolvimento ágil', 
     icon: '🏄',
-    logoUrl: 'https://codeium.com/favicon.ico'
+    category: 'ide',
+  },
+  { 
+    id: 'trae', 
+    name: 'Trae', 
+    description: 'IDE IA da ByteDance com agentes autônomos', 
+    icon: '🔮',
+    category: 'ide',
+  },
+  { 
+    id: 'v0', 
+    name: 'v0 (Vercel)', 
+    description: 'Gerador de UI da Vercel com shadcn/ui', 
+    icon: '▲',
+    category: 'builder',
+  },
+  { 
+    id: 'bolt', 
+    name: 'Bolt.new', 
+    description: 'Ambiente IA full-stack com preview instantâneo', 
+    icon: '⚡',
+    category: 'builder',
+  },
+  { 
+    id: 'replit', 
+    name: 'Replit', 
+    description: 'IDE online com deploy integrado e IA', 
+    icon: '🔁',
+    category: 'builder',
   },
   { 
     id: 'chatgpt', 
     name: 'ChatGPT', 
-    description: 'OpenAI GPT-4 para geração de código', 
+    description: 'OpenAI GPT para geração de código', 
     icon: '🤖',
-    logoUrl: 'https://chat.openai.com/favicon.ico'
+    category: 'chat',
   },
   { 
     id: 'claude', 
     name: 'Claude', 
     description: 'Anthropic Claude para código limpo e seguro', 
     icon: '🧠',
-    logoUrl: 'https://claude.ai/favicon.ico'
+    category: 'chat',
   },
   { 
     id: 'google-studio', 
     name: 'Google AI Studio', 
     description: 'Gemini da Google para projetos avançados', 
     icon: '🔷',
-    logoUrl: 'https://aistudio.google.com/favicon.ico'
+    category: 'chat',
   },
   { 
     id: 'other', 
     name: 'Outra IA', 
     description: 'Especificar manualmente', 
-    icon: '✨'
+    icon: '✨',
   },
 ];
 
@@ -279,4 +303,5 @@ export const initialFromScratchFormData: FromScratchFormData = {
   responsiveDesktop: true,
   responsiveLargeScreen: false,
   targetAI: 'lovable',
+  codeStyle: 'modern',
 };

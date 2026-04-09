@@ -5,6 +5,7 @@ import cursorIcon from '@/assets/ai-icons/cursor.png';
 import traeIcon from '@/assets/ai-icons/trae.png';
 import boltIcon from '@/assets/ai-icons/bolt.png';
 import replitIcon from '@/assets/ai-icons/replit.png';
+import antigravityIcon from '@/assets/ai-icons/antigravity.png';
 
 export interface BuildConnector {
   id: string;
@@ -56,6 +57,15 @@ export const BUILD_CONNECTORS: BuildConnector[] = [
     url: 'https://cursor.sh',
     promptPrefix: 'Gere a arquitetura completa com estrutura de pastas, services, hooks, APIs e banco.',
     focus: ['fullstack', 'architecture', 'backend', 'api'],
+  },
+  {
+    id: 'antigravity',
+    name: 'Antigravity',
+    description: 'IDE agêntica do Google com Gemini 3',
+    icon: antigravityIcon,
+    url: 'https://idx.google.com',
+    promptPrefix: 'Use agentes autônomos para planejar, executar e validar o projeto. Aproveite o Gemini 3 Pro integrado.',
+    focus: ['fullstack', 'architecture', 'autonomous', 'testing'],
   },
   {
     id: 'windsurf',
