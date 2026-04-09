@@ -214,11 +214,12 @@ serve(async (req) => {
 
     // All providers failed
     const errorMessage = lastError === 'CREDITS_EXHAUSTED'
-      ? 'Créditos insuficientes em todos os provedores de IA.'
+      ? 'Créditos insuficientes. Tente novamente mais tarde.'
       : 'Todos os provedores de IA estão temporariamente indisponíveis. Tente novamente em instantes.';
 
+    const errorStatus = lastError === 'CREDITS_EXHAUSTED' ? 402 : 503;
     return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 200, // Return 200 with error in body to avoid edge function error
+      status: errorStatus,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
