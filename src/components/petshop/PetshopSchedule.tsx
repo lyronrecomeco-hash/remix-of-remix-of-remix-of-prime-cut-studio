@@ -119,7 +119,7 @@ const PetshopSchedule = ({ isOpen, onClose }: PetshopScheduleProps) => {
 Aguardo a confirmação! Obrigado(a)! 😊`;
 
     try {
-      const petshopPhone = '5581998409073';
+      const petshopPhone = '0000000000000';
       const clientPhone = formData.phone;
 
       // 1) Envia o pedido de agendamento para o WhatsApp do Petshop (mensagem do CLIENTE)
@@ -136,7 +136,7 @@ Aguardo a confirmação! Obrigado(a)! 😊`;
       }
 
       // 2) Envia confirmação automática para o número do cliente (mensagem do PETSHOP)
-      const confirmationMessage = `✅ *Agendamento confirmado!*\n\nOlá, ${formData.ownerName}! Seu agendamento no *Seu Xodó Petshop* foi confirmado.\n\n• Serviço: ${selectedService?.name}\n• Pet: ${formData.petName} ${formData.petType === 'dog' ? '🐕' : '🐱'}\n• Data/Hora: ${formatDate(formData.date)} às ${formData.time}\n\n📍 Endereço: Estr. de Belém, 1273 - Campo Grande, Recife - PE\n\nSe precisar alterar ou cancelar, fale com a gente por aqui.`;
+      const confirmationMessage = `✅ *Agendamento confirmado!*\n\nOlá, ${formData.ownerName}! Seu agendamento no *Demo PetShop* foi confirmado.\n\n• Serviço: ${selectedService?.name}\n• Pet: ${formData.petName} ${formData.petType === 'dog' ? '🐕' : '🐱'}\n• Data/Hora: ${formatDate(formData.date)} às ${formData.time}\n\n📍 Endereço: Rua Exemplo, 123 - Centro, São Paulo\n\nSe precisar alterar ou cancelar, fale com a gente por aqui.`;
 
       try {
         await sendPetshopWhatsAppWithRetry({
@@ -167,7 +167,7 @@ Aguardo a confirmação! Obrigado(a)! 😊`;
     } catch (err) {
       console.error('Erro:', err);
       // Fallback confiável para WhatsApp (mobile e desktop)
-      openWhatsAppLink('5581998409073', message);
+      openWhatsAppLink('0000000000000', message);
       
       // Salvar mesmo assim
       saveAppointment({
