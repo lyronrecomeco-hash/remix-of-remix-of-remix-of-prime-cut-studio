@@ -653,4 +653,228 @@ export const TEMPLATE_MODELS: TemplateModel[] = [
     suggestedFeatures: ['Galeria de resultados', 'Planos de treino', 'Agendamento de avaliacao', 'Depoimentos', 'Botao WhatsApp', 'Blog fitness'],
     objectives: ['Captar alunos', 'Mostrar resultados', 'Vender planos', 'Agendar avaliacoes', 'Gerar autoridade'],
   },
+
+  // ========== NOVOS - ALIMENTAÇÃO ==========
+  {
+    id: 'confeitaria',
+    name: 'Confeitaria / Doces',
+    description: 'Bolos decorados, doces e encomendas',
+    image: imgConfeitaria,
+    category: 'site',
+    suggestedPages: ['Home', 'Catalogo', 'Encomendas', 'Sabores', 'Galeria', 'Contato'],
+    suggestedFeatures: ['Catalogo de bolos e doces', 'Sistema de encomendas', 'Galeria de criações', 'Calculadora de precos', 'Botao WhatsApp', 'Depoimentos'],
+    objectives: ['Receber encomendas', 'Mostrar portfolio de bolos', 'Calcular precos', 'Captar clientes', 'Promover datas especiais'],
+  },
+
+  // ========== NOVOS - SAÚDE ==========
+  {
+    id: 'ortodontia',
+    name: 'Ortodontia / Implantes',
+    description: 'Tratamentos odontologicos avancados',
+    image: imgOrtodontia,
+    category: 'site',
+    suggestedPages: ['Home', 'Tratamentos', 'Antes e Depois', 'Tecnologia', 'Equipe', 'Agendamento', 'Contato'],
+    suggestedFeatures: ['Lista de tratamentos', 'Galeria antes/depois', 'Tecnologia 3D', 'Agendamento online', 'Simulador de sorriso', 'Convenios aceitos'],
+    objectives: ['Agendar avaliacoes', 'Mostrar resultados', 'Apresentar tecnologia', 'Gerar confianca', 'Captar pacientes'],
+  },
+
+  // ========== NOVOS - AUTOMOTIVO ==========
+  {
+    id: 'concessionaria',
+    name: 'Concessionaria / Veiculos',
+    description: 'Catalogo de veiculos e test drive',
+    image: imgConcessionaria,
+    category: 'site',
+    suggestedPages: ['Home', 'Estoque', 'Novos', 'Seminovos', 'Financiamento', 'Contato'],
+    suggestedFeatures: ['Catalogo de veiculos com filtros', 'Fotos 360°', 'Simulador de financiamento', 'Agendamento test drive', 'Botao WhatsApp', 'Comparador'],
+    objectives: ['Vender veiculos', 'Agendar test drive', 'Simular financiamento', 'Mostrar estoque', 'Captar leads'],
+  },
+
+  // ========== NOVOS - EVENTOS ==========
+  {
+    id: 'eventos',
+    name: 'Eventos / Festas',
+    description: 'Organizacao de eventos e orcamentos',
+    image: imgEventos,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Portfolio', 'Pacotes', 'Depoimentos', 'Contato'],
+    suggestedFeatures: ['Portfolio de eventos', 'Pacotes de servicos', 'Formulario de orcamento', 'Galeria de fotos', 'Botao WhatsApp', 'Calendario de disponibilidade'],
+    objectives: ['Receber orcamentos', 'Mostrar portfolio', 'Apresentar pacotes', 'Captar clientes', 'Divulgar eventos realizados'],
+  },
+
+  // ========== NOVOS - MÍDIA ==========
+  {
+    id: 'podcast',
+    name: 'Podcast / Radio',
+    description: 'Episodios, convidados e audiencia',
+    image: imgPodcast,
+    category: 'site',
+    suggestedPages: ['Home', 'Episodios', 'Sobre', 'Convidados', 'Contato', 'Patrocine'],
+    suggestedFeatures: ['Player de audio integrado', 'Lista de episodios', 'Perfil de convidados', 'Newsletter', 'Links de plataformas', 'Formulario de patrocinio'],
+    objectives: ['Aumentar audiencia', 'Listar episodios', 'Atrair patrocinadores', 'Captar assinantes', 'Promover convidados'],
+  },
+  {
+    id: 'banda-musica',
+    name: 'Banda / Musico',
+    description: 'Shows, discografia e contratacao',
+    image: imgBandaMusica,
+    category: 'site',
+    suggestedPages: ['Home', 'Sobre', 'Discografia', 'Shows', 'Galeria', 'Contato'],
+    suggestedFeatures: ['Player de musicas', 'Agenda de shows', 'Galeria de fotos e videos', 'Biografia', 'Formulario de contratacao', 'Links de streaming'],
+    objectives: ['Promover shows', 'Mostrar discografia', 'Facilitar contratacao', 'Captar fas', 'Aumentar seguidores'],
+  },
+
+  // ========== NOVOS - SERVIÇOS ==========
+  {
+    id: 'limpeza',
+    name: 'Limpeza / Diarista',
+    description: 'Servicos de limpeza e higienizacao',
+    image: imgLimpeza,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Planos', 'Orcamento', 'Depoimentos', 'Contato'],
+    suggestedFeatures: ['Lista de servicos', 'Planos residencial/comercial', 'Formulario de orcamento', 'Botao WhatsApp', 'Fotos antes/depois', 'Certificacoes'],
+    objectives: ['Captar clientes', 'Mostrar servicos', 'Vender planos', 'Gerar orcamentos', 'Fidelizar'],
+  },
+  {
+    id: 'encanador',
+    name: 'Encanador / Eletricista',
+    description: 'Servicos tecnicos e manutencao',
+    image: imgEncanador,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Orcamento', 'Emergencia', 'Sobre', 'Contato'],
+    suggestedFeatures: ['Lista de servicos', 'Atendimento emergencial', 'Formulario de orcamento', 'Botao WhatsApp', 'Depoimentos', 'Area de atuacao'],
+    objectives: ['Atendimento rapido', 'Gerar orcamentos', 'Mostrar servicos', 'Captar clientes locais', 'Plantao emergencial'],
+  },
+  {
+    id: 'seguranca',
+    name: 'Seguranca Patrimonial',
+    description: 'Monitoramento e vigilancia',
+    image: imgSeguranca,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Tecnologia', 'Planos', 'Clientes', 'Contato'],
+    suggestedFeatures: ['Lista de servicos', 'Tecnologia e equipamentos', 'Planos de monitoramento', 'Botao WhatsApp', 'Casos de sucesso', 'Certificacoes'],
+    objectives: ['Vender planos', 'Apresentar tecnologia', 'Captar empresas', 'Gerar credibilidade', 'Atendimento 24h'],
+  },
+  {
+    id: 'consultoria-financeira',
+    name: 'Consultoria Financeira',
+    description: 'Investimentos e planejamento financeiro',
+    image: imgConsultoriaFinanceira,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Sobre', 'Blog', 'Simulador', 'Contato'],
+    suggestedFeatures: ['Servicos de consultoria', 'Simulador financeiro', 'Blog de educacao financeira', 'Perfil dos consultores', 'Botao WhatsApp', 'Depoimentos'],
+    objectives: ['Captar clientes', 'Gerar autoridade', 'Educar sobre financas', 'Vender consultorias', 'Agendar reunioes'],
+  },
+
+  // ========== NOVOS - VAREJO ==========
+  {
+    id: 'suplementos',
+    name: 'Loja de Suplementos',
+    description: 'Suplementos e nutricao esportiva',
+    image: imgSuplementos,
+    category: 'site',
+    suggestedPages: ['Home', 'Produtos', 'Categorias', 'Promocoes', 'Blog', 'Contato'],
+    suggestedFeatures: ['Catalogo de produtos', 'Filtros por categoria', 'Promocoes e combos', 'Blog de nutricao', 'Botao WhatsApp', 'Carrinho de compras'],
+    objectives: ['Vender suplementos', 'Promover ofertas', 'Educar sobre nutricao', 'Captar clientes', 'Fidelizar'],
+  },
+  {
+    id: 'loja-roupas',
+    name: 'Loja de Roupas / Moda',
+    description: 'Fashion e-commerce e lookbook',
+    image: imgLojaRoupas,
+    category: 'site',
+    suggestedPages: ['Home', 'Colecoes', 'Categorias', 'Lookbook', 'Sobre', 'Contato'],
+    suggestedFeatures: ['Catalogo com filtros', 'Lookbook sazonal', 'Tabela de tamanhos', 'Botao WhatsApp', 'Instagram feed', 'Programa fidelidade'],
+    objectives: ['Vender roupas', 'Mostrar colecoes', 'Captar clientes', 'Promover lookbook', 'Fidelizar'],
+  },
+  {
+    id: 'moda-fitness',
+    name: 'Moda Fitness / Sportswear',
+    description: 'Roupas esportivas e acessorios',
+    image: imgModaFitness,
+    category: 'site',
+    suggestedPages: ['Home', 'Produtos', 'Colecoes', 'Atacado', 'Sobre', 'Contato'],
+    suggestedFeatures: ['Catalogo de produtos', 'Colecoes por modalidade', 'Venda atacado', 'Tabela de medidas', 'Botao WhatsApp', 'Instagram feed'],
+    objectives: ['Vender online', 'Mostrar colecoes', 'Atender atacado', 'Captar clientes', 'Promover marca'],
+  },
+
+  // ========== NOVOS - PETS ==========
+  {
+    id: 'dog-walker',
+    name: 'Dog Walker / Pet Sitter',
+    description: 'Passeios, hospedagem e cuidados pet',
+    image: imgDogWalker,
+    category: 'site',
+    suggestedPages: ['Home', 'Servicos', 'Planos', 'Equipe', 'Galeria', 'Contato'],
+    suggestedFeatures: ['Servicos de passeio e hospedagem', 'Planos mensais', 'Perfil dos cuidadores', 'Galeria de pets', 'Botao WhatsApp', 'Depoimentos'],
+    objectives: ['Captar clientes', 'Mostrar servicos', 'Vender planos', 'Gerar confianca', 'Fidelizar tutores'],
+  },
+
+  // ========== NOVOS - RELIGIOSO ==========
+  {
+    id: 'igreja',
+    name: 'Igreja / Ministerio',
+    description: 'Programacao, cultos e comunidade',
+    image: imgIgreja,
+    category: 'site',
+    suggestedPages: ['Home', 'Sobre', 'Programacao', 'Ministerios', 'Celulas', 'Contato'],
+    suggestedFeatures: ['Programacao de cultos', 'Ministerios e celulas', 'Transmissao ao vivo', 'Galeria de eventos', 'Botao WhatsApp', 'Doacoes online'],
+    objectives: ['Informar programacao', 'Conectar membros', 'Transmitir cultos', 'Receber doacoes', 'Divulgar eventos'],
+  },
+
+  // ========== NOVOS - EDUCAÇÃO ==========
+  {
+    id: 'creche',
+    name: 'Creche / Bercario',
+    description: 'Cuidados infantis e matriculas',
+    image: imgCreche,
+    category: 'site',
+    suggestedPages: ['Home', 'Proposta', 'Estrutura', 'Turmas', 'Matricula', 'Contato'],
+    suggestedFeatures: ['Tour virtual', 'Proposta pedagogica', 'Galeria de atividades', 'Formulario de matricula', 'Botao WhatsApp', 'Cardapio alimentar'],
+    objectives: ['Captar matriculas', 'Mostrar estrutura', 'Gerar confianca dos pais', 'Informar turmas', 'Facilitar contato'],
+  },
+
+  // ========== NOVOS - FITNESS ==========
+  {
+    id: 'crossfit',
+    name: 'CrossFit / Box',
+    description: 'WODs, planos e comunidade fitness',
+    image: imgCrossfit,
+    category: 'site',
+    suggestedPages: ['Home', 'WODs', 'Planos', 'Coaches', 'Estrutura', 'Contato'],
+    suggestedFeatures: ['WOD do dia', 'Tabela de planos', 'Perfil dos coaches', 'Galeria do box', 'Botao WhatsApp', 'Ranking e recordes'],
+    objectives: ['Captar atletas', 'Mostrar WODs', 'Vender planos', 'Apresentar coaches', 'Comunidade fitness'],
+  },
+
+  // ========== NOVOS APPS ==========
+  {
+    id: 'saas-app',
+    name: 'App SaaS / Startup',
+    description: 'Dashboard, planos e onboarding',
+    image: imgSaasApp,
+    category: 'app',
+    suggestedPages: ['Landing', 'Dashboard', 'Planos', 'Login', 'Configuracoes', 'Suporte'],
+    suggestedFeatures: ['Dashboard com graficos', 'Sistema de planos', 'Onboarding guiado', 'Autenticacao', 'API integrada', 'Notificacoes'],
+    objectives: ['Vender assinaturas', 'Apresentar produto', 'Converter trial', 'Suporte ao cliente', 'Dashboard analitico'],
+  },
+  {
+    id: 'cursos-online',
+    name: 'Plataforma de Cursos',
+    description: 'EAD com video aulas e certificados',
+    image: imgCursosOnline,
+    category: 'app',
+    suggestedPages: ['Home', 'Cursos', 'Player de Aulas', 'Meu Progresso', 'Certificados', 'Perfil'],
+    suggestedFeatures: ['Player de video', 'Progresso de aulas', 'Certificados automaticos', 'Quiz e avaliacoes', 'Forum de alunos', 'Dashboard do instrutor'],
+    objectives: ['Vender cursos', 'Engajar alunos', 'Emitir certificados', 'Acompanhar progresso', 'Gestao de instrutores'],
+  },
+  {
+    id: 'gestao-restaurante-app',
+    name: 'App Gestao Restaurante',
+    description: 'Mesas, pedidos e controle',
+    image: imgGestaoRestauranteApp,
+    category: 'app',
+    suggestedPages: ['Dashboard', 'Mesas', 'Pedidos', 'Cardapio', 'Caixa', 'Relatorios'],
+    suggestedFeatures: ['Mapa de mesas interativo', 'Gestao de pedidos', 'Cardapio digital admin', 'Controle de caixa', 'Relatorios de vendas', 'Comanda eletronica'],
+    objectives: ['Gerenciar mesas', 'Controlar pedidos', 'Fechar caixa', 'Relatorios diarios', 'Otimizar atendimento'],
+  },
 ];
