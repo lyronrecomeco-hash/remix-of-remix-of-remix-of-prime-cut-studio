@@ -51,6 +51,27 @@ import imgEscolaInfantil from '@/assets/templates/escola-infantil.jpg';
 import imgAgenciaMarketing from '@/assets/templates/agencia-marketing.jpg';
 import imgPersonalTrainer from '@/assets/templates/personal-trainer.jpg';
 import imgFarmacia from '@/assets/templates/farmacia.jpg';
+// New template images
+import imgCrossfit from '@/assets/templates/crossfit.jpg';
+import imgOrtodontia from '@/assets/templates/ortodontia.jpg';
+import imgConcessionaria from '@/assets/templates/concessionaria.jpg';
+import imgEventos from '@/assets/templates/eventos.jpg';
+import imgPodcast from '@/assets/templates/podcast.jpg';
+import imgLimpeza from '@/assets/templates/limpeza.jpg';
+import imgConfeitaria from '@/assets/templates/confeitaria.jpg';
+import imgSuplementos from '@/assets/templates/suplementos.jpg';
+import imgBandaMusica from '@/assets/templates/banda-musica.jpg';
+import imgEncanador from '@/assets/templates/encanador.jpg';
+import imgSaasApp from '@/assets/templates/saas-app.jpg';
+import imgIgreja from '@/assets/templates/igreja.jpg';
+import imgCreche from '@/assets/templates/creche.jpg';
+import imgCursosOnline from '@/assets/templates/cursos-online.jpg';
+import imgSeguranca from '@/assets/templates/seguranca.jpg';
+import imgModaFitness from '@/assets/templates/moda-fitness.jpg';
+import imgDogWalker from '@/assets/templates/dog-walker.jpg';
+import imgGestaoRestauranteApp from '@/assets/templates/gestao-restaurante-app.jpg';
+import imgConsultoriaFinanceira from '@/assets/templates/consultoria-financeira.jpg';
+import imgLojaRoupas from '@/assets/templates/loja-roupas.jpg';
 
 export type TemplateCategory = 'site' | 'app';
 
