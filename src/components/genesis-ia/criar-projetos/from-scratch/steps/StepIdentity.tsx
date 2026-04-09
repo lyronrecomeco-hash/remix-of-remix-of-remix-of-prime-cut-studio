@@ -68,7 +68,18 @@ export function StepIdentity() {
     updateFormData('companyName', proposal.company_name || '');
     updateFormData('projectName', proposal.company_name || '');
     if (answers?.slogan) updateFormData('slogan', answers.slogan);
-    if (answers?.city || answers?.location) updateFormData('cityRegion', answers.city || answers.location || '');
+    
+    // Extract city from address field (format: "Rua X, N - Bairro, Cidade - UF, CEP")
+    const address = answers?.address || answers?.city || answers?.location || '';
+    if (address) {
+      // Try to extract "Cidade - UF" from Brazilian address format
+      const cityMatch = address.match(/,\s*([^,]+?)\s*-\s*([A-Z]{2})\s*,/);
+      if (cityMatch) {
+        updateFormData('cityRegion', `${cityMatch[1].trim()}, ${cityMatch[2]}`);
+      } else {
+        updateFormData('cityRegion', address);
+      }
+    }
     
     setShowProposalModal(false);
     toast.success('Dados importados!', { description: `Dados de "${proposal.company_name}" aplicados.` });
@@ -76,8 +87,8 @@ export function StepIdentity() {
     // Auto-analyze target audience
     setAnalyzingAudience(true);
     try {
-      const nicheInfo = (proposal.ai_analysis as any)?.niche || answers?.niche || selectedNiche?.name || '';
-      const analysisText = typeof proposal.ai_analysis === 'object' ? JSON.stringify(proposal.ai_analysis) : '';
+      const nicheInfo = answers?.niche || (proposal.ai_analysis as any)?.niche || selectedNiche?.name || '';
+      const analysisText = typeof proposal.ai_analysis === 'object' && proposal.ai_analysis ? JSON.stringify(proposal.ai_analysis) : '';
 
       const { data: funcData } = await supabase.functions.invoke('genesis-ai-chat', {
         body: {
@@ -87,7 +98,9 @@ export function StepIdentity() {
               content: `Com base nestes dados, gere um BREVE público-alvo (máximo 2 linhas):
 Empresa: ${proposal.company_name}
 Nicho: ${nicheInfo}
-Cidade: ${answers?.city || ''}
+Endereço: ${address}
+Website: ${answers?.website || ''}
+Avaliação: ${answers?.rating || ''}
 ${analysisText ? `Análise: ${analysisText.slice(0, 500)}` : ''}
 Responda APENAS o público-alvo, sem introdução.`
             }
