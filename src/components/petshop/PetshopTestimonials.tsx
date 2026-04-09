@@ -12,7 +12,7 @@ const PetshopTestimonials = () => {
       name: 'Maria Silva',
       pet: 'Mel - Golden Retriever',
       avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-      text: 'Minha Mel fica feliz demais quando vai ao Seu Xodó! A equipe é super carinhosa e o banho fica impecável.',
+      text: 'Minha Mel fica feliz demais quando vai ao Demo PetShop! A equipe é super carinhosa e o banho fica impecável.',
       rating: 5,
     },
     {

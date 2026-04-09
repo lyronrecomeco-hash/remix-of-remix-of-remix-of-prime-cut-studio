@@ -112,11 +112,11 @@ const PetshopMyAppointments = ({ isOpen, onClose }: PetshopMyAppointmentsProps) 
 
     setCancellingId(apt.id);
 
-    const petshopPhone = '5581998409073';
+    const petshopPhone = '0000000000000';
 
     const cancelToPetshop = `Olá! Gostaria de cancelar meu agendamento. ❌\n\n*Agendamento:*\n• Serviço: ${apt.serviceName}\n• Pet: ${apt.petName} ${apt.petType === 'dog' ? '🐕' : '🐱'}\n• Data/Hora: ${formatDate(apt.date)} às ${apt.time}\n\n*Meus dados:*\n• Nome: ${apt.ownerName}\n• WhatsApp: ${apt.phone}\n\nObrigado(a)!`;
 
-    const cancelToClient = `❌ *Cancelamento confirmado!*\n\nOlá, ${apt.ownerName}! Seu cancelamento no *Seu Xodó Petshop* foi registrado.\n\n• Serviço: ${apt.serviceName}\n• Pet: ${apt.petName} ${apt.petType === 'dog' ? '🐕' : '🐱'}\n• Data/Hora: ${formatDate(apt.date)} às ${apt.time}\n\nSe quiser remarcar, é só fazer um novo agendamento por aqui.`;
+    const cancelToClient = `❌ *Cancelamento confirmado!*\n\nOlá, ${apt.ownerName}! Seu cancelamento no *Demo PetShop* foi registrado.\n\n• Serviço: ${apt.serviceName}\n• Pet: ${apt.petName} ${apt.petType === 'dog' ? '🐕' : '🐱'}\n• Data/Hora: ${formatDate(apt.date)} às ${apt.time}\n\nSe quiser remarcar, é só fazer um novo agendamento por aqui.`;
 
     try {
       // 1) Avisar o Petshop

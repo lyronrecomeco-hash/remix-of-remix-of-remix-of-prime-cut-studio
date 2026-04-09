@@ -34,7 +34,7 @@ const PetshopAbout = () => {
             <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
               <img
                 src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600"
-                alt="Equipe Seu Xodó Petshop"
+                alt="Equipe Demo PetShop"
                 className="w-full h-64 sm:h-80 lg:h-[450px] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-petshop-dark/60 via-transparent to-transparent" />

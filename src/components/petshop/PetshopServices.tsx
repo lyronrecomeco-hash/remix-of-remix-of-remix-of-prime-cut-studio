@@ -197,13 +197,12 @@ const PetshopServices = ({ onScheduleClick }: PetshopServicesProps) => {
             <p className="text-sm text-petshop-dark font-medium mb-2">
               Precisa de ajuda para escolher?
             </p>
-            <a 
-              href="https://wa.me/5581998409073"
-              className="text-petshop-orange font-bold text-sm flex items-center justify-center gap-2"
+            <span
+              className="text-petshop-orange font-bold text-sm flex items-center justify-center gap-2 opacity-60 cursor-default"
             >
-              Fale conosco pelo WhatsApp
+              Fale conosco pelo WhatsApp (Demo)
               <ArrowRight className="w-4 h-4" />
-            </a>
+            </span>
           </div>
         </motion.div>
       </div>

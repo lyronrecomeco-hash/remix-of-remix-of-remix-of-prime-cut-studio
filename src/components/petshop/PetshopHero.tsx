@@ -20,7 +20,7 @@ const PetshopHero = ({ onScheduleClick }: PetshopHeroProps) => {
       <div className="absolute inset-0">
         <motion.img
           src={heroBg}
-          alt="Pet Shop Seu Xodó"
+          alt="Demo PetShop"
           className="w-full h-full object-cover object-center"
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
